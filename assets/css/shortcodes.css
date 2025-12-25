@@ -1,139 +1,73 @@
 /**
- * AFCGlide Listings - Shortcode Specific Styles
- * This file handles the Grid, Slider, and Submission Form layouts.
+ * AFCGlide Listings - Shortcode Components (Luxury Merged)
+ * Maps to Master Style v3.0 logic
  */
 
-/* =========================================================
-  1. Grid Layout (The "Snap" to side-by-side)
-  ========================================================= */
-.afcglide-grid-ready {
+/* 1. Grid Layout - Using the Master Grid name */
+.afcglide-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 30px;
-    margin: 20px 0;
+    margin: 30px 0;
 }
 
-/* =========================================================
-  2. Listing Card Design
-  ========================================================= */
-.afcglide-listing-card {
+/* 2. Listing Card - Merged with Glassmorphism Price logic */
+.afc-listing-card {
     background: #ffffff;
-    border: 1px solid #e5e5e5;
-    border-radius: 12px;
+    border: 1px solid var(--afc-border);
+    border-radius: var(--afc-radius);
     overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
     display: flex;
     flex-direction: column;
     height: 100%;
-    position: relative;
 }
 
-.afcglide-listing-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+.afc-listing-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--afc-shadow-lux);
 }
 
-/* Card Media/Image area */
-.afcglide-card-media {
+.afc-card-media {
     position: relative;
     aspect-ratio: 16 / 9;
     overflow: hidden;
-    background: #f0f0f0;
 }
 
-.afcglide-card-media img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-/* Price Overlay */
-.afcglide-card-price {
+/* Luxury Price Tag on Card (Matches Hero Price Tag style) */
+.afc-card-price-tag {
     position: absolute;
-    bottom: 10px;
-    left: 10px;
-    background: #2271b1; /* WordPress Blue */
-    color: #fff;
-    padding: 5px 12px;
-    border-radius: 4px;
-    font-weight: bold;
-    font-size: 0.9rem;
+    bottom: 15px;
+    left: 15px;
+    background: var(--afc-glass);
+    backdrop-filter: blur(8px);
+    color: var(--afc-dark);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 800;
+    border: 1px solid rgba(255,255,255,0.4);
     z-index: 5;
 }
 
-/* Card Content Area */
-.afcglide-card-body {
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-}
-
-.afcglide-card-title {
-    margin: 0 0 10px;
-    font-size: 1.2rem;
-    font-weight: 700;
-}
-
-.afcglide-card-title a {
-    text-decoration: none;
-    color: #212529;
-}
-
-.afcglide-card-excerpt {
-    font-size: 0.9rem;
-    color: #646970;
-    margin-bottom: 20px;
-    line-height: 1.5;
-}
-
-/* =========================================================
-  3. Buttons (Matching your Master Styles)
-  ========================================================= */
-.afcglide-btn {
-    display: inline-block;
-    background: #2271b1;
-    color: white !important;
-    text-align: center;
-    padding: 10px 20px;
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: 600;
-    margin-top: auto;
-    transition: background 0.2s;
-}
-
-.afcglide-btn:hover {
-    background: #135e96;
-}
-
-/* =========================================================
-  4. Horizontal Slider (Section 7 from Master)
-  ========================================================= */
-.afcglide-card-slider-wrapper {
+/* 3. Horizontal Slider (The Featured Row) */
+.afcglide-slider-container {
     padding: 20px 0;
-    overflow: hidden;
+    position: relative;
 }
 
-.afcglide-card-slider {
+.afcglide-slider-track {
     display: flex;
-    gap: 24px;
+    gap: 25px;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
-    padding-bottom: 20px;
-    scrollbar-width: thin;
+    padding: 20px 0 40px 0;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
-.afcglide-slide {
-    flex: 0 0 320px;
+.afcglide-slider-track::-webkit-scrollbar { display: none; }
+
+.afc-slide-item {
+    flex: 0 0 350px;
     scroll-snap-align: start;
-}
-
-/* =========================================================
-  5. Responsive Fixes
-  ========================================================= */
-@media (max-width: 768px) {
-    .afcglide-grid-ready {
-        grid-template-columns: 1fr;
-    }
 }

@@ -1,21 +1,19 @@
 /**
- * AFCGlide Admin Styles
- * Backend metabox styling for media uploaders
- * 
- * Save as: assets/css/admin.css
+ * AFCGlide Listings - Master Admin UI (v3.0 Full Refactor)
+ * Combines full original functionality with Luxury Roadmap styling.
  */
 
-/* ================================
-   METABOX GENERAL
-   ================================ */
+/* =========================================================
+  1. Metabox General & Layout
+  ========================================================= */
 .afcglide-metabox-wrapper {
-    padding: 15px 0;
+    padding: 15px 5px;
 }
 
 .afcglide-metabox-row {
     margin-bottom: 25px;
     padding-bottom: 20px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #f0f0f1;
 }
 
 .afcglide-metabox-row:last-child {
@@ -25,67 +23,74 @@
 .afcglide-metabox-label {
     display: block;
     margin-bottom: 10px;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 14px;
-    color: #23282d;
+    color: #1d2327;
 }
 
 .afcglide-metabox-description {
     display: block;
     margin-top: 8px;
     font-size: 13px;
-    color: #666;
+    color: #646970;
     font-style: italic;
 }
 
-/* ================================
-   MEDIA UPLOADER STYLES
-   ================================ */
+/* =========================================================
+  2. Media Uploader & Roadmap Zones
+  ========================================================= */
 .afcglide-media-uploader {
-    border: 2px dashed #ddd;
-    border-radius: 6px;
-    padding: 20px;
-    background: #f9f9f9;
+    border: 2px dashed #c3c4c7;
+    border-radius: 8px;
+    padding: 25px;
+    background: #f8fafc;
     text-align: center;
+    transition: all 0.3s ease;
+}
+
+.afcglide-media-uploader:hover {
+    border-color: #2271b1;
+    background: #fff;
 }
 
 .afcglide-media-preview {
     margin-bottom: 15px;
-    min-height: 100px;
+    min-height: 120px;
     display: flex;
     align-items: center;
     justify-content: center;
     background: #fff;
-    border-radius: 4px;
+    border-radius: 6px;
+    border: 1px solid #dcdcde;
 }
 
 .afcglide-media-preview img {
     max-width: 100%;
     height: auto;
     border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .afcglide-media-preview:empty::before {
-    content: 'No Image Selected';
-    color: #ccc;
+    content: '📸 No Image Selected';
+    color: #a7aaad;
     font-size: 14px;
     font-weight: 600;
 }
 
-/* Upload Buttons */
+/* Branded Upload Buttons */
 .afcglide-select-hero,
 .afcglide-select-stack,
 .afcglide-add-slider {
     display: inline-block;
     padding: 10px 20px;
-    background: #0073aa;
-    color: #fff;
-    border: none;
+    background: #2271b1 !important; /* Branded Blue */
+    color: #fff !important;
+    border: 1px solid #135e96 !important;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 13px;
+    font-weight: 600;
     text-decoration: none;
     transition: background 0.3s ease;
 }
@@ -93,37 +98,37 @@
 .afcglide-select-hero:hover,
 .afcglide-select-stack:hover,
 .afcglide-add-slider:hover {
-    background: #005a87;
-    color: #fff;
+    background: #135e96 !important;
 }
 
-/* Remove Buttons */
+/* Branded Remove Buttons */
 .afcglide-remove-hero,
 .afcglide-remove-stack {
     display: inline-block;
     margin-left: 10px;
     padding: 8px 16px;
-    background: #dc3545;
-    color: #fff;
-    border: none;
+    background: #fcf0f1 !important;
+    color: #d63638 !important;
+    border: 1px solid #d63638 !important;
     border-radius: 4px;
     cursor: pointer;
     font-size: 13px;
-    transition: background 0.3s ease;
+    transition: all 0.2s;
 }
 
 .afcglide-remove-hero:hover,
 .afcglide-remove-stack:hover {
-    background: #c82333;
+    background: #d63638 !important;
+    color: #fff !important;
 }
 
-/* ================================
-   SLIDER GALLERY
-   ================================ */
+/* =========================================================
+  3. Slider Gallery Grid
+  ========================================================= */
 .afcglide-slider-gallery-wrapper {
     background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 6px;
+    border: 1px solid #dcdcde;
+    border-radius: 8px;
     padding: 20px;
 }
 
@@ -146,22 +151,23 @@
 
 .afcglide-slider-thumb {
     position: relative;
-    border: 2px solid #ddd;
+    border: 1px solid #dcdcde;
     border-radius: 6px;
     overflow: hidden;
     background: #f5f5f5;
     transition: transform 0.2s ease;
+    aspect-ratio: 1;
 }
 
 .afcglide-slider-thumb:hover {
     transform: scale(1.05);
-    border-color: #0073aa;
+    border-color: #2271b1;
 }
 
 .afcglide-slider-thumb img {
     display: block;
     width: 100%;
-    height: 100px;
+    height: 100%;
     object-fit: cover;
 }
 
@@ -169,133 +175,79 @@
     position: absolute;
     top: 5px;
     right: 5px;
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
-    background: #dc3545;
+    background: #d63638;
     color: #fff;
     border: 2px solid #fff;
-    font-size: 16px;
-    line-height: 1;
+    font-size: 14px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.3s ease;
-    padding: 0;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
-.afcglide-remove-slider:hover {
-    background: #c82333;
-}
-
-/* ================================
-   COLOR PICKER
-   ================================ */
-.afcglide-color-picker-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.afcglide-color-picker {
-    max-width: 100px;
-}
-
-/* ================================
-   INPUT FIELDS
-   ================================ */
-.afcglide-input-full {
+/* =========================================================
+  4. Input Fields & Typography
+  ========================================================= */
+.afcglide-input-full,
+.afcglide-select-full,
+.afcglide-admin-input {
     width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
+    padding: 10px 12px;
+    border: 1px solid #8c8f94;
     border-radius: 4px;
     font-size: 14px;
-}
-
-.afcglide-input-full:focus {
-    outline: none;
-    border-color: #0073aa;
-    box-shadow: 0 0 0 3px rgba(0,115,170,0.1);
 }
 
 .afcglide-textarea-full {
     width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #ddd;
+    padding: 12px;
+    border: 1px solid #8c8f94;
     border-radius: 4px;
     font-size: 14px;
     min-height: 120px;
     font-family: inherit;
-    resize: vertical;
 }
 
+.afcglide-input-full:focus, 
 .afcglide-textarea-full:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
     outline: none;
-    border-color: #0073aa;
-    box-shadow: 0 0 0 3px rgba(0,115,170,0.1);
 }
 
-/* ================================
-   SELECT DROPDOWNS
-   ================================ */
-.afcglide-select-full {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
-    background: #fff;
+/* =========================================================
+  5. Special Components (Color Picker & Notices)
+  ========================================================= */
+.afcglide-color-picker-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: #f8fafc;
+    padding: 10px;
+    border-radius: 6px;
 }
 
-.afcglide-select-full:focus {
-    outline: none;
-    border-color: #0073aa;
-}
-
-/* ================================
-   NOTICES/ALERTS IN METABOX
-   ================================ */
 .afcglide-notice {
-    padding: 12px 15px;
+    padding: 15px 20px;
     border-left: 4px solid;
     border-radius: 4px;
     margin-bottom: 20px;
+    font-weight: 500;
 }
 
-.afcglide-notice-info {
-    background: #d1ecf1;
-    border-color: #17a2b8;
-    color: #0c5460;
-}
+.afcglide-notice-info { background: #d1ecf1; border-color: #17a2b8; color: #0c5460; }
+.afcglide-notice-warning { background: #fff3cd; border-color: #ffc107; color: #856404; }
+.afcglide-notice-success { background: #d4edda; border-color: #28a745; color: #155724; }
 
-.afcglide-notice-warning {
-    background: #fff3cd;
-    border-color: #ffc107;
-    color: #856404;
-}
-
-.afcglide-notice-success {
-    background: #d4edda;
-    border-color: #28a745;
-    color: #155724;
-}
-
-/* ================================
-   RESPONSIVE
-   ================================ */
+/* =========================================================
+  6. Responsive
+  ========================================================= */
 @media (max-width: 782px) {
-    .afcglide-media-uploader {
-        padding: 15px;
-    }
-    
     #afcglide-slider-preview {
-        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-        gap: 10px;
-    }
-    
-    .afcglide-slider-thumb img {
-        height: 70px;
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
     }
 }

@@ -1,259 +1,131 @@
 <?php
-/**
- * AFCGlide AJAX Handler
- * Handles filtering and load more functionality
- *
- * Save as: includes/class-afcglide-ajax-handler.php
- *
- * @package AFCGlide\Listings
- */
-
 namespace AFCGlide\Listings;
+
+use AFCGlide\Listings\Helpers\Sanitizer;
+use AFCGlide\Listings\Submission\Submission_Files; 
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 class AFCGlide_Ajax_Handler {
 
+    public static function init() {
+        new self();
+    }
+
     public function __construct() {
-        // AJAX actions for both logged-in and non-logged-in users
+        // --- Search/Filter Actions ---
         add_action( 'wp_ajax_afcglide_filter_listings', [ $this, 'filter_listings' ] );
         add_action( 'wp_ajax_nopriv_afcglide_filter_listings', [ $this, 'filter_listings' ] );
-        
-        // Enqueue scripts
+
+        // --- Agent Submission Actions ---
+        add_action( 'wp_ajax_afcglide_submit_listing', [ $this, 'handle_listing_submission' ] );
+        add_action( 'wp_ajax_nopriv_afcglide_submit_listing', [ $this, 'handle_listing_submission' ] );
+
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
     }
 
     /**
-     * Enqueue public scripts with localized data
+     * ENQUEUE: Locals, Nonces, and Scripts
+     * Synced with AFCG_URL from main plugin file.
      */
     public function enqueue_scripts() {
-        // Enqueue public JS
-        wp_enqueue_script(
-            'afcglide-public',
-            AFCG_PLUGIN_URL . 'assets/js/public.js',
-            [ 'jquery' ],
-            AFCG_VERSION,
-            true
-        );
+        // FIX: Changed AFCG_PLUGIN_URL to AFCG_URL
+        wp_enqueue_script( 'afcglide-public', AFCG_URL . 'assets/js/public.js', [ 'jquery' ], '3.6.0', true );
 
-        // Localize script with AJAX URL and nonce
         wp_localize_script( 'afcglide-public', 'afcglide_ajax_object', [
             'ajax_url' => admin_url( 'admin-ajax.php' ),
             'nonce'    => wp_create_nonce( 'afcglide_ajax_nonce' ),
             'strings'  => [
-                'loading' => __( 'Loading...', 'afcglide' ),
-                'load_more' => __( 'Load More Listings', 'afcglide' ),
-                'no_results' => __( 'No listings found.', 'afcglide' ),
-                'error' => __( 'Error loading listings. Please try again.', 'afcglide' ),
+                'loading'    => __( 'Searching...', 'afcglide' ),
+                'success'    => __( '✨ Listing submitted successfully!', 'afcglide' ),
+                'error'      => __( 'Error: Please check the form.', 'afcglide' ),
             ]
         ]);
-
-        // Enqueue GLightbox if not already loaded
+        
         if ( is_singular( 'afcglide_listing' ) ) {
-            wp_enqueue_style(
-                'glightbox',
-                'https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css',
-                [],
-                '3.2.0'
-            );
-            
-            wp_enqueue_script(
-                'glightbox',
-                'https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js',
-                [],
-                '3.2.0',
-                true
-            );
+            wp_enqueue_style( 'glightbox', 'https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css' );
+            wp_enqueue_script( 'glightbox', 'https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js', [], '3.2.0', true );
         }
     }
 
-    /**
-     * Handle AJAX filter & load more request
-     */
+    /* =========================================================
+      1. THE SUBMISSION HANDLER (The "Create" Side)
+      ========================================================= */
+    public function handle_listing_submission() {
+        check_ajax_referer( 'afcglide_ajax_nonce', 'nonce' );
+
+        $post_id = wp_insert_post([
+            'post_title'   => sanitize_text_field( $_POST['property_title'] ),
+            'post_content' => wp_kses_post( $_POST['property_description'] ),
+            'post_status'  => 'pending',
+            'post_type'    => 'afcglide_listing',
+        ]);
+
+        if ( is_wp_error( $post_id ) ) {
+            wp_send_json_error( [ 'message' => 'Listing creation failed.' ] );
+        }
+
+        // Save Price Meta (Synced Key)
+        update_post_meta( $post_id, '_listing_price', Sanitizer::price( $_POST['price'] ) );
+
+        // CALL FILE ENGINE: Processes Hero, Stack, and Slider
+        if ( class_exists( 'AFCGlide\Listings\Submission\Submission_Files' ) ) {
+            $file_engine = new Submission_Files();
+            $file_engine->process_submission_media( $post_id );
+        }
+
+        wp_send_json_success( [ 'message' => '✨ Success! Property sent for review.' ] );
+    }
+
+    /* =========================================================
+      2. THE FILTER HANDLER (The "Search" Side)
+      ========================================================= */
     public function filter_listings() {
-        // Verify nonce
-        if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'afcglide_ajax_nonce' ) ) {
-            wp_send_json_error( [ 'message' => 'Security check failed.' ] );
-        }
+        check_ajax_referer( 'afcglide_ajax_nonce', 'nonce' );
 
-        // Get request parameters
-        $page = isset( $_POST['page'] ) ? absint( $_POST['page'] ) : 1;
+        $page    = isset( $_POST['page'] ) ? absint( $_POST['page'] ) : 1;
         $filters = isset( $_POST['filters'] ) ? $_POST['filters'] : [];
-        $query_vars = isset( $_POST['query_vars'] ) ? $_POST['query_vars'] : [];
-
-        // Build query args
-        $args = $this->build_query_args( $page, $filters, $query_vars );
-
-        // Execute query
+        $args    = $this->build_query_args( $page, $filters );
+        
         $query = new \WP_Query( $args );
+        $html  = '';
 
-        // Generate HTML
-        $html = $this->generate_listings_html( $query );
-
-        // Prepare response
         if ( $query->have_posts() ) {
-            wp_send_json_success([
-                'html' => $html,
-                'page' => $page,
-                'max_pages' => $query->max_num_pages,
-                'found_posts' => $query->found_posts,
-            ]);
-        } else {
-            wp_send_json_success([
-                'html' => '<div class="afcglide-no-results"><p>' . __( 'No listings found.', 'afcglide' ) . '</p></div>',
-                'page' => $page,
-                'max_pages' => 0,
-                'found_posts' => 0,
-            ]);
-        }
-    }
-
-    /**
-     * Build WP_Query arguments
-     */
-    private function build_query_args( $page, $filters, $query_vars ) {
-        // Base args
-        $args = [
-            'post_type'      => 'afcglide_listing',
-            'post_status'    => 'publish',
-            'posts_per_page' => 9, // Default
-            'paged'          => $page,
-        ];
-
-        // Merge with shortcode query vars if provided
-        if ( ! empty( $query_vars ) && is_array( $query_vars ) ) {
-            $args = array_merge( $args, $query_vars );
-        }
-
-        // Apply filters
-        if ( ! empty( $filters ) && is_array( $filters ) ) {
-            
-            // Location filter (taxonomy)
-            if ( ! empty( $filters['location'] ) ) {
-                $args['tax_query'][] = [
-                    'taxonomy' => 'afcglide_location',
-                    'field'    => 'slug',
-                    'terms'    => sanitize_text_field( $filters['location'] ),
-                ];
+            ob_start();
+            while ( $query->have_posts() ) {
+                $query->the_post();
+                $this->render_luxury_card();
             }
-
-            // Type filter (taxonomy)
-            if ( ! empty( $filters['type'] ) ) {
-                $args['tax_query'][] = [
-                    'taxonomy' => 'afcglide_type',
-                    'field'    => 'slug',
-                    'terms'    => sanitize_text_field( $filters['type'] ),
-                ];
-            }
-
-            // Status filter (taxonomy)
-            if ( ! empty( $filters['status'] ) ) {
-                $args['tax_query'][] = [
-                    'taxonomy' => 'afcglide_status',
-                    'field'    => 'slug',
-                    'terms'    => sanitize_text_field( $filters['status'] ),
-                ];
-            }
-
-            // Price range filter (meta query)
-            $meta_query = [];
-            
-            if ( ! empty( $filters['min_price'] ) || ! empty( $filters['max_price'] ) ) {
-                $price_query = [
-                    'key'     => '_price',
-                    'type'    => 'NUMERIC',
-                    'compare' => 'BETWEEN',
-                ];
-
-                $min = ! empty( $filters['min_price'] ) ? floatval( $filters['min_price'] ) : 0;
-                $max = ! empty( $filters['max_price'] ) ? floatval( $filters['max_price'] ) : PHP_INT_MAX;
-                
-                $price_query['value'] = [ $min, $max ];
-                $meta_query[] = $price_query;
-            }
-
-            if ( ! empty( $meta_query ) ) {
-                $args['meta_query'] = $meta_query;
-            }
-        }
-
-        return apply_filters( 'afcglide_ajax_query_args', $args, $filters );
-    }
-
-    /**
-     * Generate HTML for listings
-     */
-    private function generate_listings_html( $query ) {
-        if ( ! $query->have_posts() ) {
-            return '';
-        }
-
-        ob_start();
-
-        while ( $query->have_posts() ) {
-            $query->the_post();
-            
-            // Use template if exists, otherwise default card
-            $template = locate_template( 'afcglide-templates/card.php' );
-            
-            if ( $template ) {
-                include $template;
-            } else {
-                $this->render_default_card();
-            }
+            $html = ob_get_clean();
         }
 
         wp_reset_postdata();
-
-        return ob_get_clean();
+        wp_send_json_success([ 'html' => $html, 'max_pages' => $query->max_num_pages ]);
     }
 
-    /**
-     * Render default listing card
-     */
-    private function render_default_card() {
-        $post_id = get_the_ID();
-        $price = get_post_meta( $post_id, '_price', true );
+    private function render_luxury_card() {
+        $price = get_post_meta( get_the_ID(), '_listing_price', true );
         ?>
-        
-        <div class="afcglide-card">
-            <?php if ( has_post_thumbnail() ): ?>
-                <div class="afcglide-card-image">
-                    <a href="<?php the_permalink(); ?>">
-                        <?php the_post_thumbnail( 'medium' ); ?>
-                    </a>
-                </div>
-            <?php endif; ?>
-            
-            <div class="afcglide-card-content">
-                <h3 class="afcglide-card-title">
-                    <a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
-                </h3>
-                
-                <?php if ( ! empty( $price ) ): ?>
-                    <p class="afcglide-card-price"><?php echo esc_html( $price ); ?></p>
-                <?php endif; ?>
-                
-                <div class="afcglide-card-excerpt">
-                    <?php echo wp_trim_words( get_the_content(), 20 ); ?>
-                </div>
-                
-                <a href="<?php the_permalink(); ?>" class="afcglide-card-link">
-                    <?php _e( 'View Details', 'afcglide' ); ?> &rarr;
-                </a>
+        <article class="afc-listing-card"> 
+            <div class="afc-card-media">
+                <?php if ( has_post_thumbnail() ) the_post_thumbnail('large'); ?>
+                <div class="afc-card-price-tag">$<?php echo number_format($price); ?></div>
             </div>
-        </div>
-        
+            <div class="afc-card-content">
+                <h3 class="afc-card-title"><?php the_title(); ?></h3>
+                <div class="excerpt"><?php echo wp_trim_words( get_the_content(), 12 ); ?></div>
+                <a href="<?php the_permalink(); ?>" class="afcglide-btn"><?php _e('View Details', 'afcglide'); ?></a>
+            </div>
+        </article>
         <?php
     }
 
-    /**
-     * Static init method for main plugin
-     */
-    public static function init() {
-        new self();
+    private function build_query_args( $page, $filters ) {
+        return [
+            'post_type'      => 'afcglide_listing',
+            'post_status'    => 'publish',
+            'posts_per_page' => 9,
+            'paged'          => $page,
+        ];
     }
 }
-
-// Initialize
-new AFCGlide_Ajax_Handler();

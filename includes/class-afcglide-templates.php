@@ -1,38 +1,22 @@
 <?php
-/**
- * Single Listing Template Loader
- *
- * @package AFCGlide_Listings
- */
-
 namespace AFCGlide\Listings;
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+defined( 'ABSPATH' ) || exit;
 
 class AFCGlide_Templates {
 
-    const TEMPLATE_FILE = 'single-afcglide_listing.php';
-
     public static function init() {
-        add_filter( 'template_include', [ __CLASS__, 'load_single_template' ], 99 );
+        add_filter( 'single_template', [ __CLASS__, 'load_listing_template' ] );
     }
 
-    public static function load_single_template( $template ) {
-        if ( is_singular( 'afcglide_listing' ) ) { // ✅ Singular CPT
-            
-            // Check for theme override first
-            $theme_file = get_stylesheet_directory() . '/afcglide-listings/' . self::TEMPLATE_FILE;
-            
-            // Check plugin default
-            $plugin_file = AFCG_PLUGIN_DIR . 'templates/' . self::TEMPLATE_FILE;
-
-            if ( file_exists( $theme_file ) ) {
-                return $theme_file;
-            } elseif ( file_exists( $plugin_file ) ) {
-                return $plugin_file;
+    public static function load_listing_template( $template ) {
+        if ( is_singular( 'afcglide_listing' ) ) {
+            // Look for the template in our plugin folder
+            $plugin_template = AFCG_PATH . 'templates/single-listing.php';
+            if ( file_exists( $plugin_template ) ) {
+                return $plugin_template;
             }
         }
         return $template;
     }
 }
-?>

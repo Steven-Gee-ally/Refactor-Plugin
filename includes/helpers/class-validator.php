@@ -184,4 +184,11 @@ class Validator {
     public static function term_exists( $term_id, $taxonomy ) {
         return term_exists( $term_id, $taxonomy ) !== null;
     }
+    /**
+     * Validate numeric value with decimal support
+     * Specifically for Baths (2.5) or Prices (1200.50)
+     */
+    public static function is_decimal( $value ) {
+        return is_numeric( $value ) && preg_match( '/^[0-9]+(\.[0-9]+)?$/', $value );
+    }
 }

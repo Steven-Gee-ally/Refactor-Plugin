@@ -1,8 +1,7 @@
 <?php
 /**
- * AFCGlide Metaboxes & Meta registration
- *
- * @package AFCGlide_Listings
+ * AFCGlide Metaboxes - The Master Storage Engine
+ * Version 3.2.0 - Optimized for GPS, Amenities, and Hero-16 Gallery
  */
 
 namespace AFCGlide\Listings;
@@ -11,43 +10,42 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 class AFCGlide_Metaboxes {
 
-    // Define ALL your fields here. The save function will use this list automatically.
+    /**
+     * THE MASTER LIST: These match your form inputs exactly.
+     */
     public static $meta_keys = [
         '_listing_price', 
         '_listing_beds', 
         '_listing_baths', 
         '_listing_sqft', 
-        '_hero_image', 
-        '_slider_images_json', 
-        '_is_featured',
         '_gps_lat', 
         '_gps_lng', 
-        '_primary_color', 
-        '_secondary_color', 
-        '_background_color'
+        '_listing_amenities',
+        '_agent_photo', 
+        '_agency_logo', 
+        '_hero_image', 
+        '_slider_images_json', 
+        '_stack_images_json',
+        '_is_featured'
     ];
 
     public static function init() {
         add_action( 'add_meta_boxes', [ __CLASS__, 'add_metaboxes' ] );
-        add_action( 'save_post_afcglide_listing', [ __CLASS__, 'save_metabox' ], 10, 2 );
+        add_action( 'save_post', [ __CLASS__, 'save_metabox' ], 10, 2 );
         add_action( 'admin_enqueue_scripts', [ __CLASS__, 'admin_assets' ] );
     }
 
     public static function admin_assets( $hook ) {
         global $post;
         if ( ! isset( $post ) || $post->post_type !== 'afcglide_listing' ) return;
-
         wp_enqueue_media();
         wp_enqueue_style( 'wp-color-picker' );
-        // Ensure these files exist in your assets folder!
-        wp_enqueue_style( 'afcglide-admin-css', AFCG_PLUGIN_URL . 'assets/css/afcglide-admin.css', [], AFCG_VERSION );
-        wp_enqueue_script( 'afcglide-admin-js', AFCG_PLUGIN_URL . 'assets/js/afcglide-admin.js', [ 'jquery', 'wp-color-picker' ], AFCG_VERSION, true );
     }
 
     public static function add_metaboxes() {
         add_meta_box(
-            'afcglide_listing_metabox',
-            __( 'Listing Details', 'afcglide' ),
+            'afcglide_listing_details',
+            __( 'Listing Details, GPS & Amenities', 'afcglide' ),
             [ __CLASS__, 'render_metabox' ],
             'afcglide_listing',
             'normal',
@@ -58,50 +56,51 @@ class AFCGlide_Metaboxes {
     public static function render_metabox( $post ) {
         wp_nonce_field( 'afcglide_meta_nonce', 'afcglide_meta_nonce' );
 
-        $price = get_post_meta( $post->ID, '_listing_price', true );
-        $beds  = get_post_meta( $post->ID, '_listing_beds', true );
-        $baths = get_post_meta( $post->ID, '_listing_baths', true );
-        $sqft  = get_post_meta( $post->ID, '_listing_sqft', true );
-        $hero_id = intval( get_post_meta( $post->ID, '_hero_image', true ) );
-        $hero_src = $hero_id ? wp_get_attachment_image_url( $hero_id, 'medium' ) : '';
-
-        // HTML Output
+        // Pull Data
+        $price     = get_post_meta( $post->ID, '_listing_price', true );
+        $beds      = get_post_meta( $post->ID, '_listing_beds', true );
+        $baths     = get_post_meta( $post->ID, '_listing_baths', true );
+        $lat       = get_post_meta( $post->ID, '_gps_lat', true );
+        $lng       = get_post_meta( $post->ID, '_gps_lng', true );
+        $amenities = get_post_meta( $post->ID, '_listing_amenities', true ) ?: [];
         ?>
-        <div class="afcglide-meta-wrap afcglide-metabox-wrapper">
-            <p>
-                <label><strong><?php esc_html_e( 'Price ($)', 'afcglide' ); ?></strong></label>
-                <input type="text" name="_listing_price" value="<?php echo esc_attr( $price ); ?>" style="width:100%;">
-            </p>
-            <p>
-                <label><strong><?php esc_html_e( 'Beds', 'afcglide' ); ?></strong></label>
-                <input type="number" name="_listing_beds" value="<?php echo esc_attr( $beds ); ?>" style="width:100%;">
-            </p>
-            <p>
-                <label><strong><?php esc_html_e( 'Baths', 'afcglide' ); ?></strong></label>
-                <input type="number" name="_listing_baths" value="<?php echo esc_attr( $baths ); ?>" step="0.5" style="width:100%;">
-            </p>
-            <p>
-                <label><strong><?php esc_html_e( 'SqFt', 'afcglide' ); ?></strong></label>
-                <input type="number" name="_listing_sqft" value="<?php echo esc_attr( $sqft ); ?>" style="width:100%;">
-            </p>
 
-            <div style="margin-top: 20px; border-top:1px solid #ddd; padding-top:10px;">
-                <label><strong><?php esc_html_e( 'Hero Image', 'afcglide' ); ?></strong></label>
-                <div class="afcglide-media-uploader">
-                    <input type="hidden" name="_hero_image" value="<?php echo esc_attr( $hero_id ); ?>">
-                    <div class="afcglide-media-preview" style="margin-bottom:10px;">
-                        <?php if ( $hero_src ) : ?>
-                            <img src="<?php echo esc_url( $hero_src ); ?>" style="max-width:150px; display:block;">
-                        <?php else: ?>
-                            <span style="color:#888;">No image selected</span>
-                        <?php endif; ?>
-                    </div>
-                    <button type="button" class="button afcglide-select-hero">Select Image</button>
-                    <button type="button" class="button afcglide-remove-hero">Remove</button>
-                </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+            <div>
+                <label><strong><?php _e('Price ($)', 'afcglide'); ?></strong></label>
+                <input type="text" name="_listing_price" value="<?php echo esc_attr($price); ?>" style="width:100%;">
             </div>
-            
+            <div>
+                <label><strong><?php _e('Beds', 'afcglide'); ?></strong></label>
+                <input type="number" name="_listing_beds" value="<?php echo esc_attr($beds); ?>" style="width:100%;">
             </div>
+            <div>
+                <label><strong><?php _e('Baths', 'afcglide'); ?></strong></label>
+                <input type="number" name="_listing_baths" value="<?php echo esc_attr($baths); ?>" step="0.5" style="width:100%;">
+            </div>
+        </div>
+
+        <div style="background: #f0f6fb; padding: 15px; border: 1px solid #ccd0d4; border-radius: 4px; margin-bottom: 20px;">
+            <label><strong><?php _e('GPS Location (Pinpoint Accuracy)', 'afcglide'); ?></strong></label>
+            <div style="display: flex; gap: 15px; margin-top: 10px;">
+                <input type="text" name="_gps_lat" placeholder="Latitude" value="<?php echo esc_attr($lat); ?>" style="flex:1;">
+                <input type="text" name="_gps_lng" placeholder="Longitude" value="<?php echo esc_attr($lng); ?>" style="flex:1;">
+            </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label><strong><?php _e('Amenities', 'afcglide'); ?></strong></label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px;">
+                <?php 
+                $options = ['Pool', 'Ocean View', 'Gated', 'Backup Power', 'Guest House', 'High-Speed Internet', 'Garage', 'Furnished', 'AC', 'Waterfront', 'Hiking Trails', 'Solar Power', 'Gym', 'Wine Cellar', 'Spa'];
+                foreach($options as $opt) : ?>
+                    <label>
+                        <input type="checkbox" name="_listing_amenities[]" value="<?php echo $opt; ?>" <?php checked(in_array($opt, $amenities)); ?>> 
+                        <?php echo $opt; ?>
+                    </label>
+                <?php endforeach; ?>
+            </div>
+        </div>
         <?php
     }
 
@@ -110,13 +109,15 @@ class AFCGlide_Metaboxes {
         if ( ! isset( $_POST['afcglide_meta_nonce'] ) || ! wp_verify_nonce( $_POST['afcglide_meta_nonce'], 'afcglide_meta_nonce' ) ) return;
         if ( ! current_user_can( 'edit_post', $post_id ) ) return;
 
-        // IMPROVEMENT: Loop through the master list defined at the top
         foreach ( self::$meta_keys as $field ) {
             if ( isset( $_POST[ $field ] ) ) {
-                // Sanitize based on field type if necessary, for now text is safe
-                update_post_meta( $post_id, $field, sanitize_text_field( $_POST[ $field ] ) );
+                $value = $_POST[ $field ];
+                $sanitized = is_array( $value ) ? array_map( 'sanitize_text_field', $value ) : sanitize_text_field( $value );
+                update_post_meta( $post_id, $field, $sanitized );
+            } else {
+                // If it's a checkbox and it's missing from POST, it was unchecked.
+                if ( $field === '_listing_amenities' ) delete_post_meta( $post_id, $field );
             }
         }
     }
 }
-?>
