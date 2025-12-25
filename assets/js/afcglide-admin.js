@@ -1,99 +1,51 @@
 /**
- * AFCGlide Admin JS (v3.0 Luxury Refactor)
- * Handles: Color Pickers, Image Roadmap, & Gallery Sorting
+ * AFCGlide Admin JS (v3.7.1 Luxury Master)
+ * Synced with Master Metabox Refactor
  */
 jQuery(document).ready(function($){
 
-    // 1. Initialize Color Pickers (Luxury Branding)
+    // 1. Universal Media Uploader (Hero, Agent, Logo, Stack)
+    $(document).on('click', '.afc-upload-btn', function(e){
+        e.preventDefault();
+        const button = $(this);
+        const target = button.data('target'); // 'hero', 'stack', 'agent', or 'logo'
+        
+        const frame = wp.media({
+            title: 'Select Luxury Media',
+            multiple: (target === 'stack'), // Allows multiple only for the photo stack
+            library: { type: 'image' }
+        }).on('select', function(){
+            
+            if (target === 'stack') {
+                // Logic for the Multi-Image Photo Stack
+                const selection = frame.state().get('selection');
+                let ids = [];
+                selection.map(function(attachment) {
+                    ids.push(attachment.toJSON().id);
+                });
+                $('#stack-images-data').val(JSON.stringify(ids));
+                alert('Stack updated with ' + ids.length + ' images.');
+            } else {
+                // Logic for Single Images (Hero, Agent, Logo)
+                const attachment = frame.state().get('selection').first().toJSON();
+                
+                // This maps the 'target' to the specific IDs in your PHP
+                if (target === 'hero') {
+                    $('#hero-image-id').val(attachment.id);
+                    $('#hero-preview').attr('src', attachment.url).show();
+                } else if (target === 'agent') {
+                    $('#agent-photo-id').val(attachment.id);
+                    $('#agent-preview').attr('src', attachment.url).show();
+                } else if (target === 'logo') {
+                    $('#logo-image-id').val(attachment.id);
+                    $('#logo-preview').attr('src', attachment.url).show();
+                }
+            }
+        }).open();
+    });
+
+    // 2. Initialize Color Pickers (If you use them in Settings)
     if( $.isFunction($.fn.wpColorPicker) ) {
         $('.afcglide-color-picker').wpColorPicker();
     }
-
-    // 2. Universal Media Uploader (Hero, Stack, Agent Photo, Agency Logo)
-    // Updated selector to catch ALL single upload buttons
-    $(document).on('click', '.afcglide-select-hero, .afcglide-select-stack, .afcglide-select-branding', function(e){
-        e.preventDefault();
-        const button = $(this);
-        const wrapper = button.closest('.afcglide-media-uploader, .branding-upload-grid'); 
-        
-        const frame = wp.media({
-            title: 'Select Image',
-            multiple: false,
-            library: { type: 'image' }
-        }).on('select', function(){
-            const attachment = frame.state().get('selection').first().toJSON();
-            // Find the hidden input and the preview div in this specific zone
-            wrapper.find('input[type="hidden"]').val(attachment.id);
-            wrapper.find('.afcglide-media-preview').html(`<img src="${attachment.url}" class="admin-preview-img">`);
-        }).open();
-    });
-
-    // 3. Multi-Image Gallery (Slider Roadmap)
-    $(document).on('click', '.afcglide-add-slider', function(e){ // Synced class name
-        e.preventDefault();
-        const frame = wp.media({
-            title: 'Select Gallery Images',
-            multiple: true, 
-            library: { type: 'image' }
-        }).on('select', function(){
-            const selection = frame.state().get('selection');
-            let currentData = getSliderData();
-
-            selection.map(function(attachment){
-                attachment = attachment.toJSON();
-                if( currentData.indexOf(attachment.id) === -1 ) {
-                    currentData.push(attachment.id);
-                    // Matches the Refactored Admin CSS Grid
-                    $('#afcglide-slider-preview').append(`
-                        <div class="afcglide-slider-thumb" data-id="${attachment.id}">
-                            <img src="${attachment.url}">
-                            <button type="button" class="afcglide-remove-slider" data-id="${attachment.id}">&times;</button>
-                        </div>
-                    `);
-                }
-            });
-            updateSliderInput(currentData);
-        }).open();
-    });
-
-    // 4. Drag-to-Sort (Luxury Organization)
-    if ($.isFunction($.fn.sortable)) {
-        $('#afcglide-slider-preview').sortable({
-            placeholder: "ui-state-highlight", // Visual aid during drag
-            update: function() {
-                let sortedIDs = [];
-                $('.afcglide-slider-thumb').each(function() {
-                    sortedIDs.push($(this).data('id'));
-                });
-                updateSliderInput(sortedIDs);
-            }
-        });
-    }
-
-    // Helper: JSON Data Management
-    function getSliderData() {
-        const val = $('#afcglide_slider_json').val();
-        try { return val ? JSON.parse(val) : []; } catch(e) { return []; }
-    }
-
-    function updateSliderInput(dataArray) {
-        $('#afcglide_slider_json').val(JSON.stringify(dataArray));
-    }
-
-    // 5. Remove Logic (Single & Gallery)
-    // Handle Gallery Removal
-    $(document).on('click', '.afcglide-remove-slider', function(e){
-        $(this).closest('.afcglide-slider-thumb').remove();
-        let ids = [];
-        $('.afcglide-slider-thumb').each(function() { ids.push($(this).data('id')); });
-        updateSliderInput(ids);
-    });
-
-    // Handle Single Image Clear
-    $(document).on('click', '.afcglide-remove-media', function(e){
-        e.preventDefault();
-        const wrapper = $(this).closest('.afcglide-media-uploader');
-        wrapper.find('input[type="hidden"]').val('');
-        wrapper.find('.afcglide-media-preview').empty();
-    });
 });
