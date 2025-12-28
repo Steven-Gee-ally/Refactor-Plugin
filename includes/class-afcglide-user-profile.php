@@ -1,9 +1,10 @@
 <?php
+namespace AFCGlide\Listings;
+
 /**
  * Master User Profile Class - Refactored for AFCGlide v3
  */
 
-namespace AFCGlide\Listings;
 
 use AFCGlide\Listings\Helpers\Sanitizer;
 use AFCGlide\Listings\Helpers\Validator;

@@ -8,7 +8,6 @@ jQuery(document).ready(function($) {
     // 1. AJAX Listing Engine (Grid & Filters)
     // ======================================================
     function initAFCGlideAJAX() {
-        // SYNC: Changed from .afcglide-grid-ready to .afcglide-grid
         const $grid = $('.afcglide-grid'); 
         const $loadMoreBtn = $('.afcglide-load-more');
         const $filterForm = $('.afcglide-filter-form');
@@ -23,8 +22,7 @@ jQuery(document).ready(function($) {
                 });
             }
 
-            // Using the loading overlay from Master CSS Section 8
-            $grid.addClass('is-loading'); 
+            $grid.addClass('is-loading').css('opacity', '0.6'); 
 
             $.ajax({
                 url: afcglide_ajax_object.ajax_url,
@@ -36,19 +34,28 @@ jQuery(document).ready(function($) {
                     filters: filterData
                 },
                 success: function(res) {
-                    $grid.removeClass('is-loading');
+                    $grid.removeClass('is-loading').css('opacity', '1');
                     if (res.success) {
                         append ? $grid.append(res.data.html) : $grid.html(res.data.html);
+                        
                         $loadMoreBtn.data('page', page);
-                        (page >= res.data.max_pages) ? $loadMoreBtn.fadeOut() : $loadMoreBtn.fadeIn();
+                        if (res.data.max_pages <= page) {
+                            $loadMoreBtn.fadeOut();
+                        } else {
+                            $loadMoreBtn.fadeIn();
+                        }
                     }
+                },
+                error: function() {
+                    $grid.removeClass('is-loading').css('opacity', '1');
                 }
             });
         }
 
         $(document).on('click', '.afcglide-load-more', function(e) {
             e.preventDefault();
-            fetchListings(parseInt($(this).data('page')) + 1, true);
+            const nextPage = parseInt($(this).data('page')) + 1;
+            fetchListings(nextPage, true);
         });
 
         let filterTimer;
@@ -59,55 +66,95 @@ jQuery(document).ready(function($) {
     }
 
     // ======================================================
-    // 4. THE SUBMISSION ENGINE (AJAX + MULTI-UPLOAD)
+    // 2. THE SUBMISSION ENGINE (AJAX + MULTI-UPLOAD)
     // ======================================================
     function initSubmissionUI() {
         const $form = $('#afcglide-submit-property');
         if (!$form.length) return;
 
         $form.on('submit', function(e) {
-            e.preventDefault(); // Stop page reload
+            e.preventDefault(); 
 
             const $btn = $(this).find('.afcglide-btn');
-            const $msgArea = $('#afc-form-messages'); // Your alert zone
+            const $msgArea = $('#afc-form-messages'); 
             
-            // Create FormData to handle the image files
             let formData = new FormData(this);
             formData.append('action', 'afcglide_submit_listing');
             formData.append('nonce', afcglide_ajax_object.nonce);
 
-            // Trigger Loading State (Master CSS Section 9)
             $btn.addClass('is-processing').prop('disabled', true);
+            $btn.find('.btn-text').text(afcglide_ajax_object.strings.loading);
+            $msgArea.html('');
 
             $.ajax({
                 url: afcglide_ajax_object.ajax_url,
                 type: 'POST',
                 data: formData,
-                processData: false, // Critical for images
-                contentType: false, // Critical for images
+                processData: false,
+                contentType: false,
                 success: function(res) {
                     if (res.success) {
-                        // Success Alert (Master CSS Section 9)
-                        $msgArea.html('<div class="afc-success-msg">' + res.data.message + '</div>');
+                        $msgArea.html('<div class="afc-success-msg">' + afcglide_ajax_object.strings.success + '</div>');
                         $form[0].reset();
-                        $('html, body').animate({ scrollTop: $msgArea.offset().top - 100 }, 500);
+                        $('html, body').animate({ scrollTop: $msgArea.offset().top - 150 }, 600);
                     } else {
-                        // Error Alert
-                        $msgArea.html('<div class="afc-error-msg">' + res.data.message + '</div>');
+                        const errorMsg = res.data.message || afcglide_ajax_object.strings.error;
+                        $msgArea.html('<div class="afc-error-msg">' + errorMsg + '</div>');
                     }
                 },
                 error: function() {
-                    $msgArea.html('<div class="afc-error-msg">A server error occurred. Please try again.</div>');
+                    $msgArea.html('<div class="afc-error-msg">A server error occurred. Please check your file sizes.</div>');
                 },
                 complete: function() {
                     $btn.removeClass('is-processing').prop('disabled', false);
+                    $btn.find('.btn-text').text('Submit Luxury Listing');
                 }
             });
         });
     }
 
-    // Initialize all
+    // ======================================================
+    // 3. UI ENHANCEMENTS (The "Agent Experience")
+    // ======================================================
+    function initUX() {
+        // 1. Trigger hidden file inputs when clicking a "Branded" button
+        $(document).on('click', '.afc-public-upload-trigger', function(e) {
+            e.preventDefault();
+            $(this).siblings('input[type="file"]').click();
+        });
+
+        // 2. Real-time Image Preview for Agents
+        $(document).on('change', 'input[type="file"]', function(e) {
+            const input = this;
+            const $previewBox = $(this).siblings('.afc-public-preview');
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    $previewBox.html(`
+                        <div class="preview-wrapper" style="position:relative; margin-top:15px;">
+                            <img src="${event.target.result}" style="width:100%; max-width:300px; border-radius:12px; border:2px solid #4f46e5;">
+                            <span class="remove-preview" style="position:absolute; top:-10px; right:-10px; background:red; color:white; border-radius:50%; width:25px; height:25px; text-align:center; cursor:pointer; line-height:25px;">×</span>
+                        </div>
+                    `);
+                };
+                reader.readAsDataURL(input.files[0]);
+                $(this).closest('.upload-zone').addClass('has-file');
+            }
+        });
+
+        // 3. Remove Image logic
+        $(document).on('click', '.remove-preview', function() {
+            const $parent = $(this).closest('.upload-zone');
+            $parent.find('input[type="file"]').val('');
+            $parent.find('.afc-public-preview').empty();
+            $parent.removeClass('has-file');
+        });
+    }
+
+    // Initialize all modules
     initAFCGlideAJAX();
     initSubmissionUI();
-    // (Other init functions stay the same)
-});
+    initUX();
+
+}); // <-- THE MISSING SHOE

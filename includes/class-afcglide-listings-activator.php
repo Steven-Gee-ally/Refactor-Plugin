@@ -1,4 +1,6 @@
 <?php
+namespace AFCGlide\Listings;
+
 /**
  * Fired during plugin activation.
  *
@@ -7,7 +9,6 @@
  * @package AFCGlide_Listings
  */
 
-namespace AFCGlide\Listings;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;

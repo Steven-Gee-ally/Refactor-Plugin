@@ -1,4 +1,6 @@
 <?php
+namespace AFCGlide\Listings;
+
 /**
  * Registers Custom Post Types and Taxonomies.
  * Refactored for v3.6.6 - Direct Execution for Sidebar Visibility
@@ -6,7 +8,6 @@
  * @package AFCGlide_Listings
  */
 
-namespace AFCGlide\Listings;
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -48,19 +49,20 @@ class AFCGlide_CPT_Tax {
             'labels'              => $labels,
             'public'              => true,
             'show_ui'             => true,
-            'show_in_menu'        => true, // THE SIDEBAR SWITCH
+            'show_in_menu'        => true, 
             'menu_position'       => 5,
             'menu_icon'           => 'dashicons-admin-home',
             'has_archive'         => 'listings',
             'rewrite'             => [ 'slug' => 'listings', 'with_front' => false ],
-            'supports'            => [ 'title', 'editor', 'thumbnail', 'excerpt', 'custom-fields', 'author' ],
+            // FIX: Removed 'editor' and 'excerpt' to kill the Gutenberg Block area
+            'supports'            => [ 'title', 'thumbnail', 'author' ], 
             'taxonomies'          => [ 'property_type', 'property_status', 'property_location', 'property_amenity' ],
-            'show_in_rest'        => true, // Essential for Gutenberg
+            // FIX: Set show_in_rest to false to force Classic Editor / Metabox layout
+            'show_in_rest'        => false, 
         ];
 
         register_post_type( 'afcglide_listing', $args );
     }
-
     /**
      * Register Taxonomies
      */

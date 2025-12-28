@@ -1,10 +1,11 @@
 <?php
+namespace AFCGlide\Listings\Submission;
+
 /**
  * Submission Auth - Refactored for AFCGlide v3
  * Handles Logic for Login and Registration.
  */
 
-namespace AFCGlide\Listings\Submission;
 
 use AFCGlide\Listings\Helpers\Message_Helper;
 use AFCGlide\Listings\Helpers\Sanitizer;

@@ -1,4 +1,6 @@
 <?php
+namespace AFCGlide\Listings;
+
 /**
  * AFCGlide Shortcodes - Consolidated & Fixed
  * All shortcodes in one place with consistent naming
@@ -7,7 +9,6 @@
  * @since 3.6.6
  */
 
-namespace AFCGlide\Listings;
 
 // Exit if accessed directly
 if ( ! defined( 'ABSPATH' ) ) {
