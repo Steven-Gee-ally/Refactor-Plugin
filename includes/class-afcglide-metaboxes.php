@@ -3,10 +3,8 @@ namespace AFCGlide\Listings;
 
 /**
  * AFCGlide Metaboxes - Property Data Management
- * Version 3.7.0 - Complete with Media Uploads
+ * Version 3.7.1 - Corrected Syntax & Agent Proofing
  */
-
-
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -57,10 +55,8 @@ class AFCGlide_Metaboxes {
             return;
         }
         
-        // Enqueue WordPress media uploader
         wp_enqueue_media();
         
-        // Enqueue admin styles
         wp_enqueue_style( 
             'afcglide-metabox-css', 
             AFCG_URL . 'assets/css/admin.css', 
@@ -68,7 +64,6 @@ class AFCGlide_Metaboxes {
             AFCG_VERSION 
         );
         
-        // Enqueue admin JavaScript for media uploads
         wp_enqueue_script( 
             'afcglide-metabox-js', 
             AFCG_URL . 'assets/js/afcglide-admin.js', 
@@ -79,50 +74,20 @@ class AFCGlide_Metaboxes {
     }
 
     public static function add_metaboxes() {
-        add_meta_box( 
-            'afc_details', 
-            __( 'Property Details', 'afcglide' ), 
-            [ __CLASS__, 'render_details' ], 
-            'afcglide_listing', 
-            'normal', 
-            'high' 
-        );
-        
-        add_meta_box( 
-            'afc_location', 
-            __( 'Location & GPS', 'afcglide' ), 
-            [ __CLASS__, 'render_location' ], 
-            'afcglide_listing', 
-            'normal', 
-            'high' 
-        );
-        
-        add_meta_box( 
-            'afc_amenities', 
-            __( '💎 LUXURY AMENITIES (VER 3.7)', 'afcglide' ), 
-            [ __CLASS__, 'render_amenities' ], 
-            'afcglide_listing', 
-            'normal', 
-            'default' 
-        );
-        
-        add_meta_box( 
-            'afc_amenities', 
-            __( 'Amenities', 'afcglide' ), 
-            [ __CLASS__, 'render_amenities' ], 
-            'afcglide_listing', 
-            'normal', 
-            'default' 
-        );
-        
-        add_meta_box( 
-            'afc_agent', 
-            __( 'Agent Information', 'afcglide' ), 
-            [ __CLASS__, 'render_agent' ], 
-            'afcglide_listing', 
-            'side', 
-            'default' 
-        );
+        // --- START AGENT PROOFING (Hides the clutter) ---
+        remove_meta_box( 'astra_settings_meta_box', 'afcglide_listing', 'side' );
+        remove_meta_box( 'tagsdiv-post_tag', 'afcglide_listing', 'side' );
+        remove_meta_box( 'categorydiv', 'afcglide_listing', 'side' );
+        remove_meta_box( 'commentstatusdiv', 'afcglide_listing', 'normal' );
+        remove_meta_box( 'slugdiv', 'afcglide_listing', 'normal' );
+        // --- END AGENT PROOFING ---
+
+        // Registering our custom AFCGlide boxes
+        add_meta_box( 'afc_details', __( 'Property Details', 'afcglide' ), [ __CLASS__, 'render_details' ], 'afcglide_listing', 'normal', 'high' );
+        add_meta_box( 'afc_location', __( 'Location & GPS', 'afcglide' ), [ __CLASS__, 'render_location' ], 'afcglide_listing', 'normal', 'high' );
+        add_meta_box( 'afc_media', __( '📸 Property Photos', 'afcglide' ), [ __CLASS__, 'render_media' ], 'afcglide_listing', 'normal', 'default' );
+        add_meta_box( 'afc_amenities', __( '💎 LUXURY AMENITIES (VER 3.7)', 'afcglide' ), [ __CLASS__, 'render_amenities' ], 'afcglide_listing', 'normal', 'default' );
+        add_meta_box( 'afc_agent', __( 'Agent Information', 'afcglide' ), [ __CLASS__, 'render_agent' ], 'afcglide_listing', 'side', 'default' );
     }
 
     /**
@@ -302,9 +267,8 @@ class AFCGlide_Metaboxes {
         </table>
         <?php
     }
-
-    /**
-     * Property Photos
+/**
+     * Property Photos - Updated for GitHub JS Compatibility
      */
     public static function render_media( $post ) {
         $hero_id = get_post_meta( $post->ID, '_hero_image_id', true );
@@ -317,72 +281,55 @@ class AFCGlide_Metaboxes {
         $hero_url = $hero_id ? wp_get_attachment_url( $hero_id ) : '';
         ?>
         <div style="padding: 15px;">
-            <!-- Hero Image -->
             <div style="margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px solid #ddd;">
                 <h4 style="margin-top: 0;">🏠 Main Hero Image</h4>
-                <p class="description">The primary image displayed in grids and at the top of the listing page.</p>
-                
                 <div class="afcglide-image-upload">
-                    <div class="image-preview" style="margin: 10px 0;">
+                    <div class="afcglide-preview-box">
                         <?php if ( $hero_url ) : ?>
-                            <img src="<?php echo esc_url( $hero_url ); ?>" style="max-width: 300px; height: auto; border-radius: 8px;">
-                        <?php else : ?>
-                            <div style="width: 300px; height: 200px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 8px; color: #999;">
-                                No image selected
-                            </div>
+                            <img src="<?php echo esc_url( $hero_url ); ?>" style="max-width: 200px; height: auto; border-radius: 8px; margin-top:10px; display:block;">
                         <?php endif; ?>
                     </div>
                     <input type="hidden" id="hero_image_id" name="_hero_image_id" value="<?php echo esc_attr( $hero_id ); ?>">
                     <button type="button" class="button afcglide-upload-image-btn" data-target="hero_image_id">
-                        <?php echo $hero_url ? 'Change Hero Image' : 'Select Hero Image'; ?>
+                        <?php echo $hero_url ? 'Change Image' : 'Select Image'; ?>
                     </button>
-                    <?php if ( $hero_url ) : ?>
-                        <button type="button" class="button afcglide-remove-image-btn" data-target="hero_image_id">Remove</button>
-                    <?php endif; ?>
+                    <button type="button" class="button afcglide-remove-image-btn" data-target="hero_image_id" style="<?php echo $hero_url ? '' : 'display:none;'; ?> color:red;">Remove</button>
                 </div>
             </div>
 
-            <!-- Stack Images -->
-            <div style="margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px solid #ddd;">
+            <div style="margin-bottom: 25px;">
                 <h4 style="margin-top: 0;">📸 3-Photo Stack</h4>
-                <p class="description">Exactly 3 images displayed as a vertical stack on the listing page.</p>
-                
-                <div id="stack-images-container">
-                    <?php foreach ( $stack_ids as $idx => $img_id ) : 
+                <div id="stack-images-container" class="afcglide-image-container">
+                    <?php foreach ( $stack_ids as $img_id ) : 
                         $img_url = wp_get_attachment_url( $img_id );
                     ?>
-                        <div class="stack-image-item" style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
-                            <img src="<?php echo esc_url( $img_url ); ?>" style="width: 100px; height: 75px; object-fit: cover; border-radius: 4px;">
+                        <div class="stack-image-item" style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px; background:#f0f0f0; padding:5px; border-radius:5px;">
+                            <img src="<?php echo esc_url( $img_url ); ?>" style="width: 80px; height: 60px; object-fit: cover; border-radius: 4px;">
                             <input type="hidden" name="_property_stack_ids[]" value="<?php echo esc_attr( $img_id ); ?>">
                             <button type="button" class="button remove-stack-image">Remove</button>
                         </div>
                     <?php endforeach; ?>
                 </div>
-                
-                <button type="button" class="button afcglide-add-stack-image-btn" <?php echo count( $stack_ids ) >= 3 ? 'disabled' : ''; ?>>
-                    Add Stack Image (<?php echo count( $stack_ids ); ?>/3)
+                <button type="button" class="button afcglide-add-stack-image-btn" <?php disabled(count($stack_ids) >= 3); ?>>
+                    Add Stack Image (<?php echo count($stack_ids); ?>/3)
                 </button>
             </div>
 
-            <!-- Slider Images -->
             <div>
                 <h4 style="margin-top: 0;">🖼️ Gallery Slider</h4>
-                <p class="description">Additional images for the full property gallery. <strong>Limit: 12 photos</strong></p>
-                
-                <div id="slider-images-container" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px;">
+                <div id="slider-images-container" class="afcglide-image-container" style="margin-bottom: 10px;">
                     <?php foreach ( $slider_ids as $img_id ) : 
                         $img_url = wp_get_attachment_url( $img_id );
                     ?>
-                        <div class="slider-image-item" style="position: relative;">
-                            <img src="<?php echo esc_url( $img_url ); ?>" style="width: 100%; height: 100px; object-fit: cover; border-radius: 4px;">
+                        <div class="slider-image-item" style="display:inline-block; margin-right:10px; position: relative;">
+                            <img src="<?php echo esc_url( $img_url ); ?>" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px;">
                             <input type="hidden" name="_property_slider_ids[]" value="<?php echo esc_attr( $img_id ); ?>">
-                            <button type="button" class="button-link remove-slider-image" style="position: absolute; top: 5px; right: 5px; background: red; color: white; border-radius: 50%; width: 20px; height: 20px; text-align: center; line-height: 20px; cursor: pointer;">×</button>
+                            <button type="button" class="remove-slider-image" style="position: absolute; top: -5px; right: -5px; background: #ff0000; color: #fff; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer;">×</button>
                         </div>
                     <?php endforeach; ?>
                 </div>
-                
-                <button type="button" class="button afcglide-add-slider-image-btn" <?php echo count( $slider_ids ) >= 12 ? 'disabled' : ''; ?>>
-                    Add Gallery Image (<?php echo count( $slider_ids ); ?>/12)
+                <button type="button" class="button afcglide-add-slider-image-btn" <?php disabled(count($slider_ids) >= 12); ?>>
+                    Add Gallery Image (<?php echo count($slider_ids); ?>/12)
                 </button>
             </div>
         </div>
@@ -438,7 +385,7 @@ class AFCGlide_Metaboxes {
     }
 
     /**
-     * Agent Information
+     * Agent Information - Aligned with GitHub JS
      */
     public static function render_agent( $post ) {
         $agent_name = get_post_meta( $post->ID, '_agent_name', true );
@@ -455,90 +402,67 @@ class AFCGlide_Metaboxes {
         $agency_logo_url = $agency_logo_id ? wp_get_attachment_url( $agency_logo_id ) : '';
         ?>
         <div style="padding: 10px;">
-            <!-- Agent Photo -->
-            <div style="text-align: center; margin-bottom: 20px;">
+            <div style="text-align: center; margin-bottom: 20px;" class="afcglide-image-upload">
                 <p><strong>Agent Photo</strong></p>
-                <?php if ( $agent_photo_url ) : ?>
-                    <img src="<?php echo esc_url( $agent_photo_url ); ?>" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-bottom: 10px;">
-                <?php else : ?>
-                    <div style="width: 100px; height: 100px; border-radius: 50%; background: #f0f0f0; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; color: #999;">👤</div>
-                <?php endif; ?>
+                <div class="afcglide-preview-box">
+                    <?php if ( $agent_photo_url ) : ?>
+                        <img src="<?php echo esc_url( $agent_photo_url ); ?>" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin: 0 auto 10px; display: block;">
+                    <?php else : ?>
+                        <div style="width: 100px; height: 100px; border-radius: 50%; background: #f0f0f0; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; color: #999;">👤</div>
+                    <?php endif; ?>
+                </div>
                 <input type="hidden" id="agent_photo_id" name="_agent_photo_id" value="<?php echo esc_attr( $agent_photo_id ); ?>">
-                <button type="button" class="button afcglide-upload-image-btn" data-target="agent_photo_id" style="display: block; margin: 5px auto;">
+                <button type="button" class="button afcglide-upload-image-btn" data-target="agent_photo_id">
                     <?php echo $agent_photo_url ? 'Change Photo' : 'Upload Photo'; ?>
                 </button>
             </div>
 
             <p>
                 <label><strong>Agent Name</strong></label><br>
-                <input type="text" 
-                       name="_agent_name" 
-                       value="<?php echo esc_attr( $agent_name ); ?>" 
-                       style="width: 100%;"
-                       placeholder="John Smith">
+                <input type="text" name="_agent_name" value="<?php echo esc_attr( $agent_name ); ?>" style="width: 100%;" placeholder="John Smith">
             </p>
             
             <p>
                 <label><strong>Email</strong></label><br>
-                <input type="email" 
-                       name="_agent_email" 
-                       value="<?php echo esc_attr( $agent_email ); ?>" 
-                       style="width: 100%;"
-                       placeholder="agent@agency.com">
+                <input type="email" name="_agent_email" value="<?php echo esc_attr( $agent_email ); ?>" style="width: 100%;" placeholder="agent@agency.com">
             </p>
             
             <p>
                 <label><strong>Phone</strong></label><br>
-                <input type="tel" 
-                       name="_agent_phone" 
-                       value="<?php echo esc_attr( $agent_phone ); ?>" 
-                       style="width: 100%;"
-                       placeholder="+1 (555) 123-4567">
+                <input type="tel" name="_agent_phone" value="<?php echo esc_attr( $agent_phone ); ?>" style="width: 100%;" placeholder="+1 (555) 123-4567">
             </p>
             
             <p>
                 <label><strong>License Number</strong></label><br>
-                <input type="text" 
-                       name="_agent_license" 
-                       value="<?php echo esc_attr( $agent_license ); ?>" 
-                       style="width: 100%;"
-                       placeholder="RE-123456">
+                <input type="text" name="_agent_license" value="<?php echo esc_attr( $agent_license ); ?>" style="width: 100%;" placeholder="RE-123456">
             </p>
             
             <hr>
             
             <p>
                 <label>
-                    <input type="checkbox" 
-                           name="_show_floating_whatsapp" 
-                           value="1" 
-                           <?php checked( $show_whatsapp, '1' ); ?>>
+                    <input type="checkbox" name="_show_floating_whatsapp" value="1" <?php checked( $show_whatsapp, '1' ); ?>>
                     <strong>Enable WhatsApp Button</strong>
                 </label><br>
-                <span class="description">Shows a floating WhatsApp button on the listing page</span>
+                <span class="description">Shows a floating button on the listing</span>
             </p>
             
             <p>
                 <label><strong>WhatsApp Number</strong></label><br>
-                <input type="text" 
-                       name="_agent_whatsapp" 
-                       value="<?php echo esc_attr( $agent_whatsapp ); ?>" 
-                       style="width: 100%;"
-                       placeholder="+506-1234-5678">
+                <input type="text" name="_agent_whatsapp" value="<?php echo esc_attr( $agent_whatsapp ); ?>" style="width: 100%;" placeholder="+506-1234-5678">
             </p>
             
             <hr>
             
-            <!-- Agency Logo -->
-            <div style="text-align: center;">
+            <div style="text-align: center;" class="afcglide-image-upload">
                 <p><strong>Agency Logo</strong></p>
-                <?php if ( $agency_logo_url ) : ?>
-                    <img src="<?php echo esc_url( $agency_logo_url ); ?>" style="max-width: 120px; height: auto; margin-bottom: 10px;">
-                <?php else : ?>
-                    <div style="width: 120px; height: 60px; background: #f0f0f0; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; color: #999;">Logo</div>
-                <?php endif; ?>
+                <div class="afcglide-preview-box">
+                    <?php if ( $agency_logo_url ) : ?>
+                        <img src="<?php echo esc_url( $agency_logo_url ); ?>" style="max-width: 120px; height: auto; margin: 0 auto 10px; display: block;">
+                    <?php endif; ?>
+                </div>
                 <input type="hidden" id="agency_logo_id" name="_agency_logo_id" value="<?php echo esc_attr( $agency_logo_id ); ?>">
-                <button type="button" class="button afcglide-upload-image-btn" data-target="agency_logo_id" style="display: block; margin: 5px auto;">
+                <button type="button" class="button afcglide-upload-image-btn" data-target="agency_logo_id">
                     <?php echo $agency_logo_url ? 'Change Logo' : 'Upload Logo'; ?>
                 </button>
             </div>

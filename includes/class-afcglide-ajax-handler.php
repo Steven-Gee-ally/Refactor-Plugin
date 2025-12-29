@@ -101,7 +101,7 @@ class AFCGlide_Ajax_Handler {
         update_post_meta( $post_id, '_listing_property_type', sanitize_text_field( $_POST['property_type'] ?? '' ) );
 
         // Location
-        update_post_meta( $post_id, '_property_address', sanitize_text_field( $_POST['property_address'] ?? '' ) );
+        update_post_meta( $post_id, '_listing_address', sanitize_text_field( $_POST['property_address'] ?? '' ) );
         update_post_meta( $post_id, '_property_city', sanitize_text_field( $_POST['property_city'] ?? '' ) );
         update_post_meta( $post_id, '_property_state', sanitize_text_field( $_POST['property_state'] ?? '' ) );
         update_post_meta( $post_id, '_property_country', sanitize_text_field( $_POST['property_country'] ?? '' ) );
@@ -114,9 +114,9 @@ class AFCGlide_Ajax_Handler {
         }
 
         // Agent Branding
-        update_post_meta( $post_id, '_agent_name', sanitize_text_field( $_POST['agent_name'] ?? '' ) );
+        update_post_meta( $post_id, 'agent_name', sanitize_text_field( $_POST['agent_name'] ?? '' ) );
         update_post_meta( $post_id, '_agent_email', sanitize_email( $_POST['agent_email'] ?? '' ) );
-        update_post_meta( $post_id, '_agent_phone', sanitize_text_field( $_POST['agent_phone'] ?? '' ) );
+        update_post_meta( $post_id, 'agent_phone', sanitize_text_field( $_POST['agent_phone'] ?? '' ) );
         update_post_meta( $post_id, '_agent_license', sanitize_text_field( $_POST['agent_license'] ?? '' ) );
     }
 
@@ -124,40 +124,48 @@ class AFCGlide_Ajax_Handler {
      * The Media Roadmap Logic
      */
     private function process_file_uploads( $post_id ) {
-        require_once( ABSPATH . 'wp-admin/includes/image.php' );
-        require_once( ABSPATH . 'wp-admin/includes/file.php' );
-        require_once( ABSPATH . 'wp-admin/includes/media.php' );
+    require_once( ABSPATH . 'wp-admin/includes/image.php' );
+    require_once( ABSPATH . 'wp-admin/includes/file.php' );
+    require_once( ABSPATH . 'wp-admin/includes/media.php' );
 
-        // 1. Hero Image
-        if ( ! empty( $_FILES['hero_image']['name'] ) ) {
-            $hero_id = media_handle_upload( 'hero_image', $post_id );
-            if ( ! is_wp_error( $hero_id ) ) {
-                set_post_thumbnail( $post_id, $hero_id );
-                update_post_meta( $post_id, '_hero_image_id', $hero_id );
-            }
-        }
-
-        // 2. The 3-Photo Stack
-        if ( ! empty( $_FILES['stack_images']['name'][0] ) ) {
-            $stack_ids = $this->handle_multiple_uploads( 'stack_images', $post_id );
-            update_post_meta( $post_id, '_property_stack_ids', $stack_ids );
-        }
-
-        // 3. The Full Gallery Slider
-        if ( ! empty( $_FILES['slider_images']['name'][0] ) ) {
-            $slider_ids = $this->handle_multiple_uploads( 'slider_images', $post_id );
-            update_post_meta( $post_id, '_property_slider_ids', $slider_ids );
-        }
-
-        // 4. Agent & Agency Branding
-        if ( ! empty( $_FILES['agent_photo']['name'] ) ) {
-            update_post_meta( $post_id, '_agent_photo_id', media_handle_upload( 'agent_photo', $post_id ) );
-        }
-        if ( ! empty( $_FILES['agency_logo']['name'] ) ) {
-            update_post_meta( $post_id, '_agency_logo_id', media_handle_upload( 'agency_logo', $post_id ) );
+    // 1. HERO IMAGE (The Featured Image)
+    if ( ! empty( $_FILES['hero_image']['name'] ) ) {
+        $hero_id = media_handle_upload( 'hero_image', $post_id );
+        if ( ! is_wp_error( $hero_id ) ) {
+            set_post_thumbnail( $post_id, $hero_id );
+            // We also save the ID specifically for our hero logic
+            update_post_meta( $post_id, '_hero_image_id', $hero_id );
         }
     }
 
+    // 2. THE 3-PHOTO STACK (Must be JSON for v5.5 Template)
+    if ( ! empty( $_FILES['stack_images']['name'][0] ) ) {
+        $stack_ids = $this->handle_multiple_uploads( 'stack_images', $post_id );
+        // IMPORTANT: Template v5.5 looks for '_stack_images_json'
+        update_post_meta( $post_id, '_stack_images_json', json_encode( $stack_ids ) );
+    }
+
+    // 3. THE FULL GALLERY SLIDER (Must be JSON for v5.5 Template)
+    if ( ! empty( $_FILES['slider_images']['name'][0] ) ) {
+        $slider_ids = $this->handle_multiple_uploads( 'slider_images', $post_id );
+        // IMPORTANT: Template v5.5 looks for '_slider_images_json'
+        update_post_meta( $post_id, '_slider_images_json', json_encode( $slider_ids ) );
+    }
+
+    // 4. AGENT & AGENCY BRANDING
+    if ( ! empty( $_FILES['agent_photo']['name'] ) ) {
+        $agent_aid = media_handle_upload( 'agent_photo', $post_id );
+        if ( ! is_wp_error( $agent_aid ) ) {
+            update_post_meta( $post_id, '_agent_photo', $agent_aid );
+        }
+    }
+    if ( ! empty( $_FILES['agency_logo']['name'] ) ) {
+        $agency_aid = media_handle_upload( 'agency_logo', $post_id );
+        if ( ! is_wp_error( $agency_aid ) ) {
+            update_post_meta( $post_id, '_agency_logo', $agency_aid );
+        }
+    }
+}
     private function handle_multiple_uploads( $file_key, $post_id ) {
         $attachment_ids = [];
         $files = $_FILES[ $file_key ];

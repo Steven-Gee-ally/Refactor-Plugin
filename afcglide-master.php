@@ -3,7 +3,7 @@ namespace AFCGlide\Listings;
 
 /**
  * Plugin Name: AFCGlide Listings
- * Description: Real Estate Listings - Full Build (Optimized v3.6)
+ * Description: Real Estate Listings - Full Build (Optimized v3.6.6)
  * Version: 3.6.6-STEVO-LIVE
  * Author: Stevo
  * Text Domain: afcglide-listings
@@ -26,18 +26,12 @@ define( 'AFCG_DEBUG', defined( 'WP_DEBUG' ) && WP_DEBUG );
  */
 class AFCGlide_Plugin {
     
-    /**
-     * Files to load (relative to plugin root)
-     */
     private static $workers = [
-        // Helpers
         'includes/helpers/class-validator.php',
         'includes/helpers/class-sanitizer.php',
         'includes/helpers/class-message-helper.php',
         'includes/helpers/class-upload-helper.php',
         'includes/helpers/helpers.php',
-        
-        // Core Classes
         'includes/class-cpt-tax.php',
         'includes/class-afcglide-metaboxes.php',
         'includes/class-afcglide-settings.php',
@@ -46,34 +40,26 @@ class AFCGlide_Plugin {
         'includes/class-afcglide-admin-assets.php',
         'includes/class-afcglide-public.php',
         'includes/class-afcglide-ajax-handler.php',
+        'includes/class-afcglide-user-profile.php',
         'includes/class-afcglide-shortcodes.php',
-        'includes/class-afcglide-agent-fields.php', // This is our new "Luxury" profile logic
-        
-        // Submission Logic
         'submission/class-submission-auth.php',
         'submission/class-submission-listing.php',
         'submission/class-submission-files.php',
     ];
     
-    /**
-     * Core classes to initialize
-     */
     private static $core_classes = [
         'AFCGlide_CPT_Tax',
         'AFCGlide_Metaboxes',
-        'AFCGlide_Shortcodes',      
+        'AFCGlide_Shortcodes',
         'AFCGlide_Public',
         'AFCGlide_Settings',
         'AFCGlide_Ajax_Handler',
         'AFCGlide_Block_Manager',
         'AFCGlide_Admin_Assets',
-        'AFCGlide_Templates',
-        'AFCGlide_Agent_Fields', // Initializing the new profile logic
+        'AFCGlide_User_Profile',
+        'AFCGlide_Templates', // This class now handles the Astra "Lock"
     ];
     
-    /**
-     * Submission classes to initialize
-     */
     private static $submission_classes = [
         'Submission_Auth',
         'Submission_Listing',
@@ -82,16 +68,14 @@ class AFCGlide_Plugin {
     
     private static $missing_files = [];
     private static $failed_classes = [];
-    private static $expected_shortcodes = [
-        'afcglide_login',
-        'afcglide_register',
-        'afcglide_submit_listing',
-        'afcglide_listings_grid',
-    ];
 
     public static function init() {
         self::load_files();
         add_action( 'init', [ __CLASS__, 'initialize_classes' ], 5 );
+
+        // --- STEVO'S ADDITION: CLEAN THE SIDEBAR ---
+        add_action( 'admin_menu', [ __CLASS__, 'clean_admin_menu' ], 999 );
+        
         register_activation_hook( __FILE__, [ __CLASS__, 'on_activation' ] );
         register_deactivation_hook( __FILE__, [ __CLASS__, 'on_deactivation' ] );
         
@@ -101,7 +85,16 @@ class AFCGlide_Plugin {
             add_action( 'admin_notices', [ __CLASS__, 'admin_debug_notices' ] );
         }
     }
-    
+
+    /**
+     * Clean the Listings Menu
+     * Moves control away from default WP UI
+     */
+    public static function clean_admin_menu() {
+        remove_submenu_page( 'edit.php?post_type=afcglide_listing', 'post-new.php?post_type=afcglide_listing' );
+        remove_submenu_page( 'edit.php?post_type=afcglide_listing', 'edit-tags.php?taxonomy=amenity&post_type=afcglide_listing' );
+    }
+
     private static function load_files() {
         foreach ( self::$workers as $worker ) {
             $file = AFCG_PATH . $worker;
@@ -117,12 +110,10 @@ class AFCGlide_Plugin {
         if ( class_exists( __NAMESPACE__ . '\\AFCGlide_CPT_Tax' ) ) {
             AFCGlide_CPT_Tax::init();
         }
-        
         foreach ( self::$core_classes as $class ) {
             if ( $class === 'AFCGlide_CPT_Tax' ) continue;
             self::init_class( $class, __NAMESPACE__ );
         }
-        
         foreach ( self::$submission_classes as $class ) {
             self::init_class( $class, __NAMESPACE__ . '\\Submission' );
         }
@@ -154,7 +145,7 @@ class AFCGlide_Plugin {
     
     public static function debug_output() {
         if ( ! current_user_can( 'manage_options' ) ) return;
-        echo "\n\n";
+        echo "\n\n\n\n";
     }
     
     public static function admin_debug_notices() {
@@ -165,4 +156,8 @@ class AFCGlide_Plugin {
     }
 }
 
+/**
+ * 1. BOOT THE SYSTEM
+ * All layout control is now handled within the AFCGlide_Templates class.
+ */
 AFCGlide_Plugin::init();

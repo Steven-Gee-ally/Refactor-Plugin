@@ -48,11 +48,45 @@ class Submission_Form {
                             <label>Bathrooms</label>
                             <input type="number" name="baths" step="0.5" placeholder="3.5">
                         </div>
+                        <div>
+                            <label>Listing Status</label>
+                            <select name="listing_status" style="width:100%; height:42px; border-radius:4px; border:1px solid #ddd;">
+                                <option value="just_listed">🆕 Just Listed</option>
+                                <option value="for_sale">🏠 For Sale</option>
+                                <option value="sold">💰 Sold</option>
+                                <option value="reduced">📉 Price Reduced</option>
+                            </select>
+                        </div>
                     </div>
                     
                     <div class="afcglide-form-full">
                         <label>Description</label>
                         <textarea name="property_description" rows="5" placeholder="Describe the luxury lifestyle..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3>Luxury Amenities</h3>
+                    <div class="afcglide-amenities-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                        <?php
+                        $luxury_amenities = [
+                            'gourmet_kitchen' => '👨‍🍳 Gourmet Kitchen', 'infinity_pool' => '♾️ Infinity Pool',
+                            'ocean_view' => '🌊 Ocean View', 'wine_cellar' => '🍷 Wine Cellar',
+                            'home_gym' => '💪 Private Gym', 'smart_home' => '📱 Smart Home Tech',
+                            'outdoor_cinema' => '🎬 Outdoor Cinema', 'helipad' => '🚁 Helipad Access',
+                            'gated_community' => '🛡️ Gated Community', 'guest_house' => '🏠 Guest House',
+                            'solar_power' => '☀️ Solar Power', 'beach_front' => '🏖️ Beach Front',
+                            'spa_sauna' => '🧖 Spa / Sauna', 'garage_3_car' => '🚗 3+ Car Garage',
+                            'fire_pit' => '🔥 Luxury Fire Pit', 'concierge' => '🛎️ Concierge Service',
+                            'walk_in_closet' => '👕 Walk-in Closet', 'high_ceilings' => '🏛️ High Ceilings',
+                            'staff_quarters' => '🏠 Staff Quarters', 'backup_power' => '🔋 Backup Generator'
+                        ];
+                        foreach ( $luxury_amenities as $value => $label ) : ?>
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; font-weight: 500;">
+                                <input type="checkbox" name="amenities[]" value="<?php echo esc_attr( $value ); ?>"> 
+                                <?php echo esc_html( $label ); ?>
+                            </label>
+                        <?php endforeach; ?>
                     </div>
                 </div>
 
