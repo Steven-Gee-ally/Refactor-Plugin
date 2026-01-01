@@ -25,28 +25,6 @@ class AFCGlide_Ajax_Handler {
         // Filter Action (For the Grid)
         add_action( 'wp_ajax_afcglide_filter_listings', [ $this, 'filter_listings' ] );
         add_action( 'wp_ajax_nopriv_afcglide_filter_listings', [ $this, 'filter_listings' ] );
-        
-        // Enqueue scripts
-        add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_scripts' ] );
-    }
-
-    /**
-     * Enqueue and Localize
-     */
-    public function enqueue_scripts() {
-        $js_file = file_exists( AFCG_PATH . 'assets/js/public.js' ) ? 'public.js' : 'afcglide-public.js';
-        
-        wp_enqueue_script( 'afcglide-public', AFCG_URL . 'assets/js/' . $js_file, [ 'jquery' ], AFCG_VERSION, true );
-
-        wp_localize_script( 'afcglide-public', 'afcglide_ajax_object', [
-            'ajax_url' => admin_url( 'admin-ajax.php' ),
-            'nonce'    => wp_create_nonce( 'afcglide_ajax_nonce' ),
-            'strings'  => [
-                'loading' => __( 'Processing Luxury Listing...', 'afcglide' ),
-                'success' => __( '✨ Success! Your property is live.', 'afcglide' ),
-                'error'   => __( 'Error: Please check the required fields.', 'afcglide' ),
-            ]
-        ]);
     }
 
     /**

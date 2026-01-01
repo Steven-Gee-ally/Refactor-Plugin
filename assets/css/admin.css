@@ -1,170 +1,17 @@
 /**
- * AFCGlide Listings - Master Admin UI (v3.0 Full Refactor)
- * Combines full original functionality with Luxury Roadmap styling.
+ * AFCGlide Listings - Master Admin UI (v3.1 Luxury Hybrid)
+ * FIXED VERSION: All Branding + 16-Photo Slider Grid + Emerald Publish
  */
 
-/* =========================================================
-  1. Metabox General & Layout
-  ========================================================= */
-.afcglide-metabox-wrapper {
-    padding: 15px 5px;
-}
-
-.afcglide-metabox-row {
-    margin-bottom: 25px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #f0f0f1;
-}
-
-.afcglide-metabox-row:last-child {
-    border-bottom: none;
-}
-
-.afcglide-metabox-label {
-    display: block;
-    margin-bottom: 10px;
-    font-weight: 700;
-    font-size: 14px;
-    color: #1d2327;
-}
-
-.afcglide-metabox-description {
-    display: block;
-    margin-top: 8px;
-    font-size: 13px;
-    color: #646970;
-    font-style: italic;
-}
-
-/* =========================================================
-  2. Media Uploader & Roadmap Zones
-  ========================================================= */
-.afcglide-media-uploader {
-    border: 2px dashed #c3c4c7;
-    border-radius: 8px;
-    padding: 25px;
-    background: #f8fafc;
-    text-align: center;
-    transition: all 0.3s ease;
-}
-
-.afcglide-media-uploader:hover {
-    border-color: #2271b1;
-    background: #fff;
-}
-
-.afcglide-media-preview {
-    margin-bottom: 15px;
-    min-height: 120px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #fff;
-    border-radius: 6px;
-    border: 1px solid #dcdcde;
-}
-
-.afcglide-media-preview img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.afcglide-media-preview:empty::before {
-    content: '📸 No Image Selected';
-    color: #a7aaad;
-    font-size: 14px;
-    font-weight: 600;
-}
-
-/* Branded Upload Buttons */
-.afcglide-select-hero,
-.afcglide-select-stack,
-.afcglide-add-slider {
-    display: inline-block;
-    padding: 10px 20px;
-    background: #2271b1 !important;
-    color: #fff !important;
-    border: 1px solid #135e96 !important;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 600;
-    text-decoration: none;
-    transition: background 0.3s ease;
-}
-
-/* =========================================================
-  3. Slider Gallery Grid
-  ========================================================= */
-.afcglide-slider-gallery-wrapper {
-    background: #fff;
-    border: 1px solid #dcdcde;
-    border-radius: 8px;
-    padding: 20px;
-}
-
-#afcglide-slider-preview {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 15px;
-    margin-top: 20px;
-}
-
-.afcglide-slider-thumb {
-    position: relative;
-    border: 1px solid #dcdcde;
-    border-radius: 6px;
-    overflow: hidden;
-    background: #f5f5f5;
-    transition: transform 0.2s ease;
-    aspect-ratio: 1;
-}
-
-.afcglide-slider-thumb img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-/* =========================================================
-  6. Responsive Fix
-  ========================================================= */
-@media (max-width: 782px) {
-    #afcglide-slider-preview {
-        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-    }
-} /* <--- CLOSED THE BRACKET HERE */
-
-/* =========================================================
-  7. Gutenberg Block Preview
-  ========================================================= */
-.afcglide-block-preview {
-    padding: 40px 20px;
-    border: 2px dashed #2271b1;
-    border-radius: 12px;
-    background: #f0f6fc;
-    text-align: center;
-    color: #2271b1;
-}
-
-/* =========================================================
-  8. Master Dashboard (THE GOLDEN HUB)
-  ========================================================= */
-.afcglide-admin-wrapper {
+/* 1. Dashboard & General Layout */
+/* 1. Dashboard & General Layout */
+.afcglide-admin-wrapper,
+.wrap.afcglide-dashboard {
+    /* Added .wrap support */
     background-color: #f8fafc;
     padding: 30px;
     margin-left: -20px;
     min-height: 100vh;
-}
-
-.afcglide-dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 25px;
-    margin-top: 25px;
 }
 
 .afcglide-card {
@@ -188,41 +35,137 @@
     margin-top: 0;
 }
 
-.afcglide-card .button-primary {
-    background: #4f46e5 !important; /* Luxury Indigo */
-    border: none !important;
-    padding: 12px 24px !important;
-    height: auto !important;
-    border-radius: 10px !important;
-    font-weight: 600 !important;
+/* 2. Listing Metabox Polish */
+.post-type-afcglide_listing #poststuff .postbox {
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    margin-bottom: 20px;
 }
 
-/* =========================================================
-  9. Agent Branding Profile Styles
-  ========================================================= */
-.afcglide-profile-section {
-    background: #fff;
-    border: 1px solid #ccd0d4;
-    border-radius: 12px;
-    padding: 20px;
-    margin-top: 20px;
+/* 3. Luxury Amenities (The "Chips" Look) */
+.afcglide-amenity-label {
+    /* Fixed Selector */
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 12px 15px !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
 
-    /* Style the Agent Profile section on the User page */
-#profile-page h2:last-of-type, 
-.afcglide-agent-profile-section {
+.afcglide-amenity-label:hover {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+}
+
+/* 4. The 16-Photo Slider Grid (Matches our JS) */
+#afc-slider-container {
+    background: #f1f5f9 !important;
+    border: 2px dashed #cbd5e1 !important;
+    min-height: 120px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 15px;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.afcglide-image-item {
+    /* Fixed Selector: .afc-slider-item -> .afcglide-image-item */
+    position: relative;
+    border: 1px solid #ddd;
+    background: #fff;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+.afcglide-image-item img {
+    display: block;
+    width: 100%;
+    height: 80px;
+    object-fit: cover;
+}
+
+/* 5. The Modern Green Submission Button (In-Vogue) */
+input[name="publish"].afcglide-publish-btn {
+    /* Added class specifically */
+    background: #10b981 !important;
+    /* Vibrant Emerald Green */
+    color: #ffffff !important;
+    text-shadow: none !important;
+    border: none !important;
+    box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2) !important;
+    padding: 0 40px !important;
+    height: 60px !important;
+    border-radius: 30px !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    letter-spacing: 0.5px !important;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+input[name="publish"].afcglide-publish-btn:hover {
+    background: #059669 !important;
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 15px 30px rgba(16, 185, 129, 0.35) !important;
+}
+
+input[name="publish"].afcglide-publish-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* 6. Agent Branding Profile Styles */
+.afcglide-agent-container {
+    /* Fixed Selector: .afcglide-agent-profile-section -> .afcglide-agent-container */
     background: #4f46e5;
     color: white;
     padding: 20px;
     border-radius: 12px 12px 0 0;
-    margin-top: 40px;
+    margin-top: 20px;
+    /* Reduced from 40px for better fit */
+    display: flex;
+    align-items: center;
+    gap: 20px;
 }
 
-#profile-page .form-table:last-of-type {
-    background: #fff;
-    padding: 30px;
-    border: 2px solid #4f46e5;
-    border-radius: 0 0 12px 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+/* Adjustments for children of agent container if they were relying on inheritance or specific selectors */
+.afcglide-agent-container .afcglide-preview-box {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 5px;
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
 }
 
+.afcglide-agent-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
 }
+
+/* Inputs inside the header should look "white on blue" or standard?
+   The HTML puts inputs inside .afcglide-agent-fields inside .afcglide-agent-container.
+   Let's style them to look decent on the dark blue background.
+*/
+.afcglide-agent-fields input[type="text"] {
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 5px;
+}
+
+/* Agent Section Body (if applicable, though the HTML seems to rely on standard metabox content flow for the rest) */
+/* Replaces: #profile-page .form-table:last-of-type selector which seemed very specific and likely broken */

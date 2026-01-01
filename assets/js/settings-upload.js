@@ -1,50 +1,41 @@
 /**
- * AFCGlide Settings Upload Handler (v3.0 Luxury Refactor)
- * Universal logic for agency logo, placeholders, and branding.
+ * AFCGlide Settings Upload Handler
+ * Handles Agency Logo upload for the Global Config page.
  */
-jQuery(document).ready(function($) {
-    
-    // 1. Branding & Settings Upload Handler
-    $(document).on('click', '.afcglide-upload-button', function(e) {
+jQuery(document).ready(function ($) {
+
+    // Branding & Settings Upload Handler
+    // UPDATED SELECTOR: Targeting .afcglide-upload-logo-btn (matches PHP)
+    $(document).on('click', '.afcglide-upload-logo-btn', function (e) {
         e.preventDefault();
 
         const $button = $(this);
-        const $wrapper = $button.closest('.afcglide-settings-upload-wrapper');
-        const $targetField = $wrapper.find('.afcglide-settings-input');
-        const $preview = $wrapper.find('.afcglide-settings-preview');
+        // UPDATED SELECTOR: Targeting .afcglide-logo-upload (matches PHP)
+        const $wrapper = $button.closest('.afcglide-logo-upload');
+        // UPDATED SELECTOR: Targeting hidden input by ID (matches PHP)
+        const $targetField = $wrapper.find('#afcglide_logo_id');
+        // UPDATED SELECTOR: Targeting .afcglide-logo-preview (matches PHP)
+        const $preview = $wrapper.find('.afcglide-logo-preview');
 
         const frame = wp.media({
-            title: 'Select or Upload Branding Media',
-            button: { text: 'Apply to Settings' }, // Luxury prompt
+            title: 'Select Company Logo',
+            button: { text: 'Set as Logo' },
             multiple: false,
             library: { type: 'image' }
-        }).on('select', function() {
+        }).on('select', function () {
             const attachment = frame.state().get('selection').first().toJSON();
-            
-            // Sync: We store the URL for settings generally, but IDs are better for listings.
-            $targetField.val(attachment.url).trigger('change');
 
-            // Update Preview (Syncs with admin.css .afcglide-media-preview styles)
+            // Set the attachment ID into the hidden field
+            $targetField.val(attachment.id).trigger('change');
+
+            // Update Preview
             if ($preview.length) {
+                // Using style="max-width: 300px;" to match the PHP's initial render style
                 $preview.hide().html(`
-                    <div class="afcglide-media-preview">
-                        <img src="${attachment.url}" class="admin-preview-img">
-                    </div>
+                    <img src="${attachment.url}" style="max-width: 300px;">
                 `).fadeIn(600);
             }
         }).open();
     });
 
-    // 2. Global Clear Logic
-    $(document).on('click', '.afcglide-clear-button', function(e) {
-        e.preventDefault();
-        const $wrapper = $(this).closest('.afcglide-settings-upload-wrapper');
-        
-        $wrapper.find('.afcglide-settings-input').val('');
-        
-        // Return to the "No Image Selected" state from admin.css
-        $wrapper.find('.afcglide-settings-preview').fadeOut(300, function() {
-            $(this).empty().show(); 
-        });
-    });
 });

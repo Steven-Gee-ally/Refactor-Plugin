@@ -550,8 +550,7 @@ final class AFCGlide_Shortcodes {
         $columns = max( 1, min( 4, $columns ) );
         
         printf( 
-            '<div class="afcglide-grid-wrapper afcglide-grid-cols-%d" data-columns="%d">',
-            (int) $columns,
+            '<div class="afcglide-grid afcglide-grid-cols-%d">',
             (int) $columns
         );
         
@@ -567,26 +566,30 @@ final class AFCGlide_Shortcodes {
     }
 
     /**
-     * Render individual listing card
-     * 
-     * @return void Outputs HTML directly
+     * Render individual listing card - Global Agent Aware
      */
     private static function render_listing_card() {
         $post_id = get_the_ID();
+        
+        // 1. Pull Property Data
         $price   = get_post_meta( $post_id, '_listing_price', true );
         $beds    = get_post_meta( $post_id, '_listing_beds', true );
         $baths   = get_post_meta( $post_id, '_listing_baths', true );
+
+        // 2. Pull Synced Agent Data (The "Global Brain" Logic)
+        $agent_id     = get_option('afc_global_agent_id');
+        $headshot_id  = get_user_meta( $agent_id, 'afc_agent_photo', true );
+        $headshot_url = $headshot_id ? wp_get_attachment_image_url( $headshot_id, 'thumbnail' ) : '';
+        $whatsapp     = get_user_meta( $agent_id, 'afc_whatsapp', true );
         ?>
-        <article class="afcglide-listing-card" data-listing-id="<?php echo esc_attr( $post_id ); ?>">
+        <article class="afc-listing-card">
             <div class="afc-card-media">
                 <?php if ( has_post_thumbnail() ) : ?>
-                    <a href="<?php the_permalink(); ?>" class="afc-card-link">
-                        <?php the_post_thumbnail( 'large', [ 'class' => 'afc-card-image' ] ); ?>
+                    <a href="<?php the_permalink(); ?>">
+                        <?php the_post_thumbnail( 'large' ); ?>
                     </a>
                 <?php else : ?>
-                    <div class="afc-card-placeholder">
-                        <span class="afc-placeholder-icon">🏠</span>
-                    </div>
+                    <div class="afc-placeholder">🏠</div>
                 <?php endif; ?>
                 
                 <?php if ( $price ) : ?>
@@ -597,37 +600,27 @@ final class AFCGlide_Shortcodes {
             </div>
             
             <div class="afc-card-content">
-                <h3 class="afc-card-title">
-                    <a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
-                </h3>
+                <h3 class="afc-card-title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
                 
-                <?php if ( $beds || $baths ) : ?>
-                    <div class="afc-card-meta">
-                        <?php if ( $beds ) : ?>
-                            <span class="afc-meta-item">
-                                <span class="afc-meta-icon">🛏️</span>
-                                <?php echo esc_html( $beds ); ?> 
-                                <?php esc_html_e( 'beds', 'afcglide' ); ?>
-                            </span>
-                        <?php endif; ?>
-                        <?php if ( $baths ) : ?>
-                            <span class="afc-meta-item">
-                                <span class="afc-meta-icon">🚿</span>
-                                <?php echo esc_html( $baths ); ?> 
-                                <?php esc_html_e( 'baths', 'afcglide' ); ?>
-                            </span>
-                        <?php endif; ?>
-                    </div>
-                <?php endif; ?>
-                
-                <div class="afc-card-excerpt">
-                    <?php echo wp_trim_words( get_the_content(), 15, '...' ); ?>
+                <div class="afc-card-meta">
+                    <span class="afc-meta-item">🛏️ <?php echo esc_html( $beds ); ?> Beds</span>
+                    <span class="afc-meta-item">🚿 <?php echo esc_html( $baths ); ?> Baths</span>
                 </div>
-                
-                <a href="<?php the_permalink(); ?>" class="afcglide-btn afc-btn-primary">
-                    <?php esc_html_e( 'View Details', 'afcglide' ); ?>
-                    <span class="afc-btn-arrow">→</span>
-                </a>
+
+                <div class="afc-agent-footer">
+                    <div class="afc-agent-info">
+                        <?php if ( $headshot_url ) : ?>
+                            <img src="<?php echo esc_url($headshot_url); ?>" class="afc-agent-avatar">
+                        <?php else : ?>
+                            <div class="afc-agent-avatar-placeholder">👤</div>
+                        <?php endif; ?>
+                        <span class="afc-agent-name"><?php echo get_userdata($agent_id)->display_name ?? 'Agent'; ?></span>
+                    </div>
+
+                    <?php if ( $whatsapp ) : ?>
+                        <a href="https://wa.me/<?php echo preg_replace('/[^0-9]/', '', $whatsapp); ?>" target="_blank" class="afc-whatsapp-btn">WhatsApp</a>
+                    <?php endif; ?>
+                </div>
             </div>
         </article>
         <?php

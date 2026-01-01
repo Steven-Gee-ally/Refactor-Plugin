@@ -42,9 +42,6 @@ class AFCGlide_Plugin {
         'includes/class-afcglide-ajax-handler.php',
         'includes/class-afcglide-user-profile.php',
         'includes/class-afcglide-shortcodes.php',
-        'submission/class-submission-auth.php',
-        'submission/class-submission-listing.php',
-        'submission/class-submission-files.php',
     ];
     
     private static $core_classes = [
@@ -60,11 +57,7 @@ class AFCGlide_Plugin {
         'AFCGlide_Templates', // This class now handles the Astra "Lock"
     ];
     
-    private static $submission_classes = [
-        'Submission_Auth',
-        'Submission_Listing',
-        'Submission_Files',
-    ];
+
     
     private static $missing_files = [];
     private static $failed_classes = [];
@@ -86,14 +79,16 @@ class AFCGlide_Plugin {
         }
     }
 
-    /**
-     * Clean the Listings Menu
-     * Moves control away from default WP UI
+  /**
+     * Clean the Listings Menu & Editor Sidebar
+     * FIXED: Using the exact taxonomy keys from class-cpt-tax.php
      */
     public static function clean_admin_menu() {
-        remove_submenu_page( 'edit.php?post_type=afcglide_listing', 'post-new.php?post_type=afcglide_listing' );
-        remove_submenu_page( 'edit.php?post_type=afcglide_listing', 'edit-tags.php?taxonomy=amenity&post_type=afcglide_listing' );
-    }
+    // Just hide the left-side menu clutter
+    remove_submenu_page( 'edit.php?post_type=afcglide_listing', 'post-new.php?post_type=afcglide_listing' );
+    remove_submenu_page( 'edit.php?post_type=afcglide_listing', 'edit-tags.php?taxonomy=property_amenity&post_type=afcglide_listing' );
+}
+    
 
     private static function load_files() {
         foreach ( self::$workers as $worker ) {
@@ -114,9 +109,7 @@ class AFCGlide_Plugin {
             if ( $class === 'AFCGlide_CPT_Tax' ) continue;
             self::init_class( $class, __NAMESPACE__ );
         }
-        foreach ( self::$submission_classes as $class ) {
-            self::init_class( $class, __NAMESPACE__ . '\\Submission' );
-        }
+
     }
     
     private static function init_class( $class, $namespace ) {

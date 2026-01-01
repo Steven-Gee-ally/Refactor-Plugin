@@ -1,120 +1,142 @@
-jQuery(document).ready(function($) {
-    
-    // DEBUG: This will tell us if the script is even loading
-    console.log('AFCGlide Admin JS Loaded');
+jQuery(document).ready(function ($) {
 
-    // 1. Single Image Upload (Hero, Agent Photo, Agency Logo)
-    $(document).on('click', '.afcglide-upload-image-btn', function(e) {
+    // --- 1. GENERIC IMAGE UPLOADER (For Hero & Agent Photo) ---
+    $('.afcglide-upload-image-btn').on('click', function (e) {
         e.preventDefault();
         var button = $(this);
-        var targetId = button.attr('data-target'); // Get the ID of the hidden input
-        var inputField = $('#' + targetId);
-        
-        // Find the preview container - looking for a sibling with the class
-        var previewContainer = button.siblings('.afcglide-preview-box');
+        var targetId = button.data('target');
+        var previewDiv = button.siblings('.afcglide-preview-box');
 
         var frame = wp.media({
-            title: 'Select Image',
-            button: { text: 'Use This Image' },
+            title: 'Select or Upload Media',
+            button: { text: 'Use this photo' },
             multiple: false
         });
 
-        frame.on('select', function() {
+        frame.on('select', function () {
             var attachment = frame.state().get('selection').first().toJSON();
-            inputField.val(attachment.id);
-            
-            // Show the preview
-            previewContainer.html('<img src="' + attachment.url + '" style="max-width: 200px; height: auto; border-radius: 8px; margin-top:10px; display:block;">');
-            
-            button.text('Change Image');
-            // Show the remove button if it exists
-            button.siblings('.afcglide-remove-image-btn').show();
+            $('#' + targetId).val(attachment.id);
+
+            // Determine specific class for styling based on target ID
+            var imgClass = '';
+            if (targetId === 'agent_photo_id') {
+                imgClass = 'afcglide-agent-photo';
+            } else if (targetId === 'hero_image_id') {
+                imgClass = 'afcglide-hero-preview';
+            }
+
+            // Using pure CSS classes instead of inline styles where possible
+            previewDiv.html('<img src="' + attachment.url + '" class="' + imgClass + '" alt="Preview">');
         });
 
         frame.open();
     });
 
-    // 2. Remove Single Image
-    $(document).on('click', '.afcglide-remove-image-btn', function(e) {
+    // --- 2. THE 16-PHOTO GALLERY SLIDER (Bulk Upload) ---
+    $('.afcglide-add-slider-images-btn').on('click', function (e) {
         e.preventDefault();
-        var button = $(this);
-        var targetId = button.attr('data-target');
-        $('#' + targetId).val('');
-        button.siblings('.afcglide-preview-box').empty();
-        button.siblings('.afcglide-upload-image-btn').text('Select Image');
-        button.hide();
-    });
-
-    // 3. Stack Images (Max 3)
-    $(document).on('click', '.afcglide-add-stack-image-btn', function(e) {
-        e.preventDefault();
-        var button = $(this);
-        var container = $('#stack-images-container');
-        
-        var frame = wp.media({
-            title: 'Select Stack Image',
-            button: { text: 'Add to Stack' },
-            multiple: false
-        });
-
-        frame.on('select', function() {
-            var attachment = frame.state().get('selection').first().toJSON();
-            var html = `
-                <div class="stack-image-item" style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px; background:#f0f0f0; padding:5px; border-radius:5px;">
-                    <img src="${attachment.url}" style="width: 80px; height: 60px; object-fit: cover; border-radius: 4px;">
-                    <input type="hidden" name="_property_stack_ids[]" value="${attachment.id}">
-                    <button type="button" class="button remove-stack-image">Remove</button>
-                </div>`;
-            container.append(html);
-            updateCounts(button, container, 3, 'Stack');
-        });
-        frame.open();
-    });
-
-    // 4. Slider Images (Max 12)
-    $(document).on('click', '.afcglide-add-slider-image-btn', function(e) {
-        e.preventDefault();
-        var button = $(this);
-        var container = $('#slider-images-container');
 
         var frame = wp.media({
-            title: 'Select Gallery Images',
+            title: 'Select Gallery Photos (Max 16 Total)',
             button: { text: 'Add to Gallery' },
             multiple: true
         });
 
-        frame.on('select', function() {
-            var attachments = frame.state().get('selection').toJSON();
-            attachments.forEach(function(img) {
-                if (container.find('.slider-image-item').length < 12) {
-                    var html = `
-                        <div class="slider-image-item" style="display:inline-block; margin-right:10px; position: relative;">
-                            <img src="${img.url}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px;">
-                            <input type="hidden" name="_property_slider_ids[]" value="${img.id}">
-                            <button type="button" class="remove-slider-image" style="position: absolute; top: -5px; right: -5px; background: #ff0000; color: #fff; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer;">×</button>
-                        </div>`;
-                    container.append(html);
+        frame.on('select', function () {
+            var selection = frame.state().get('selection');
+            var container = $('#afc-slider-container');
+
+            selection.map(function (attachment) {
+                attachment = attachment.toJSON();
+                // Check current count to enforce the 16-photo limit
+                // UPDATED SELECTOR: .afcglide-image-item (Matches CSS/PHP)
+                var currentCount = container.find('.afcglide-image-item').length;
+
+                if (currentCount < 16) {
+                    // UPDATED STRUCTURE: Matches existing PHP output exactly
+                    container.append(`
+                        <div class="afcglide-image-item">
+                            <img src="${attachment.url}" alt="Gallery Image">
+                            <input type="hidden" name="_property_slider_ids[]" value="${attachment.id}">
+                            <button type="button" class="afc-remove-slider-img" aria-label="Remove image">&times;</button>
+                        </div>
+                    `);
                 }
             });
-            updateCounts(button, container, 12, 'Gallery');
+            updateSliderCount();
+        });
+
+        frame.open();
+    });
+
+    // --- 3. THE 3-PHOTO STACK (Logic) ---
+    $('.afcglide-add-stack-image-btn').on('click', function (e) {
+        e.preventDefault();
+        var frame = wp.media({
+            title: 'Select 3 Photos for Stack',
+            button: { text: 'Set Stack Photos' },
+            multiple: true
+        });
+
+        frame.on('select', function () {
+            var selection = frame.state().get('selection');
+            var container = $('#stack-images-container');
+            container.empty(); // Clear existing to maintain exactly 3
+
+            var i = 0;
+            selection.map(function (attachment) {
+                if (i < 3) {
+                    attachment = attachment.toJSON();
+                    // UPDATED STRUCTURE: Matches existing PHP output exactly
+                    container.append(`
+                        <div class="afcglide-stack-item">
+                            <img src="${attachment.url}" alt="Stack Image">
+                            <input type="hidden" name="_property_stack_ids[]" value="${attachment.id}">
+                            <button type="button" class="afc-remove-stack-img" aria-label="Remove image">&times;</button>
+                        </div>
+                    `);
+                }
+                i++;
+            });
         });
         frame.open();
     });
 
-    function updateCounts(btn, container, max, label) {
-        var count = container.children().length;
-        btn.text('Add ' + label + ' Image (' + count + '/' + max + ')');
-        btn.prop('disabled', count >= max);
-    }
-
-    $(document).on('click', '.remove-stack-image, .remove-slider-image', function() {
-        var container = $(this).closest('.afcglide-image-container'); // Ensure your containers have this class
-        var btn = container.siblings('button');
-        var isStack = container.attr('id').includes('stack');
-        var max = isStack ? 3 : 12;
-        var label = isStack ? 'Stack' : 'Gallery';
-        
+    // --- 4. GENERIC REMOVE FUNCTION ---
+    // Handles both Slider (.afc-remove-slider-img) and Stack (.afc-remove-stack-img)
+    $(document).on('click', '.afc-remove-slider-img, .afc-remove-stack-img', function () {
         $(this).parent().remove();
-        updateCounts(btn, container, max, label);
+        updateSliderCount();
     });
+
+    // --- 5. IMAGE REMOVE BTN (Single Image) ---
+    $('.afcglide-remove-image-btn').on('click', function (e) {
+        e.preventDefault();
+        var button = $(this);
+        var targetId = button.data('target');
+
+        $('#' + targetId).val('');
+        button.siblings('.afcglide-preview-box').html('');
+        button.remove(); // Remove the "Remove" button itself after clicking
+    });
+
+    function updateSliderCount() {
+        // UPDATED SELECTOR
+        var count = $('#afc-slider-container .afcglide-image-item').length;
+        var max = 16; // Default
+
+        // Try to get max from localized script if available
+        if (typeof afcglideConfig !== 'undefined' && afcglideConfig.maxSliderImages) {
+            max = afcglideConfig.maxSliderImages;
+        }
+
+        $('#afc-slider-count').text(count + ' / ' + max + ' Photos');
+
+        // Disable button if full
+        if (count >= max) {
+            $('.afcglide-add-slider-images-btn').prop('disabled', true);
+        } else {
+            $('.afcglide-add-slider-images-btn').prop('disabled', false);
+        }
+    }
 });

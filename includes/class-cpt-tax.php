@@ -3,11 +3,10 @@ namespace AFCGlide\Listings;
 
 /**
  * Registers Custom Post Types and Taxonomies.
- * Refactored for v3.6.6 - Direct Execution for Sidebar Visibility
+ * Version 3.8.1 - "The One Page Luxury Glide" Final Sync
  *
  * @package AFCGlide_Listings
  */
-
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -15,18 +14,11 @@ class AFCGlide_CPT_Tax {
 
     /**
      * Initialize Registration
-     * Called by the Main Plugin File during the 'init' hook
      */
     public static function init() {
-        /**
-         * FIX: We are already inside the 'init' hook from the Main Plugin File.
-         * Calling these functions directly ensures WordPress registers them 
-         * BEFORE it finishes building the Admin Sidebar menu.
-         */
         self::register_post_type();
         self::register_taxonomies();
         
-        // Auto-populate amenities stays on admin_init
         if ( is_admin() ) {
             add_action( 'admin_init', [ __CLASS__, 'populate_default_amenities' ] );
         }
@@ -54,15 +46,14 @@ class AFCGlide_CPT_Tax {
             'menu_icon'           => 'dashicons-admin-home',
             'has_archive'         => 'listings',
             'rewrite'             => [ 'slug' => 'listings', 'with_front' => false ],
-            // FIX: Removed 'editor' and 'excerpt' to kill the Gutenberg Block area
-            'supports'            => [ 'title', 'thumbnail', 'author' ], 
+            'supports'            => [ 'title', 'editor', 'thumbnail', 'author' ], // Description/Editor is ON
             'taxonomies'          => [ 'property_type', 'property_status', 'property_location', 'property_amenity' ],
-            // FIX: Set show_in_rest to false to force Classic Editor / Metabox layout
-            'show_in_rest'        => false, 
+            'show_in_rest'        => false, // Forces Classic layout for our custom look
         ];
 
         register_post_type( 'afcglide_listing', $args );
     }
+
     /**
      * Register Taxonomies
      */
@@ -88,6 +79,7 @@ class AFCGlide_CPT_Tax {
                 'show_in_nav_menus' => true,
                 'show_in_rest'      => true,
                 'rewrite'           => [ 'slug' => $args['slug'], 'with_front' => false ],
+                'meta_box_cb'       => false, // This keeps the sidebar clean!
             ] );
             
             register_taxonomy_for_object_type( $slug, 'afcglide_listing' );
@@ -95,15 +87,17 @@ class AFCGlide_CPT_Tax {
     }
 
     /**
-     * Auto-populate default luxury amenities
+     * Auto-populate exactly 20 default luxury amenities
      */
     public static function populate_default_amenities() {
         if ( ! taxonomy_exists('property_amenity') ) return;
 
         $amenities = [
-            'Infinity Pool', 'Home Gym', 'Outdoor Shower', 'Hot Tub', 
-            'Wrap-around Deck', 'Fire Pit', 'Vaulted Ceilings', 
-            'Gourmet Kitchen', 'Smart Home Tech', 'EV Charging'
+            'Gourmet Kitchen', 'Infinity Pool', 'Ocean View', 'Wine Cellar',
+            'Private Gym', 'Smart Home Tech', 'Outdoor Cinema', 'Helipad Access',
+            'Gated Community', 'Guest House', 'Solar Power', 'Beach Front',
+            'Spa / Sauna', '3+ Car Garage', 'Luxury Fire Pit', 'Concierge Service',
+            'Walk-in Closet', 'High Ceilings', 'Staff Quarters', 'Backup Generator'
         ];
 
         foreach ( $amenities as $amenity ) {

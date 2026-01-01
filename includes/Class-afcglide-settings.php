@@ -46,46 +46,69 @@ class AFCGlide_Settings {
     }
 
     public static function render_dashboard() {
+        // Logic: Handle Saving the Global Agent
+        if ( isset($_POST['afc_save_agent_choice']) ) {
+            update_option('afc_global_agent_id', sanitize_text_field($_POST['afc_agent_id']));
+            echo '<div class="notice notice-success is-dismissible" style="border:none; background:#f0fdf4; color:#166534; border-left:4px solid #4ade80;"><p><strong>Success:</strong> Global Agent synchronization complete.</p></div>';
+        }
+
+        $agents = get_users(['role__in' => ['administrator', 'author', 'editor']]);
+        $current_agent_id = get_option('afc_global_agent_id', '');
+        $current_agent = get_userdata($current_agent_id);
         ?>
-        <div class="wrap afcglide-admin-wrapper">
-            <h1 style="font-weight: 800; margin-bottom: 5px;">🚀 AFCGlide Command Center</h1>
-            <p style="margin-bottom: 30px; color: #64748b; font-size: 16px;">Welcome back, Stevo. Here is your luxury real estate toolkit.</p>
+        
+        <div class="wrap" style="max-width: 1000px; margin: 40px auto; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
             
-            <div class="afcglide-dashboard-grid">
+            <div style="margin-bottom: 40px;">
+                <h1 style="font-size: 32px; font-weight: 300; color: #1e293b; margin: 0;">AFCGlide <span style="font-weight: 700;">Home</span></h1>
+                <p style="color: #94a3b8; font-size: 16px; margin-top: 5px;">Luxury Real Estate Management Engine v3</p>
+            </div>
+
+            <div style="background: #ffffff; border: 1px solid #f1f5f9; padding: 30px; border-radius: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px;">
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <div style="height: 60px; width: 60px; background: #eff6ff; color: #3b82f6; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                        <?php echo $current_agent ? '✨' : '👤'; ?>
+                    </div>
+                    <div>
+                        <p style="margin: 0; font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700; letter-spacing: 1px;">Primary Global Agent</p>
+                        <h3 style="margin: 0; font-size: 20px; color: #334155; font-weight: 600;">
+                            <?php echo $current_agent ? esc_html($current_agent->display_name) : 'Awaiting Connection...'; ?>
+                        </h3>
+                    </div>
+                </div>
+
+                <form method="post" style="display: flex; gap: 12px;">
+                    <select name="afc_agent_id" style="padding: 12px 15px; border-radius: 12px; border: 1px solid #e2e8f0; background: #f8fafc; color: #475569; min-width: 220px; font-size: 14px;">
+                        <option value="">Choose Agent Profile...</option>
+                        <?php foreach ( $agents as $agent ) : ?>
+                            <option value="<?php echo $agent->ID; ?>" <?php selected($current_agent_id, $agent->ID); ?>>
+                                <?php echo esc_html( $agent->display_name ); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button type="submit" name="afc_save_agent_choice" style="background: #3b82f6; color: #fff; border: none; padding: 12px 25px; border-radius: 12px; font-weight: 600; cursor: pointer;">Sync</button>
+                </form>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px;">
                 
-                <div class="afcglide-card" style="border-top: 5px solid #a7f3d0;">
-                    <span style="font-size: 30px;">🏆</span>
-                    <h2>Agent Branding</h2>
-                    <p>Update your headshot, agency logo, and WhatsApp number for lead generation.</p>
-                    <a href="<?php echo admin_url('profile.php'); ?>" class="button button-primary">Edit My Profile</a>
-                </div>
+                <a href="<?php echo admin_url('edit.php?post_type=afcglide_listing'); ?>" style="text-decoration: none; background: #fff; padding: 30px; border-radius: 20px; border: 1px solid #f1f5f9; transition: all 0.3s ease;">
+                    <div style="background: #fdf2f8; width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 20px;">🏠</div>
+                    <h4 style="margin: 0 0 10px 0; color: #334155; font-size: 17px;">Inventory</h4>
+                    <p style="margin: 0; color: #94a3b8; font-size: 13px; line-height: 1.6;">Manage property details and luxury amenities.</p>
+                </a>
 
-                <div class="afcglide-card" style="border-top: 5px solid #3b82f6;">
-                    <span style="font-size: 30px;">🏠</span>
-                    <h2>Property Inventory</h2>
-                    <p>Manage your luxury listings. Add descriptions, prices, and the "Big 8" amenities.</p>
-                    <div style="display:flex; gap:10px;">
-                        <a href="<?php echo admin_url('edit.php?post_type=afcglide_listing'); ?>" class="button button-primary">All Listings</a>
-                        <a href="<?php echo admin_url('post-new.php?post_type=afcglide_listing'); ?>" class="button">+ Add New</a>
-                    </div>
-                </div>
+                <a href="<?php echo admin_url('profile.php'); ?>" style="text-decoration: none; background: #fff; padding: 30px; border-radius: 20px; border: 1px solid #f1f5f9; transition: all 0.3s ease;">
+                    <div style="background: #f0fdf4; width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 20px;">🤳</div>
+                    <h4 style="margin: 0 0 10px 0; color: #334155; font-size: 17px;">Agent Branding</h4>
+                    <p style="margin: 0; color: #94a3b8; font-size: 13px; line-height: 1.6;">Edit headshots, bios, and social connections.</p>
+                </a>
 
-                <div class="afcglide-card" style="border-top: 5px solid #a7f3d0;">
-                    <span style="font-size: 30px;">👥</span>
-                    <h2>Team Manager</h2>
-                    <p>Add new agents or editors to the platform to help manage listings.</p>
-                    <div style="display:flex; gap:10px;">
-                        <a href="<?php echo admin_url('users.php'); ?>" class="button button-primary">View Team</a>
-                        <a href="<?php echo admin_url('user-new.php'); ?>" class="button">Add Agent</a>
-                    </div>
-                </div>
-
-                <div class="afcglide-card" style="border-top: 5px solid #a7f3d0;">
-                    <span style="font-size: 30px;">⚙️</span>
-                    <h2>Global Settings</h2>
-                    <p>Configure Google Maps API, currency symbols, and listing display options.</p>
-                    <a href="<?php echo admin_url('admin.php?page=afcglide-settings'); ?>" class="button button-primary">System Settings</a>
-                </div>
+                <a href="<?php echo admin_url('admin.php?page=afcglide-settings'); ?>" style="text-decoration: none; background: #fff; padding: 30px; border-radius: 20px; border: 1px solid #f1f5f9; transition: all 0.3s ease;">
+                    <div style="background: #fff7ed; width: 45px; height: 45px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 20px;">⚙️</div>
+                    <h4 style="margin: 0 0 10px 0; color: #334155; font-size: 17px;">Global Config</h4>
+                    <p style="margin: 0; color: #94a3b8; font-size: 13px; line-height: 1.6;">API keys, currency symbols, and branding logos.</p>
+                </a>
 
             </div>
         </div>
