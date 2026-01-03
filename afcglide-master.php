@@ -3,8 +3,8 @@ namespace AFCGlide\Listings;
 
 /**
  * Plugin Name: AFCGlide Listings
- * Description: Real Estate Listings - Full Build (Optimized v3.6.6)
- * Version: 3.6.6-STEVO-LIVE
+ * Description: Real Estate Listings - Full Build (Optimized v3.6.7 - Agent-Proof Edition)
+ * Version: 3.6.7-AGENT-PROOF
  * Author: Stevo
  * Text Domain: afcglide-listings
  * Domain Path: /languages
@@ -15,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 /**
  * Define Plugin Constants
  */
-define( 'AFCG_VERSION', '3.6.6' );
+define( 'AFCG_VERSION', '3.6.7' );
 define( 'AFCG_PATH', plugin_dir_path( __FILE__ ) );
 define( 'AFCG_URL', plugin_dir_url( __FILE__ ) );
 define( 'AFCG_BASENAME', plugin_basename( __FILE__ ) );
@@ -27,11 +27,14 @@ define( 'AFCG_DEBUG', defined( 'WP_DEBUG' ) && WP_DEBUG );
 class AFCGlide_Plugin {
     
     private static $workers = [
+        // Helper Classes
         'includes/helpers/class-validator.php',
         'includes/helpers/class-sanitizer.php',
         'includes/helpers/class-message-helper.php',
         'includes/helpers/class-upload-helper.php',
         'includes/helpers/helpers.php',
+        
+        // Core Functionality
         'includes/class-cpt-tax.php',
         'includes/class-afcglide-metaboxes.php',
         'includes/class-afcglide-settings.php',
@@ -42,6 +45,10 @@ class AFCGlide_Plugin {
         'includes/class-afcglide-ajax-handler.php',
         'includes/class-afcglide-user-profile.php',
         'includes/class-afcglide-shortcodes.php',
+        
+        // Admin Enhancements (NEW)
+        'includes/admin/class-afcglide-admin-menu.php',        // Clean admin interface
+        'includes/admin/class-afcglide-agent-protections.php', // Delete protection & duplicate
     ];
     
     private static $core_classes = [
@@ -54,10 +61,8 @@ class AFCGlide_Plugin {
         'AFCGlide_Block_Manager',
         'AFCGlide_Admin_Assets',
         'AFCGlide_User_Profile',
-        'AFCGlide_Templates', // This class now handles the Astra "Lock"
+        'AFCGlide_Templates', 
     ];
-    
-
     
     private static $missing_files = [];
     private static $failed_classes = [];
@@ -65,9 +70,6 @@ class AFCGlide_Plugin {
     public static function init() {
         self::load_files();
         add_action( 'init', [ __CLASS__, 'initialize_classes' ], 5 );
-
-        // --- STEVO'S ADDITION: CLEAN THE SIDEBAR ---
-        add_action( 'admin_menu', [ __CLASS__, 'clean_admin_menu' ], 999 );
         
         register_activation_hook( __FILE__, [ __CLASS__, 'on_activation' ] );
         register_deactivation_hook( __FILE__, [ __CLASS__, 'on_deactivation' ] );
@@ -78,17 +80,6 @@ class AFCGlide_Plugin {
             add_action( 'admin_notices', [ __CLASS__, 'admin_debug_notices' ] );
         }
     }
-
-  /**
-     * Clean the Listings Menu & Editor Sidebar
-     * FIXED: Using the exact taxonomy keys from class-cpt-tax.php
-     */
-    public static function clean_admin_menu() {
-    // Just hide the left-side menu clutter
-    remove_submenu_page( 'edit.php?post_type=afcglide_listing', 'post-new.php?post_type=afcglide_listing' );
-    remove_submenu_page( 'edit.php?post_type=afcglide_listing', 'edit-tags.php?taxonomy=property_amenity&post_type=afcglide_listing' );
-}
-    
 
     private static function load_files() {
         foreach ( self::$workers as $worker ) {
@@ -102,14 +93,26 @@ class AFCGlide_Plugin {
     }
     
     public static function initialize_classes() {
+        // Initialize CPT/Tax first (creates post type)
         if ( class_exists( __NAMESPACE__ . '\\AFCGlide_CPT_Tax' ) ) {
             AFCGlide_CPT_Tax::init();
         }
+        
+        // Initialize core listing classes
         foreach ( self::$core_classes as $class ) {
             if ( $class === 'AFCGlide_CPT_Tax' ) continue;
             self::init_class( $class, __NAMESPACE__ );
         }
-
+        
+        // Initialize Admin Menu Customizer (different namespace)
+        if ( class_exists( 'AFCGlide\\Admin\\AFCGlide_Admin_Menu' ) ) {
+            \AFCGlide\Admin\AFCGlide_Admin_Menu::init();
+        }
+        
+        // Initialize Agent Protections (different namespace) - NEW
+        if ( class_exists( 'AFCGlide\\Admin\\AFCGlide_Agent_Protections' ) ) {
+            \AFCGlide\Admin\AFCGlide_Agent_Protections::init();
+        }
     }
     
     private static function init_class( $class, $namespace ) {
@@ -138,7 +141,7 @@ class AFCGlide_Plugin {
     
     public static function debug_output() {
         if ( ! current_user_can( 'manage_options' ) ) return;
-        echo "\n\n\n\n";
+        echo "\n<!-- AFCGlide Debug: Plugin loaded successfully -->\n";
     }
     
     public static function admin_debug_notices() {
@@ -149,8 +152,5 @@ class AFCGlide_Plugin {
     }
 }
 
-/**
- * 1. BOOT THE SYSTEM
- * All layout control is now handled within the AFCGlide_Templates class.
- */
+// BOOT THE ENGINE 🚀
 AFCGlide_Plugin::init();

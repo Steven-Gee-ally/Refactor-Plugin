@@ -1,11 +1,11 @@
 /**
  * AFCGlide Listings - Master Public JS (v3.2 Luxury Refactor)
- * Optimized for: Multi-Upload AJAX, Luxury Transitions, & Brand Sync
+ * Focus: High-End Buyer Experience & Lightning Fast Filtering
  */
 jQuery(document).ready(function($) {
 
     // ======================================================
-    // 1. AJAX Listing Engine (Grid & Filters)
+    // 1. AJAX LISTING ENGINE (The Grid & Filters)
     // ======================================================
     function initAFCGlideAJAX() {
         const $grid = $('.afcglide-grid'); 
@@ -22,6 +22,7 @@ jQuery(document).ready(function($) {
                 });
             }
 
+            // Emerald Loading State
             $grid.addClass('is-loading').css('opacity', '0.6'); 
 
             $.ajax({
@@ -48,16 +49,19 @@ jQuery(document).ready(function($) {
                 },
                 error: function() {
                     $grid.removeClass('is-loading').css('opacity', '1');
+                    console.error('AFCGlide: AJAX Filter Error');
                 }
             });
         }
 
+        // Load More Event
         $(document).on('click', '.afcglide-load-more', function(e) {
             e.preventDefault();
             const nextPage = parseInt($(this).data('page')) + 1;
             fetchListings(nextPage, true);
         });
 
+        // Live Filter Trigger
         let filterTimer;
         $filterForm.on('change input', 'select, input', function() {
             clearTimeout(filterTimer);
@@ -66,95 +70,26 @@ jQuery(document).ready(function($) {
     }
 
     // ======================================================
-    // 2. THE SUBMISSION ENGINE (AJAX + MULTI-UPLOAD)
+    // 2. LUXURY UI INTERACTION
     // ======================================================
-    function initSubmissionUI() {
-        const $form = $('#afcglide-submit-property');
-        if (!$form.length) return;
-
-        $form.on('submit', function(e) {
-            e.preventDefault(); 
-
-            const $btn = $(this).find('.afcglide-btn');
-            const $msgArea = $('#afc-form-messages'); 
-            
-            let formData = new FormData(this);
-            formData.append('action', 'afcglide_submit_listing');
-            formData.append('nonce', afcglide_ajax_object.nonce);
-
-            $btn.addClass('is-processing').prop('disabled', true);
-            $btn.find('.btn-text').text(afcglide_ajax_object.strings.loading);
-            $msgArea.html('');
-
-            $.ajax({
-                url: afcglide_ajax_object.ajax_url,
-                type: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(res) {
-                    if (res.success) {
-                        $msgArea.html('<div class="afc-success-msg">' + afcglide_ajax_object.strings.success + '</div>');
-                        $form[0].reset();
-                        $('html, body').animate({ scrollTop: $msgArea.offset().top - 150 }, 600);
-                    } else {
-                        const errorMsg = res.data.message || afcglide_ajax_object.strings.error;
-                        $msgArea.html('<div class="afc-error-msg">' + errorMsg + '</div>');
-                    }
-                },
-                error: function() {
-                    $msgArea.html('<div class="afc-error-msg">A server error occurred. Please check your file sizes.</div>');
-                },
-                complete: function() {
-                    $btn.removeClass('is-processing').prop('disabled', false);
-                    $btn.find('.btn-text').text('Submit Luxury Listing');
-                }
-            });
-        });
-    }
-
-    // ======================================================
-    // 3. UI ENHANCEMENTS (The "Agent Experience")
-    // ======================================================
-    function initUX() {
-        // 1. Trigger hidden file inputs when clicking a "Branded" button
-        $(document).on('click', '.afc-public-upload-trigger', function(e) {
+    function initLuxuryUI() {
+        // Smooth scroll for listing links
+        $(document).on('click', 'a[href^="#afc-"]', function(e) {
             e.preventDefault();
-            $(this).siblings('input[type="file"]').click();
+            $('html, body').animate({
+                scrollTop: $($.attr(this, 'href')).offset().top - 100
+            }, 800);
         });
 
-        // 2. Real-time Image Preview for Agents
-        $(document).on('change', 'input[type="file"]', function(e) {
-            const input = this;
-            const $previewBox = $(this).siblings('.afc-public-preview');
-            
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    $previewBox.html(`
-                        <div class="preview-wrapper" style="position:relative; margin-top:15px;">
-                            <img src="${event.target.result}" style="width:100%; max-width:300px; border-radius:12px; border:2px solid #4f46e5;">
-                            <span class="remove-preview" style="position:absolute; top:-10px; right:-10px; background:red; color:white; border-radius:50%; width:25px; height:25px; text-align:center; cursor:pointer; line-height:25px;">×</span>
-                        </div>
-                    `);
-                };
-                reader.readAsDataURL(input.files[0]);
-                $(this).closest('.upload-zone').addClass('has-file');
-            }
-        });
-
-        // 3. Remove Image logic
-        $(document).on('click', '.remove-preview', function() {
-            const $parent = $(this).closest('.upload-zone');
-            $parent.find('input[type="file"]').val('');
-            $parent.find('.afc-public-preview').empty();
-            $parent.removeClass('has-file');
-        });
+        // Hover effect for the 20-Point Amenities (Front-End)
+        $('.afc-amenity-item').hover(
+            function() { $(this).css('border-color', '#10b981'); },
+            function() { $(this).css('border-color', '#e2e8f0'); }
+        );
     }
 
-    // Initialize all modules
+    // Launch Engines
     initAFCGlideAJAX();
-    initSubmissionUI();
-    initUX();
+    initLuxuryUI();
 
-}); // <-- THE MISSING SHOE
+});
