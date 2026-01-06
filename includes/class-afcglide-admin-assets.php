@@ -23,12 +23,18 @@ class AFCGlide_Admin_Assets {
             return;
         }
 
-        // 3. LOAD MEDIA ENGINE & CSS
-        // Needed for Photos (Listings), Agent Photos (Profile), and Branding (Settings/Home)
+       // 3. LOAD MEDIA ENGINE & CSS
         wp_enqueue_media();
         wp_enqueue_style( 'wp-color-picker' );
 
-        if ( file_exists( AFCG_PATH . 'assets/css/admin.css' ) ) {
+      // 3. LOAD CSS (Slow and Precise)
+        wp_enqueue_media();
+        wp_enqueue_style( 'wp-color-picker' );
+
+        // We are using the exact path verified by the terminal: assets/css/admin.css
+        $admin_css_path = AFCG_PATH . 'assets/css/admin.css';
+        
+        if ( file_exists( $admin_css_path ) ) {
             wp_enqueue_style(
                 'afcglide-admin-style',
                 AFCG_URL . 'assets/css/admin.css',

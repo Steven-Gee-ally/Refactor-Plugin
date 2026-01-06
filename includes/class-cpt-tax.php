@@ -36,14 +36,13 @@ class AFCGlide_CPT_Tax {
             'edit_item'          => __( 'Edit Listing', 'afcglide' ),
             'menu_name'          => __( 'Listings', 'afcglide' ),
         ];
-
+  
         $args = [
             'labels'              => $labels,
             'public'              => true,
             'show_ui'             => true,
-            'show_in_menu'        => true, 
-            'menu_position'       => 5,
-            'menu_icon'           => 'dashicons-admin-home',
+            'show_in_menu'        => 'afcglide-home',
+            
             'has_archive'         => 'listings',
             'rewrite'             => [ 'slug' => 'listings', 'with_front' => false ],
             'supports'            => [ 'title', 'editor', 'thumbnail', 'author' ], // Description/Editor is ON

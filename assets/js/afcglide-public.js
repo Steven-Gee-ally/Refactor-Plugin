@@ -2,15 +2,18 @@
  * AFCGlide Listings - Master Public JS (v3.2 Luxury Refactor)
  * Focus: High-End Buyer Experience & Lightning Fast Filtering
  */
-jQuery(document).ready(function($) {
+jQuery(document).ready(function ($) {
 
     // ======================================================
     // 1. AJAX LISTING ENGINE (The Grid & Filters)
     // ======================================================
     function initAFCGlideAJAX() {
-        const $grid = $('.afcglide-grid'); 
+        const $grid = $('.afcglide-grid');
         const $loadMoreBtn = $('.afcglide-load-more');
         const $filterForm = $('.afcglide-filter-form');
+
+        // ✅ FIX: Move this to the top so fetchListings can see it!
+        let isFetching = false;
 
         if (!$grid.length) return;
 
@@ -23,7 +26,7 @@ jQuery(document).ready(function($) {
             }
 
             // Emerald Loading State
-            $grid.addClass('is-loading').css('opacity', '0.6'); 
+            $grid.addClass('is-loading').css('opacity', '0.6');
 
             $.ajax({
                 url: afcglide_ajax_object.ajax_url,
@@ -34,11 +37,13 @@ jQuery(document).ready(function($) {
                     page: page,
                     filters: filterData
                 },
-                success: function(res) {
+                success: function (res) {
+                    isFetching = false; // Now this works!
                     $grid.removeClass('is-loading').css('opacity', '1');
+
                     if (res.success) {
                         append ? $grid.append(res.data.html) : $grid.html(res.data.html);
-                        
+
                         $loadMoreBtn.data('page', page);
                         if (res.data.max_pages <= page) {
                             $loadMoreBtn.fadeOut();
@@ -47,7 +52,8 @@ jQuery(document).ready(function($) {
                         }
                     }
                 },
-                error: function() {
+                error: function () {
+                    isFetching = false; // Now this works!
                     $grid.removeClass('is-loading').css('opacity', '1');
                     console.error('AFCGlide: AJAX Filter Error');
                 }
@@ -55,37 +61,36 @@ jQuery(document).ready(function($) {
         }
 
         // Load More Event
-        $(document).on('click', '.afcglide-load-more', function(e) {
+        $(document).on('click', '.afcglide-load-more', function (e) {
             e.preventDefault();
+            if (isFetching) return;
+
+            isFetching = true;
             const nextPage = parseInt($(this).data('page')) + 1;
             fetchListings(nextPage, true);
         });
 
         // Live Filter Trigger
         let filterTimer;
-        $filterForm.on('change input', 'select, input', function() {
+        $filterForm.on('change input', 'select, input', function () {
             clearTimeout(filterTimer);
             filterTimer = setTimeout(() => fetchListings(1, false), 400);
         });
     }
 
     // ======================================================
-    // 2. LUXURY UI INTERACTION
+    // 2. LUXURY UI INTERACTION (Optimized)
     // ======================================================
     function initLuxuryUI() {
-        // Smooth scroll for listing links
-        $(document).on('click', 'a[href^="#afc-"]', function(e) {
-            e.preventDefault();
-            $('html, body').animate({
-                scrollTop: $($.attr(this, 'href')).offset().top - 100
-            }, 800);
+        $(document).on('click', 'a[href^="#afc-"]', function (e) {
+            const target = $(this.getAttribute('href'));
+            if (target.length) {
+                e.preventDefault();
+                $('html, body').stop().animate({
+                    scrollTop: target.offset().top - 100
+                }, 800);
+            }
         });
-
-        // Hover effect for the 20-Point Amenities (Front-End)
-        $('.afc-amenity-item').hover(
-            function() { $(this).css('border-color', '#10b981'); },
-            function() { $(this).css('border-color', '#e2e8f0'); }
-        );
     }
 
     // Launch Engines
