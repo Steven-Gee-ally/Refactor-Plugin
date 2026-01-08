@@ -5,42 +5,68 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
  * AFCGlide Agent Protections
- * Version 1.0.0 - Delete Protection & Duplicate Listings
+ * Version 1.1.0 - Ghost Mode + Integrated Dashboard Controls
  */
 class AFCGlide_Agent_Protections {
 
     public static function init() {
+        // --- GHOST MODE & MENU HIDING ---
+        add_action( 'admin_menu', [ __CLASS__, 'apply_ghost_mode' ], 999 );
+
+        // --- DELETE PROTECTION ---
         // Prevent accidental deletion of published listings
         add_filter( 'user_has_cap', [ __CLASS__, 'prevent_accidental_delete' ], 10, 3 );
         
-        // Add duplicate button to listing table
+        // --- DUPLICATION ENGINE ---
         add_filter( 'post_row_actions', [ __CLASS__, 'add_duplicate_button' ], 10, 2 );
-        
-        // Handle duplication
         add_action( 'admin_action_afcg_duplicate_listing', [ __CLASS__, 'duplicate_listing' ] );
-        
-        // Show confirmation notice
         add_action( 'admin_notices', [ __CLASS__, 'show_duplicate_notice' ] );
     }
 
     /**
-     * Prevent Accidental Deletion of Published Listings
-     * Requires confirmation before allowing delete
+     * Ghost Mode: Hides technical clutter from non-admins
+     * Controlled by the "Ghost Mode" toggle on the AFCGlide Dashboard
+     */
+    public static function apply_ghost_mode() {
+        // Only run if Ghost Mode is toggled ON
+        if ( get_option( 'afc_ghost_mode' ) !== 'yes' ) {
+            return;
+        }
+
+        // Never hide menus from the Master Administrator
+        if ( current_user_can( 'manage_options' ) ) {
+            return;
+        }
+
+        // Hide the messy WordPress internals for a clean Agent experience
+        remove_menu_page( 'edit.php?post_type=page' );    // Hide Pages
+        remove_menu_page( 'edit-comments.php' );         // Hide Comments
+        remove_menu_page( 'themes.php' );                // Hide Appearance
+        remove_menu_page( 'plugins.php' );               // Hide Plugins
+        remove_menu_page( 'tools.php' );                 // Hide Tools
+        remove_menu_page( 'options-general.php' );       // Hide WP Settings
+        remove_menu_page( 'edit.php' );                  // Hide Default Posts
+    }
+
+    /**
+     * Prevent Accidental Deletion
+     * Links your confirmation page to the "Delete Protection" dashboard toggle
      */
     public static function prevent_accidental_delete( $caps, $cap, $args ) {
-        // Only check delete_post capability
+        // Only check if Delete Protection is toggled ON in Dashboard
+        if ( get_option( 'afc_lockdown_enabled' ) !== 'yes' ) {
+            return $caps;
+        }
+
         if ( ! isset( $args[0] ) || $args[0] !== 'delete_post' ) {
             return $caps;
         }
 
-        // Only for our listing post type
         if ( isset( $args[2] ) ) {
             $post = get_post( $args[2] );
             
             if ( $post && $post->post_type === 'afcglide_listing' && $post->post_status === 'publish' ) {
-                // Check if confirmation parameter is present
                 if ( ! isset( $_GET['confirm_delete'] ) || $_GET['confirm_delete'] !== '1' ) {
-                    // Show confirmation page
                     self::show_delete_confirmation( $post );
                     exit;
                 }
@@ -51,7 +77,7 @@ class AFCGlide_Agent_Protections {
     }
 
     /**
-     * Show Delete Confirmation Page
+     * Show Delete Confirmation Page (Your High-End UI)
      */
     private static function show_delete_confirmation( $post ) {
         $delete_url = add_query_arg( 'confirm_delete', '1', $_SERVER['REQUEST_URI'] );
@@ -79,15 +105,8 @@ class AFCGlide_Agent_Protections {
                     max-width: 500px;
                     text-align: center;
                 }
-                .warning-icon {
-                    font-size: 64px;
-                    margin-bottom: 20px;
-                }
-                h1 {
-                    color: #ef4444;
-                    margin: 0 0 20px 0;
-                    font-size: 28px;
-                }
+                .warning-icon { font-size: 64px; margin-bottom: 20px; }
+                h1 { color: #ef4444; margin: 0 0 20px 0; font-size: 28px; }
                 .listing-title {
                     background: #f8fafc;
                     padding: 15px;
@@ -96,58 +115,25 @@ class AFCGlide_Agent_Protections {
                     font-weight: bold;
                     color: #334155;
                 }
-                .buttons {
-                    display: flex;
-                    gap: 15px;
-                    margin-top: 30px;
-                }
+                .buttons { display: flex; gap: 15px; margin-top: 30px; }
                 .btn {
-                    flex: 1;
-                    padding: 15px 30px;
-                    border: none;
-                    border-radius: 8px;
-                    font-size: 16px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    text-decoration: none;
-                    display: inline-block;
+                    flex: 1; padding: 15px 30px; border: none; border-radius: 8px;
+                    font-size: 16px; font-weight: 600; cursor: pointer;
+                    text-decoration: none; display: inline-block;
                 }
-                .btn-delete {
-                    background: #ef4444;
-                    color: white;
-                }
-                .btn-delete:hover {
-                    background: #dc2626;
-                }
-                .btn-cancel {
-                    background: #e2e8f0;
-                    color: #334155;
-                }
-                .btn-cancel:hover {
-                    background: #cbd5e1;
-                }
+                .btn-delete { background: #ef4444; color: white; }
+                .btn-cancel { background: #e2e8f0; color: #334155; }
             </style>
         </head>
         <body>
             <div class="confirm-box">
                 <div class="warning-icon">⚠️</div>
                 <h1>Delete Published Listing?</h1>
-                <p style="color: #64748b; font-size: 16px;">
-                    You're about to <strong>permanently delete</strong> a published listing. This action cannot be undone.
-                </p>
-                <div class="listing-title">
-                    "<?php echo esc_html( $post->post_title ); ?>"
-                </div>
-                <p style="color: #94a3b8; font-size: 14px;">
-                    This listing is currently <strong>LIVE</strong> on your website.
-                </p>
+                <p style="color: #64748b; font-size: 16px;">This action cannot be undone.</p>
+                <div class="listing-title">"<?php echo esc_html( $post->post_title ); ?>"</div>
                 <div class="buttons">
-                    <a href="<?php echo esc_url( $cancel_url ); ?>" class="btn btn-cancel">
-                        ← Cancel
-                    </a>
-                    <a href="<?php echo esc_url( $delete_url ); ?>" class="btn btn-delete">
-                        Yes, Delete Forever
-                    </a>
+                    <a href="<?php echo esc_url( $cancel_url ); ?>" class="btn btn-cancel">← Cancel</a>
+                    <a href="<?php echo esc_url( $delete_url ); ?>" class="btn btn-delete">Yes, Delete Forever</a>
                 </div>
             </div>
         </body>
@@ -156,7 +142,7 @@ class AFCGlide_Agent_Protections {
     }
 
     /**
-     * Add Duplicate Button to Listing Table
+     * Add Duplicate Button
      */
     public static function add_duplicate_button( $actions, $post ) {
         if ( $post->post_type === 'afcglide_listing' && current_user_can( 'edit_posts' ) ) {
@@ -164,11 +150,7 @@ class AFCGlide_Agent_Protections {
                 admin_url( 'admin.php?action=afcg_duplicate_listing&post=' . $post->ID ),
                 'duplicate_listing_' . $post->ID
             );
-            
-            $actions['duplicate'] = sprintf(
-                '<a href="%s">📋 Duplicate</a>',
-                esc_url( $url )
-            );
+            $actions['duplicate'] = sprintf( '<a href="%s">📋 Duplicate</a>', esc_url( $url ) );
         }
         return $actions;
     }
@@ -177,91 +159,45 @@ class AFCGlide_Agent_Protections {
      * Handle Listing Duplication
      */
     public static function duplicate_listing() {
-        // Check if post ID is provided
-        if ( ! isset( $_GET['post'] ) ) {
-            wp_die( __( 'No listing to duplicate.', 'afcglide' ) );
-        }
-
+        if ( ! isset( $_GET['post'] ) ) wp_die( 'No listing to duplicate.' );
         $post_id = absint( $_GET['post'] );
-        
-        // Verify nonce
         check_admin_referer( 'duplicate_listing_' . $post_id );
-
-        // Get the original post
         $post = get_post( $post_id );
 
-        if ( ! $post || $post->post_type !== 'afcglide_listing' ) {
-            wp_die( __( 'Invalid listing.', 'afcglide' ) );
-        }
+        if ( ! $post || $post->post_type !== 'afcglide_listing' ) wp_die( 'Invalid listing.' );
+        if ( ! current_user_can( 'edit_posts' ) ) wp_die( 'Permission denied.' );
 
-        // Check permissions
-        if ( ! current_user_can( 'edit_posts' ) ) {
-            wp_die( __( 'You do not have permission to duplicate listings.', 'afcglide' ) );
-        }
-
-        // Create the duplicate
         $new_post_id = wp_insert_post([
             'post_title'   => $post->post_title . ' (Copy)',
             'post_content' => $post->post_content,
-            'post_excerpt' => $post->post_excerpt,
             'post_type'    => 'afcglide_listing',
-            'post_status'  => 'draft', // Always start as draft
+            'post_status'  => 'draft',
             'post_author'  => get_current_user_id(),
         ]);
 
-        if ( is_wp_error( $new_post_id ) ) {
-            wp_die( __( 'Error creating duplicate listing.', 'afcglide' ) );
-        }
+        if ( is_wp_error( $new_post_id ) ) wp_die( 'Error duplicating.' );
 
-        // Copy all post meta
-        $meta_keys = get_post_meta( $post_id );
-        foreach ( $meta_keys as $key => $values ) {
-            // Skip internal WordPress meta
-            if ( substr( $key, 0, 1 ) === '_' && in_array( $key, [ '_edit_lock', '_edit_last' ] ) ) {
-                continue;
-            }
-            
+        // Copy Meta
+        $meta = get_post_meta( $post_id );
+        foreach ( $meta as $key => $values ) {
+            if ( in_array( $key, [ '_edit_lock', '_edit_last' ] ) ) continue;
             foreach ( $values as $value ) {
                 add_post_meta( $new_post_id, $key, maybe_unserialize( $value ) );
             }
         }
 
-        // Copy taxonomies
-        $taxonomies = get_object_taxonomies( 'afcglide_listing' );
-        foreach ( $taxonomies as $taxonomy ) {
-            $terms = wp_get_object_terms( $post_id, $taxonomy, [ 'fields' => 'ids' ] );
-            if ( ! is_wp_error( $terms ) && ! empty( $terms ) ) {
-                wp_set_object_terms( $new_post_id, $terms, $taxonomy );
-            }
-        }
-
-        // Set success message
         set_transient( 'afcg_duplicate_success_' . $new_post_id, true, 30 );
-
-        // Redirect to edit the new listing
         wp_redirect( admin_url( 'post.php?action=edit&post=' . $new_post_id ) );
         exit;
     }
 
     /**
-     * Show Success Notice After Duplication
+     * Success Notice
      */
     public static function show_duplicate_notice() {
         global $post;
-        
-        if ( ! $post || $post->post_type !== 'afcglide_listing' ) {
-            return;
-        }
-
-        if ( get_transient( 'afcg_duplicate_success_' . $post->ID ) ) {
-            ?>
-            <div class="notice notice-success is-dismissible">
-                <p>
-                    <strong>✅ Listing Duplicated Successfully!</strong><br>
-                    This is a draft copy. Update the details and publish when ready.
-                </p>
-            </div>
-            <?php
+        if ( $post && $post->post_type === 'afcglide_listing' && get_transient( 'afcg_duplicate_success_' . $post->ID ) ) {
+            echo '<div class="notice notice-success is-dismissible"><p><strong>✅ Listing Duplicated Successfully!</strong> This is a draft copy.</p></div>';
             delete_transient( 'afcg_duplicate_success_' . $post->ID );
         }
     }

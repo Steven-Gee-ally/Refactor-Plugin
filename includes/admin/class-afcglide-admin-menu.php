@@ -148,52 +148,16 @@ class AFCGlide_Admin_Menu {
     }
     /**
      * Clean up the Listing Editor to meet "Best in the World" standards.
-     * Removes WP clutter so the agent stays focused.
+     * We move all styling to assets/css/admin.css for maximum performance.
      */
     public static function clean_up_listing_editor() {
         $screen = get_current_screen();
         
-        // Only run this on our specific listing page
         if ( ! $screen || $screen->post_type !== 'afcglide_listing' ) {
             return;
         }
 
-        echo '<style>
-            /* 1. Hide the standard WP Sidebar boxes (Publish, Categories, etc) */
-            #side-sortables, #postexcerpt, #trackbacksdiv, #postcustom, #authordiv { 
-                display: none !important; 
-            }
-
-            /* 2. Force the editor to be full-width (No sidebars) */
-            #post-body.columns-2 #postbox-container-1 { display: none !important; }
-            #post-body.columns-2 #postbox-container-2 { width: 100% !important; }
-            #post-body-content { margin-right: 0 !important; }
-
-            /* 3. Style the Title to look high-end and minimal */
-            #titlewrap input { 
-                border: none !important; 
-                font-size: 38px !important; 
-                font-weight: 200 !important; 
-                padding: 15px 0 !important;
-                background: transparent !important;
-                box-shadow: none !important;
-                color: #1e293b !important;
-            }
-            #title-prompt-text { padding: 16px 0 !important; font-size: 38px !important; font-weight: 200 !important; }
-
-            /* 4. Style the Editor and Meta Boxes */
-            .wp-editor-expand { border: 1px solid #e2e8f0 !important; border-radius: 12px !important; overflow: hidden; }
-            .postbox { border-radius: 16px !important; border: 1px solid #f1f5f9 !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02) !important; }
-            .postbox h2.hndle { 
-                border-bottom: 1px solid #f1f5f9 !important; 
-                color: #10b981 !important; 
-                font-size: 14px !important; 
-                text-transform: uppercase; 
-                letter-spacing: 1px; 
-            }
-            
-            /* 5. Clean up the bottom bar */
-            #poststatusdiv, #post-formats-select { display: none !important; }
-        </style>';
+        // We inject a tiny body class so our admin.css knows when to apply the luxury layout
+        echo '<script>document.body.classList.add("afcglide-editor-active");</script>';
     }
 }

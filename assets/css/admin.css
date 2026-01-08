@@ -216,3 +216,704 @@ input[name="publish"].afcglide-publish-btn:hover {
     visibility: visible !important;
     opacity: 1 !important;
 }
+
+/* ==========================================
+   SURGICAL FIX: PROPERTY SPECS & TITLE
+   ========================================== */
+
+/* 1. Force Price, Beds, Baths into one row */
+.afcglide-details-grid {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    gap: 20px !important;
+    padding: 10px 0 !important;
+}
+
+.afcglide-details-grid div {
+    flex: 1 !important;
+}
+
+/* 2. Style the Title Header */
+#titlediv #titlewrap {
+    background: #f1f5f9 !important;
+    padding: 15px 25px !important;
+    border-radius: 12px !important;
+    border: 1px solid #e2e8f0 !important;
+    margin-bottom: 25px !important;
+}
+
+#titlediv #title {
+    background: transparent !important;
+    border: none !important;
+    font-size: 32px !important;
+    font-weight: 300 !important;
+}
+
+/* 3. Remove "Optional" from the 3-Stack Header */
+.afcglide-stack-section h4 {
+    font-size: 0 !important;
+}
+
+.afcglide-stack-section h4::before {
+    content: "3-PHOTO PROPERTY STACK";
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    visibility: visible !important;
+}
+
+/* ==========================================
+   FINAL POLISH: HEADERS & SLIDER RESTORE
+   ========================================== */
+
+/* 1. Thin out the Header Font & adjust Green */
+.postbox-header h2 {
+    font-weight: 600 !important;
+    /* Thinner, more professional font */
+    font-size: 16px !important;
+    letter-spacing: 0.3px !important;
+}
+
+/* 2. Restore the Slider Upload Area (Box 3) */
+.afcglide-slider-wrapper #afc-slider-container {
+    min-height: 150px !important;
+    border: 2px dashed #10b981 !important;
+    /* Emerald dashed border */
+    background: #f8fafc !important;
+    display: grid !important;
+    margin-bottom: 15px !important;
+}
+
+/* 3. Style the "Add Gallery Images" Button to match Branding */
+.afcglide-add-slider-images-btn {
+    background: #10b981 !important;
+    color: white !important;
+    border: none !important;
+    padding: 8px 20px !important;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+    cursor: pointer;
+}
+
+/* 4. Fix Location Input alignment (Box 5) */
+.afcglide-location-wrapper input[type="text"] {
+    width: 100% !important;
+    margin-bottom: 15px !important;
+    padding: 10px !important;
+    border: 1px solid #ddd !important;
+    border-radius: 6px !important;
+}
+
+/* ==========================================
+   FINAL REFINEMENTS: HEADER #1 & SLIDER
+   ========================================== */
+
+/* 1. Add #1 and Icon to Property Description */
+.afc-section-header h3::before {
+    content: "📝 1. ";
+    /* Adds the icon and number */
+    font-size: 18px;
+    margin-right: 10px;
+}
+
+.afc-section-header h3 {
+    color: #10b981 !important;
+    /* Matches your emerald theme */
+    font-weight: 600 !important;
+    font-size: 18px !important;
+    margin: 20px 0 10px 0 !important;
+    display: flex;
+    align-items: center;
+}
+
+/* 2. Force Main Slider Input Visibility (Box #3) */
+#afc_slider .inside {
+    padding: 20px !important;
+}
+
+#afc-slider-container {
+    min-height: 180px !important;
+    border: 2px dashed #10b981 !important;
+    /* Emerald dashed zone */
+    background: #f8fafc !important;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)) !important;
+    gap: 15px;
+    padding: 20px !important;
+    margin-bottom: 15px;
+    border-radius: 12px;
+}
+
+/* 3. Style the Gallery Count & Button */
+.afcglide-slider-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f1f5f9;
+    padding: 12px 20px;
+    border-radius: 0 0 12px 12px;
+}
+
+#afc-slider-count {
+    font-weight: 700;
+    color: #475569;
+}
+
+/* ==========================================
+   FULL PAGE LAYOUT & SLIDER INPUT RESTORE
+   ========================================== */
+
+/* 1. Force Full Page Width (Removes the right-side gap) */
+.post-type-afcglide_listing #postbox-container-1 {
+    display: none !important;
+    /* Hides the standard WP sidebar completely */
+}
+
+.post-type-afcglide_listing #postbox-container-2 {
+    width: 100% !important;
+    /* Stretches the main content to full width */
+    float: none !important;
+}
+
+.post-type-afcglide_listing #post-body.columns-2 #postbox-container-2 {
+    margin-right: 0 !important;
+}
+
+/* 2. Force Slider Input Area to be Visible (Box 3) */
+#afc_slider .inside {
+    display: block !important;
+    min-height: 200px !important;
+}
+
+#afc-slider-container {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+    gap: 15px;
+    background: #f8fafc !important;
+    border: 2px dashed #10b981 !important;
+    /* Emerald dashed box */
+    padding: 30px !important;
+    border-radius: 12px;
+    min-height: 150px !important;
+    text-align: center;
+}
+
+/* 3. Slider Empty State Label */
+#afc-slider-container:empty::before {
+    content: "📸 Drag images here or click 'Add Gallery Images' below";
+    color: #64748b;
+    font-weight: 600;
+    grid-column: 1 / -1;
+    padding: 40px 0;
+}
+
+/* ==========================================
+   BOX #2: HORIZONTAL MEDIA LAYOUT
+   ========================================== */
+
+/* 1. Force Hero and Stack to sit side-by-side */
+.afcglide-media-hub {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 40px !important;
+    /* Space between Hero and Stack */
+    padding: 20px !important;
+    align-items: flex-start !important;
+}
+
+/* 2. Give them equal or proportional breathing room */
+.afcglide-hero-section,
+.afcglide-stack-section {
+    flex: 1 !important;
+    background: #ffffff;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #f1f5f9;
+}
+
+/* 3. Ensure the preview boxes look high-end */
+.afcglide-media-hub .afcglide-preview-box {
+    width: 100% !important;
+    height: 180px !important;
+    background: #f8fafc !important;
+    border: 2px dashed #e2e8f0 !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+
+/* 4. Fix image sizing inside the previews */
+.afcglide-media-hub .afcglide-preview-box img {
+    max-height: 100%;
+    width: auto;
+    object-fit: contain;
+}
+
+/* ==========================================
+   BUTTON POLISH: PASTEL BLUE "PREP" ACTIONS
+   ========================================== */
+
+/* Target the Media Upload buttons in Box 2 */
+.afcglide-upload-image-btn,
+.afcglide-add-stack-image-btn {
+    background: #e0f2fe !important;
+    /* Soft Pastel Blue */
+    color: #0369a1 !important;
+    /* Deep Blue Text for contrast */
+    border: 1px solid #bae6fd !important;
+    padding: 8px 18px !important;
+    height: auto !important;
+    line-height: 1.4 !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    font-size: 11px !important;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer;
+}
+
+/* Hover State for the Blue Buttons */
+.afcglide-upload-image-btn:hover,
+.afcglide-add-stack-image-btn:hover {
+    background: #bae6fd !important;
+    color: #0c4a6e !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Ensure the buttons stay centered under their respective sections */
+.afcglide-hero-section,
+.afcglide-stack-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* ==========================================
+   INTERACTIVE AMENITY GLOW
+   ========================================== */
+
+/* The state when the checkbox is actually checked */
+.afcglide-amenity-label:has(input:checked) {
+    background: #ecfdf5 !important;
+    /* Very light emerald tint */
+    border-color: #10b981 !important;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.2) !important;
+    transform: scale(1.02);
+}
+
+/* Make the checkmark itself emerald when active */
+.afcglide-amenity-label input:checked {
+    accent-color: #10b981;
+}
+
+/* ==========================================
+   PRO FIELD LOGIC: VISUAL GUIDANCE
+   ========================================== */
+
+/* Style the 'Required' label from your PHP */
+.afcglide-required-field::after {
+    content: " *";
+    color: #ef4444;
+    /* Professional Red */
+    font-weight: bold;
+}
+
+/* Subtle focus state to show which box is being edited */
+.afcglide-details-grid input:focus,
+.afcglide-location-wrapper input:focus {
+    border-color: #10b981 !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+    background: #ffffff !important;
+}
+
+/* ==========================================
+   TOP LEVEL BRANDING: MAIN TITLE
+   ========================================== */
+.post-type-afcglide_listing .wrap h1 {
+    color: #10b981 !important;
+    /* Your signature Emerald Green */
+    font-size: 28px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.5px !important;
+    margin-bottom: 20px !important;
+    display: inline-block;
+    border-bottom: 3px solid #10b981;
+    /* Adds a professional underline */
+    padding-bottom: 5px;
+}
+
+
+/* ==========================================
+   TECHNICAL GPS INSTRUMENT STYLING (FORCED)
+   ========================================== */
+
+/* 1. Force the Street Address to stay on its own top row */
+.post-type-afcglide_listing #afcglide_location_metabox .inside div:first-child {
+    margin-bottom: 20px !important;
+}
+
+/* 2. Container to force Latitude and Longitude side-by-side */
+/* Note: This depends on your PHP wrapping these two in a div with this class */
+.afcglide-gps-row {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 20px !important;
+    width: 100% !important;
+}
+
+/* 3. Style the inputs to look like technical readouts */
+.post-type-afcglide_listing input[name="afcglide_lat"],
+.post-type-afcglide_listing input[name="afcglide_lng"] {
+    flex: 1 !important;
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    padding: 12px 15px 12px 35px !important;
+    /* Space for icon */
+    font-family: 'Courier New', monospace !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    border-radius: 8px !important;
+}
+
+/* 4. Add the 'Location' icon inside the box */
+.afcglide-gps-field-wrapper {
+    position: relative !important;
+    flex: 1 !important;
+}
+
+.afcglide-gps-field-wrapper::before {
+    content: "📍";
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    font-size: 14px;
+}
+
+/* ==========================================
+   GPS INSTRUMENT STYLE: THE FINAL SNAP
+   ========================================== */
+
+/* Force the side-by-side row */
+.afcglide-gps-row {
+    display: flex !important;
+    gap: 15px !important;
+    width: 100% !important;
+    margin-top: 10px;
+}
+
+/* Individual wrappers for Lat/Long */
+.gps-field-group {
+    flex: 1 !important;
+    position: relative !important;
+}
+
+/* Styling the inputs with the technical feel */
+.gps-field-group input {
+    width: 100% !important;
+    padding: 12px 10px 12px 35px !important;
+    /* Space for the 📍 icon */
+    font-family: 'Courier New', monospace !important;
+    font-weight: 700 !important;
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+}
+
+/* Placing the Map Pin Icon */
+.gps-field-group::before {
+    content: "📍";
+    position: absolute;
+    left: 10px;
+    top: 38px;
+    /* Perfectly aligned under the label */
+    font-size: 14px;
+    z-index: 2;
+}
+
+/* Labels for the coordinates */
+.gps-field-group label {
+    display: block;
+    font-size: 11px !important;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 5px;
+}
+
+/* ==========================================
+   AFCG_UNIFIED: LUXURY SETTINGS & DASHBOARD
+   ========================================== */
+
+/* The Card Wrapper */
+.afcglide-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 30px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    margin-bottom: 25px;
+}
+
+/* Section Titles (The Emerald Standard) */
+.afcglide-settings-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #10b981;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* High-End Inputs */
+.afcglide-card input[type="text"] {
+    width: 100% !important;
+    max-width: 500px;
+    padding: 12px 15px !important;
+    border-radius: 10px !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #f8fafc !important;
+    font-family: 'Courier New', monospace;
+}
+
+/* ==========================================
+   USER PROFILE LOCKDOWN (Branding Page)
+   ========================================== */
+
+/* Hide the distractions from the screenshot */
+.user-rich-editing-wrap,
+.user-admin-color-wrap,
+.user-comment-shortcuts-wrap,
+.user-admin-bar-front-wrap,
+.user-language-wrap,
+.user-syntax-highlighting-wrap,
+.yoast-settings,
+/* If you have Yoast */
+#application-passwords-section {
+    display: none !important;
+}
+
+/* Style the Profile Header to match AFCGlide */
+.edit-profile-wrapper h1 {
+    color: #10b981 !important;
+    font-size: 28px !important;
+    font-weight: 700 !important;
+    border-bottom: 3px solid #10b981;
+    display: inline-block;
+    margin-bottom: 30px !important;
+}
+
+/* Make profile inputs look like technical instruments */
+.form-table input[type="text"],
+.form-table input[type="tel"] {
+    padding: 12px !important;
+    border-radius: 8px !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #f8fafc !important;
+    width: 100% !important;
+    max-width: 400px !important;
+}
+
+/* ==========================================
+   UNIFIED PASTEL BLUE BUTTON THEME
+   ========================================== */
+
+/* Target all primary save buttons and custom upload buttons */
+.wp-core-ui .button-primary,
+.afcglide-upload-logo-btn,
+.afcglide-upload-photo-btn,
+.afc-sync-btn,
+#submit {
+    background-color: #7dd3fc !important;
+    /* Sky Blue Pastel */
+    border-color: #7dd3fc !important;
+    color: #0369a1 !important;
+    /* Deep Blue text for readability */
+    border-radius: 10px !important;
+    padding: 8px 20px !important;
+    height: auto !important;
+    font-weight: 700 !important;
+    text-shadow: none !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+/* Hover State for that "High-End" feel */
+.wp-core-ui .button-primary:hover,
+.afcglide-upload-logo-btn:hover,
+.afc-sync-btn:hover,
+#submit:hover {
+    background-color: #38bdf8 !important;
+    /* Slightly deeper blue on hover */
+    border-color: #38bdf8 !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ==========================================
+   AFCGlide Unified Button Theme (Pastel Blue)
+   ========================================== */
+
+/* This targets the Save button, Sync button, and Upload buttons */
+.wp-core-ui .button-primary,
+.afcglide-upload-logo-btn,
+.afcglide-upload-photo-btn,
+.afc-sync-btn,
+#submit {
+    background-color: #7dd3fc !important;
+    /* Sky Blue Pastel */
+    border-color: #7dd3fc !important;
+    color: #0369a1 !important;
+    /* Deep Blue text for high-end readability */
+    border-radius: 10px !important;
+    padding: 8px 24px !important;
+    height: auto !important;
+    font-weight: 700 !important;
+    text-shadow: none !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+/* Professional Hover Effect */
+.wp-core-ui .button-primary:hover,
+.afcglide-upload-logo-btn:hover,
+.afc-sync-btn:hover,
+#submit:hover {
+    background-color: #38bdf8 !important;
+    /* Slightly deeper blue */
+    border-color: #38bdf8 !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ==========================================
+   LISTING SUBMISSION PAGE: BUTTON THEME
+   ========================================== */
+
+/* 1. HERO & STACK BUTTONS (The Blue Team) */
+.post-type-afcglide_listing #poststuff .button:not(.button-primary):not(.add-attachment) {
+    background-color: #7dd3fc !important;
+    border-color: #7dd3fc !important;
+    color: #0369a1 !important;
+    font-weight: 700 !important;
+    text-shadow: none !important;
+}
+
+/* Hover for Blue Team */
+.post-type-afcglide_listing #poststuff .button:not(.button-primary):not(.add-attachment):hover {
+    background-color: #38bdf8 !important;
+    border-color: #38bdf8 !important;
+    color: #ffffff !important;
+}
+
+/* 2. ADD GALLERY BUTTON (The Green Team) */
+/* We target 'add-attachment' and 'button-primary' specifically */
+.post-type-afcglide_listing #poststuff .button-primary,
+.post-type-afcglide_listing #poststuff .button.add-attachment {
+    background-color: #10b981 !important;
+    border-color: #10b981 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    text-shadow: none !important;
+}
+
+/* FORCE GREEN HOVER (Stop it from turning blue!) */
+.post-type-afcglide_listing #poststuff .button-primary:hover,
+.post-type-afcglide_listing #poststuff .button.add-attachment:hover {
+    background-color: #059669 !important;
+    /* Deep Emerald Green */
+    border-color: #059669 !important;
+    color: #ffffff !important;
+}
+
+/* ☢️ THE NUCLEAR OPTION: Force Hide Add Media Button */
+.post-type-afcglide_listing #wp-content-media-buttons,
+.post-type-afcglide_listing .insert-media,
+.post-type-afcglide_listing #add_media {
+    display: none !important;
+}
+
+/* --- AFCGlide Luxury Dashboard Palette --- */
+
+/* 1. Global Agent Header (Pastel Mint) */
+.afcglide-dashboard .afcglide-card:first-of-type {
+    background: #f0fdf4 !important;
+    /* Mint Green Light */
+    border: 1px solid #dcfce7 !important;
+}
+
+/* 2. Inventory (Pastel Blue) */
+.afcglide-card-inventory {
+    background: #e0f2fe !important;
+    /* Sky Blue Light */
+    color: #0369a1 !important;
+    border: 1px solid #bae6fd !important;
+}
+
+.afcglide-card-inventory h4 {
+    color: #0369a1 !important;
+}
+
+/* 3. Add / Update Agent (Pastel Purple) */
+.afcglide-card-agent {
+    background: #f5f3ff !important;
+    /* Violet Light */
+    color: #5b21b6 !important;
+    border: 1px solid #ddd6fe !important;
+}
+
+.afcglide-card-agent h4 {
+    color: #5b21b6 !important;
+}
+
+/* 4. Config (Pastel Amber/Gold) */
+.afcglide-card-config {
+    background: #fffbeb !important;
+    /* Amber Light */
+    color: #92400e !important;
+    border: 1px solid #fef3c7 !important;
+}
+
+.afcglide-card-config h4 {
+    color: #92400e !important;
+}
+
+/* --- Interaction Effects --- */
+.afcglide-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.afcglide-card:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* FORCE MINT ON GLOBAL CARD */
+.afcglide-dashboard .afcglide-card.afcglide-card-global {
+    background-color: #dcfce7 !important;
+    /* Mint Green */
+    border: 1px solid #86efac !important;
+    color: #14532d !important;
+}
+
+/* Make sure the text inside the Mint card pops */
+.afcglide-card-global h3 {
+    color: #14532d !important;
+    font-weight: 800 !important;
+}
+
+.afcglide-card-global p {
+    color: #166534 !important;
+    font-weight: 600 !important;
+}

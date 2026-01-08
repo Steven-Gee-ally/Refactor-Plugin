@@ -3,20 +3,21 @@
  * One file to rule the whole site: Listings, Search, & Agent Submission.
  */
 
-:root { 
-  --afc-primary: #10b981;
-  --afc-dark: #0f172a;
-  --afc-text: #334155;
-  --afc-muted: #64748b;
-  --afc-bg-light: #f8fafc;
-  --afc-border: #e2e8f0;
-  --afc-glass: rgba(255, 255, 255, 0.85);
-  --afc-shadow-lux: 0 20px 50px rgba(0,0,0,0.05);
-  --afc-radius: 12px;
+:root {
+    --afc-primary: #10b981;
+    --afc-dark: #0f172a;
+    --afc-text: #334155;
+    --afc-muted: #64748b;
+    --afc-bg-light: #f8fafc;
+    --afc-border: #e2e8f0;
+    --afc-glass: rgba(255, 255, 255, 0.85);
+    --afc-shadow-lux: 0 20px 50px rgba(0, 0, 0, 0.05);
+    --afc-radius: 12px;
 }
 
 /* 1. FOUNDATION & RESET */
-.afcglide-wrapper, .afcglide-container {
+.afcglide-wrapper,
+.afcglide-container {
     max-width: 1400px;
     margin: 0 auto;
     padding: 0 20px;
@@ -35,21 +36,62 @@
     overflow: hidden;
 }
 
-.afc-hero-main { position: relative; height: 100%; overflow: hidden; }
-.afc-hero-main img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s ease; }
-.afc-hero-main:hover img { transform: scale(1.03); }
-
-.afc-price-badge {
-    position: absolute; bottom: 25px; left: 25px;
-    background: var(--afc-glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    padding: 14px 28px; border-radius: 10px; font-size: 26px; font-weight: 800;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.15); z-index: 10;
+.afc-hero-main {
+    position: relative;
+    height: 100%;
+    overflow: hidden;
 }
 
-.afc-hero-stack { display: flex; flex-direction: column; gap: 12px; }
-.afc-stack-item { flex: 1; overflow: hidden; border-radius: 8px; background: #000; }
-.afc-stack-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.4s; }
-.afc-stack-item:hover img { opacity: 0.8; transform: scale(1.05); }
+.afc-hero-main img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.8s ease;
+}
+
+.afc-hero-main:hover img {
+    transform: scale(1.03);
+}
+
+.afc-price-badge {
+    position: absolute;
+    bottom: 25px;
+    left: 25px;
+    background: var(--afc-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 14px 28px;
+    border-radius: 10px;
+    font-size: 26px;
+    font-weight: 800;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    z-index: 10;
+}
+
+.afc-hero-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.afc-stack-item {
+    flex: 1;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #000;
+}
+
+.afc-stack-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: 0.4s;
+}
+
+.afc-stack-item:hover img {
+    opacity: 0.8;
+    transform: scale(1.05);
+}
 
 /* 3. LISTING CARDS (Used in Grid/Search Results) */
 .afcglide-grid {
@@ -57,38 +99,161 @@
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 30px;
 }
+
 .afc-listing-card {
-    background: #fff; border-radius: var(--afc-radius); overflow: hidden;
-    border: 1px solid var(--afc-border); transition: all 0.4s ease;
+    background: #fff;
+    border-radius: var(--afc-radius);
+    overflow: hidden;
+    border: 1px solid var(--afc-border);
+    transition: all 0.4s ease;
 }
-.afc-listing-card:hover { transform: translateY(-8px); box-shadow: var(--afc-shadow-lux); }
+
+.afc-listing-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--afc-shadow-lux);
+}
 
 /* 4. AGENT SUBMISSION UI (No Compromise Professionalism) */
 .afcglide-form-wrapper {
-    background: #fff; padding: 40px; border-radius: 20px;
-    border: 1px solid var(--afc-border); box-shadow: var(--afc-shadow-lux);
+    background: #fff;
+    padding: 40px;
+    border-radius: 20px;
+    border: 1px solid var(--afc-border);
+    box-shadow: var(--afc-shadow-lux);
 }
+
 .upload-zone {
-    background: var(--afc-bg-light); border: 2px dashed var(--afc-border);
-    padding: 25px; margin-bottom: 20px; border-radius: var(--afc-radius);
+    background: var(--afc-bg-light);
+    border: 2px dashed var(--afc-border);
+    padding: 25px;
+    margin-bottom: 20px;
+    border-radius: var(--afc-radius);
     transition: 0.3s;
 }
-.upload-zone:hover { border-color: var(--afc-primary); background: #fff; }
-.hero-zone { border-left: 5px solid var(--afc-primary); }
+
+.upload-zone:hover {
+    border-color: var(--afc-primary);
+    background: #fff;
+}
+
+.hero-zone {
+    border-left: 5px solid var(--afc-primary);
+}
 
 /* 5. INTERACTIVE ELEMENTS (Buttons & Filters) */
-.afcglide-btn, .afc-btn {
-    padding: 14px 28px; border-radius: 10px; font-weight: 700;
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: none; cursor: pointer;
+.afcglide-btn,
+.afc-btn {
+    padding: 14px 28px;
+    border-radius: 10px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: none;
+    cursor: pointer;
     text-decoration: none;
 }
-.afc-btn-whatsapp { background: #25D366; color: #fff; }
-.afc-btn-call { background: var(--afc-primary); color: #fff; }
-.afc-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+
+.afc-btn-whatsapp {
+    background: #25D366;
+    color: #fff;
+}
+
+.afc-btn-call {
+    background: var(--afc-primary);
+    color: #fff;
+}
+
+.afc-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
 
 /* 6. RESPONSIVE */
 @media (max-width: 1024px) {
-    .afc-hero-block { height: 450px; }
-    .afc-hero-stack { display: none; }
+    .afc-hero-block {
+        height: 450px;
+    }
+
+    .afc-hero-stack {
+        display: none;
+    }
+}
+
+/* --- AFCGlide Front-End Luxury Polish --- */
+
+/* 1. The Listing Grid Layout */
+.afcglide-grid {
+    display: grid;
+    gap: 30px;
+    margin: 40px 0;
+}
+
+@media (min-width: 768px) {
+    .afcglide-grid-cols-3 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .afcglide-grid-cols-2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* 2. The Listing Card Design */
+.afc-listing-card {
+    background: #ffffff;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid #eef2f6;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+}
+
+.afc-listing-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* 3. The Money Tag (Price) */
+.afc-card-price-tag {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(5px);
+    padding: 8px 15px;
+    border-radius: 10px;
+    font-weight: 800;
+    color: #1e293b;
+    font-size: 14px;
+    z-index: 10;
+}
+
+/* 4. The WhatsApp Button (Costa Rica Lead Gen) */
+.afc-whatsapp-btn {
+    background: #22c55e;
+    color: white !important;
+    padding: 10px 18px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s;
+}
+
+.afc-whatsapp-btn:hover {
+    background: #16a34a;
+}
+
+/* 5. Standalone Signature Card [afcglide_signature] */
+.afc-agent-signature-card {
+    margin: 30px 0;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    /* Subtle light gray background */
 }

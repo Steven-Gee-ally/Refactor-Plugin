@@ -35,6 +35,9 @@ final class AFCGlide_Shortcodes {
         // Authentication Shortcodes
         add_shortcode( 'afcglide_login', [ __CLASS__, 'render_login_form' ] );
         add_shortcode( 'afcglide_register', [ __CLASS__, 'render_registration_form' ] );
+
+        // New Signature Card for Single Pages
+        add_shortcode( 'afcglide_signature', [ __CLASS__, 'render_signature_card' ] );
         
         // Submission Shortcodes
         add_shortcode( 'afcglide_submit_listing', [ __CLASS__, 'render_submit_form' ] );
@@ -578,9 +581,9 @@ final class AFCGlide_Shortcodes {
 
         // 2. Pull Synced Agent Data (The "Global Brain" Logic)
         $agent_id     = get_option('afc_global_agent_id');
-        $headshot_id  = get_user_meta( $agent_id, 'afc_agent_photo', true );
+        $headshot_id  = get_user_meta( $agent_id, 'agent_photo', true ); // Corrected to match Dashboard
         $headshot_url = $headshot_id ? wp_get_attachment_image_url( $headshot_id, 'thumbnail' ) : '';
-        $whatsapp     = get_user_meta( $agent_id, 'afc_whatsapp', true );
+        $phone        = get_user_meta( $agent_id, 'agent_phone', true ); // Corrected to match Dashboard
         ?>
         <article class="afc-listing-card">
             <div class="afc-card-media">
@@ -617,12 +620,48 @@ final class AFCGlide_Shortcodes {
                         <span class="afc-agent-name"><?php echo get_userdata($agent_id)->display_name ?? 'Agent'; ?></span>
                     </div>
 
-                    <?php if ( $whatsapp ) : ?>
-                        <a href="https://wa.me/<?php echo preg_replace('/[^0-9]/', '', $whatsapp); ?>" target="_blank" class="afc-whatsapp-btn">WhatsApp</a>
+                    <?php if ( $phone ) : 
+                        $wa_phone = preg_replace('/[^0-9]/', '', $phone); ?>
+                        <a href="https://wa.me/<?php echo $wa_phone; ?>" target="_blank" class="afc-whatsapp-btn">WhatsApp</a>
                     <?php endif; ?>
                 </div>
             </div>
         </article>
         <?php
     }
+
+    /**
+     * Render a standalone signature card [afc_agent_card]
+     */
+    public static function render_signature_card() {
+        $agent_id = get_option('afc_global_agent_id');
+        if ( ! $agent_id ) return '';
+
+        $user_data  = get_userdata( $agent_id );
+        $phone      = get_user_meta( $agent_id, 'agent_phone', true );
+        $photo_id   = get_user_meta( $agent_id, 'agent_photo', true );
+        $photo_url  = $photo_id ? wp_get_attachment_image_url( $photo_id, 'medium' ) : '';
+
+        ob_start();
+        ?>
+        <div class="afc-agent-signature-card" style="background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 25px; display: flex; align-items: center; gap: 20px; max-width: 450px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <div class="afc-agent-photo" style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; border: 2px solid #10b981; flex-shrink: 0;">
+                <?php if ( $photo_url ) : ?>
+                    <img src="<?php echo esc_url( $photo_url ); ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                <?php else : ?>
+                    <div style="width:100%; height:100%; background:#f1f5f9; display:flex; align-items:center; justify-content:center; color:#94a3b8;">👤</div>
+                <?php endif; ?>
+            </div>
+            <div class="afc-agent-details">
+                <p style="margin: 0; font-size: 11px; text-transform: uppercase; color: #10b981; font-weight: 700; letter-spacing: 1px;">Listing Agent</p>
+                <h4 style="margin: 5px 0; font-size: 18px; color: #1e293b; font-weight: 700;"><?php echo esc_html( $user_data->display_name ); ?></h4>
+                <?php if ( $phone ) : ?>
+                    <a href="tel:<?php echo esc_attr( $phone ); ?>" style="text-decoration: none; color: #64748b; font-size: 14px; font-weight: 600;">📞 <?php echo esc_html( $phone ); ?></a>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
 }
+    

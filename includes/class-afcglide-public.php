@@ -93,33 +93,40 @@ class AFCGlide_Public {
     }
 
     public static function render_whatsapp_button() {
-        // Only show on Single Listing pages to keep it exclusive
+        // Only show on Single Listing pages
         if ( ! is_singular( 'afcglide_listing' ) ) {
             return;
         }
 
-        // 1. Get Agent Data (From the fields we just built!)
-        $user_id = get_the_author_meta( 'ID' );
-        $whatsapp = get_user_meta( $user_id, 'afcglide_whatsapp', true );
-        $agent_name = get_the_author_meta( 'display_name', $user_id );
-        $property_title = get_the_title();
-
-        // 2. Clean the phone number (Remove spaces/dashes)
-        $clean_phone = preg_replace('/[^0-9]/', '', $whatsapp);
-
-        if ( empty( $clean_phone ) ) {
-            return; // Don't show if no phone is set
+        // 1. Get the GLOBAL Agent set in our "No Compromise" Dashboard
+        $agent_id = get_option('afc_global_agent_id');
+        
+        // Fallback: If no global agent is set, use the post author
+        if ( ! $agent_id ) {
+            $agent_id = get_the_author_meta( 'ID' );
         }
 
-        // 3. Create the pre-filled message
-        $message = rawurlencode( "Hi " . $agent_name . ", I'm interested in: " . $property_title );
+        // 2. Get Data using our consistent Keys
+        $phone      = get_user_meta( $agent_id, 'agent_phone', true ); // Corrected Key
+        $agent_name = get_userdata( $agent_id )->display_name ?? 'Agent';
+        $prop_title = get_the_title();
+
+        // 3. Clean the phone number (Remove spaces/dashes)
+        $clean_phone = preg_replace('/[^0-9]/', '', $phone);
+
+        if ( empty( $clean_phone ) ) {
+            return; 
+        }
+
+        // 4. Create the pre-filled message for Costa Rica market
+        $message = rawurlencode( "Pura Vida! I'm interested in " . $prop_title . ". Is this still available?" );
         $wa_url = "https://wa.me/" . $clean_phone . "?text=" . $message;
 
-        // 4. Output the Button
+        // 5. Output the Premium Floating Button
         ?>
-        <a href="<?php echo esc_url( $wa_url ); ?>" class="afcglide-whatsapp-float" target="_blank">
+        <a href="<?php echo esc_url( $wa_url ); ?>" class="afcglide-whatsapp-float" target="_blank" rel="nofollow">
             <span class="afcglide-whatsapp-icon">💬</span>
-            <?php echo esc_html__( 'Chat with Agent', 'afcglide' ); ?>
+            <?php echo esc_html__( 'WhatsApp Agent', 'afcglide' ); ?>
         </a>
         <?php
     }

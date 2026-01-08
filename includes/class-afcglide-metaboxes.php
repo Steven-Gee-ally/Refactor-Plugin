@@ -227,22 +227,28 @@ class AFCGlide_Metaboxes {
         <?php
     }
 
-    public static function render_location( $post ) {
+   public static function render_location( $post ) {
         $address = self::get_meta( $post->ID, '_property_address' );
         $lat = self::get_meta( $post->ID, '_gps_lat' );
         $lng = self::get_meta( $post->ID, '_gps_lng' );
         ?>
         <div class="afcglide-location-wrapper">
             <label class="afcglide-required-field">Street Address / Location Description</label>
-            <input type="text" name="_property_address" value="<?php echo esc_attr($address); ?>">
-            <div class="afcglide-gps-grid">
-                <div><label>Latitude</label><input type="text" name="_gps_lat" value="<?php echo esc_attr($lat); ?>"></div>
-                <div><label>Longitude</label><input type="text" name="_gps_lng" value="<?php echo esc_attr($lng); ?>"></div>
+            <input type="text" name="_property_address" value="<?php echo esc_attr($address); ?>" style="width:100%; margin-bottom:15px;">
+            
+            <div class="afcglide-gps-row">
+                <div class="gps-field-group">
+                    <label>Latitude</label>
+                    <input type="text" name="_gps_lat" value="<?php echo esc_attr($lat); ?>" placeholder="e.g. 9.7489">
+                </div>
+                <div class="gps-field-group">
+                    <label>Longitude</label>
+                    <input type="text" name="_gps_lng" value="<?php echo esc_attr($lng); ?>" placeholder="e.g. -84.6321">
+                </div>
             </div>
         </div>
         <?php
     }
-
     public static function render_amenities( $post ) {
         $selected = self::get_meta( $post->ID, '_listing_amenities' );
         $selected = is_array($selected) ? $selected : [];
