@@ -46,9 +46,9 @@ class AFCGlide_Plugin {
         'includes/class-afcglide-user-profile.php',
         'includes/class-afcglide-shortcodes.php',
         
-        // Admin Enhancements (NEW)
-        'includes/admin/class-afcglide-admin-menu.php',        // Clean admin interface
-        'includes/admin/class-afcglide-agent-protections.php', // Delete protection & duplicate
+        // Admin Enhancements
+        'includes/admin/class-afcglide-admin-menu.php',
+        'includes/admin/class-afcglide-agent-protections.php',
     ];
     
     private static $core_classes = [
@@ -71,6 +71,9 @@ class AFCGlide_Plugin {
         self::load_files();
         add_action( 'init', [ __CLASS__, 'initialize_classes' ], 5 );
         
+        // Command Center: Worker Mode Logic
+        add_action( 'admin_init', [ __CLASS__, 'apply_worker_mode_permissions' ] );
+        
         register_activation_hook( __FILE__, [ __CLASS__, 'on_activation' ] );
         register_deactivation_hook( __FILE__, [ __CLASS__, 'on_deactivation' ] );
         
@@ -78,6 +81,29 @@ class AFCGlide_Plugin {
             add_action( 'wp_footer', [ __CLASS__, 'debug_output' ], 999 );
             add_action( 'admin_footer', [ __CLASS__, 'debug_output' ], 999 );
             add_action( 'admin_notices', [ __CLASS__, 'admin_debug_notices' ] );
+        }
+    }
+
+    /**
+     * WORKER MODE LOGIC:
+     * This checks the Command Center switch and grants/revokes powers.
+     */
+    public static function apply_worker_mode_permissions() {
+        $worker_mode_enabled = get_option('afc_worker_mode', 'no') === 'yes';
+        $role = get_role('office_manager');
+
+        if ( ! $role ) return;
+
+        if ( $worker_mode_enabled ) {
+            // UNLOCK: Give Office Managers the power to edit/delete other agent listings
+            $role->add_cap('edit_others_afcglide_listings');
+            $role->add_cap('delete_others_afcglide_listings');
+            $role->add_cap('publish_afcglide_listings');
+        } else {
+            // LOCK: Take that power away
+            $role->remove_cap('edit_others_afcglide_listings');
+            $role->remove_cap('delete_others_afcglide_listings');
+            $role->remove_cap('publish_afcglide_listings');
         }
     }
 
@@ -93,23 +119,15 @@ class AFCGlide_Plugin {
     }
     
     public static function initialize_classes() {
-        // Initialize CPT/Tax first (creates post type)
         if ( class_exists( __NAMESPACE__ . '\\AFCGlide_CPT_Tax' ) ) {
             AFCGlide_CPT_Tax::init();
         }
         
-        // Initialize core listing classes
         foreach ( self::$core_classes as $class ) {
             if ( $class === 'AFCGlide_CPT_Tax' ) continue;
             self::init_class( $class, __NAMESPACE__ );
         }
         
-        // Initialize Admin Menu Customizer (different namespace)
-        if ( class_exists( 'AFCGlide\\Admin\\AFCGlide_Admin_Menu' ) ) {
-            \AFCGlide\Admin\AFCGlide_Admin_Menu::init();
-        }
-        
-        // Initialize Agent Protections (different namespace) - NEW
         if ( class_exists( 'AFCGlide\\Admin\\AFCGlide_Agent_Protections' ) ) {
             \AFCGlide\Admin\AFCGlide_Agent_Protections::init();
         }
@@ -127,9 +145,20 @@ class AFCGlide_Plugin {
     }
     
     public static function on_activation() {
+        // 1. Setup Custom Post Types
         if ( class_exists( __NAMESPACE__ . '\\AFCGlide_CPT_Tax' ) ) {
             AFCGlide_CPT_Tax::init();
         }
+
+        // 2. Create the "Office Manager" Role for Worker Mode
+        if ( ! get_role('office_manager') ) {
+            add_role( 'office_manager', 'Office Manager', [
+                'read'         => true,
+                'edit_posts'   => true,
+                'upload_files' => true,
+            ]);
+        }
+
         flush_rewrite_rules();
         update_option( 'afcglide_activated_time', time() );
         update_option( 'afcglide_version', AFCG_VERSION );
@@ -141,13 +170,13 @@ class AFCGlide_Plugin {
     
     public static function debug_output() {
         if ( ! current_user_can( 'manage_options' ) ) return;
-        echo "\n<!-- AFCGlide Debug: Plugin loaded successfully -->\n";
+        echo "\n\n";
     }
     
     public static function admin_debug_notices() {
         if ( ! current_user_can( 'manage_options' ) ) return;
         if ( ! empty( self::$missing_files ) || ! empty( self::$failed_classes ) ) {
-            echo '<div class="notice notice-error is-dismissible"><p><strong>AFCGlide:</strong> Issues detected in class loading. Check debug logs.</p></div>';
+            echo '<div class="notice notice-error is-dismissible"><p><strong>AFCGlide:</strong> Issues detected in class loading.</p></div>';
         }
     }
 }

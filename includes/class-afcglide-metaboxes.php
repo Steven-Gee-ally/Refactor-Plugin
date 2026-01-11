@@ -40,56 +40,26 @@ class AFCGlide_Metaboxes {
         add_action( 'admin_enqueue_scripts', [ __CLASS__, 'admin_assets' ] );
         add_action( 'edit_form_after_title', [ __CLASS__, 'render_description_label' ] );
         add_action( 'admin_notices', [ __CLASS__, 'show_validation_errors' ] );
+        add_action( 'admin_notices', [ __CLASS__, 'render_success_portal' ] );
     }
 
    public static function admin_assets( $hook ) {
-        global $post;
-        if ( ! in_array( $hook, [ 'post.php', 'post-new.php' ], true ) || empty( $post ) || $post->post_type !== 'afcglide_listing' ) return;
-
-        echo '<style>
-            /* 1. RESTORE SIDEBAR (Fixes the Slider Gallery) */
-            #postbox-container-1 { 
-                display: block !important; 
-                float: right !important;
-                width: 280px !important;
-            } 
-            #postbox-container-2 { 
-                width: calc(100% - 300px) !important; 
-                float: left !important;
-            }
-            .interface-interface-skeleton__content { overflow-y: auto !important; }
-
-            /* 2. EMERALD BRANDING */
-            .postbox-header {
-                background: #ffffff !important;
-                border-bottom: 2px solid #10b981 !important;
-            }
-            .postbox-header h2 {
-                color: #10b981 !important;
-                font-size: 18px !important;
-                font-weight: 700 !important;
-            }
-            
-            /* 3. GRID ALIGNMENT (Fixes the column mess) */
-            .afcglide-amenities-grid, 
-            [style*="grid-template-columns"] {
-                display: grid !important;
-                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
-                gap: 12px !important;
-            }
-
-            /* 4. CLEANUP */
-            #edit-slug-box, #authordiv, #slugdiv { display: none !important; }
-        </style>';
-     
+    global $post;
+    
+    // Safety check: Only run on our listing pages
+    if ( ! in_array( $hook, [ 'post.php', 'post-new.php' ], true ) || empty( $post ) || $post->post_type !== 'afcglide_listing' ) {
+        return;
     }
 
-    private static function get_meta( $post_id, $key ) {
-        $schema = self::meta_schema()[ $key ] ?? null;
-        $value  = get_post_meta( $post_id, $key, true );
-        if ( $schema && ! empty( $schema['array'] ) ) return is_array( $value ) ? $value : [];
-        return $value !== '' ? $value : ( $schema['default'] ?? '' );
-    }
+    // Enqueue the main admin styles (Make sure the path and version are correct)
+    wp_enqueue_style( 'afcglide-admin-css', AFCG_URL . 'assets/css/admin.css', [], '3.2.1' );
+    
+    // Enqueue the Media Uploader (required for your 16-photo slider)
+    wp_enqueue_media();
+    
+    // Enqueue your Admin JS
+    wp_enqueue_script( 'afcglide-admin-js', AFCG_URL . 'assets/js/admin.js', ['jquery'], '3.2.1', true );
+}
 
     public static function add_metaboxes() {
         // Clean up the sidebar
@@ -337,6 +307,70 @@ class AFCGlide_Metaboxes {
                     <p><strong>⚠️ Cannot Publish:</strong> Missing ' . implode(', ', $errors) . '</p>
                   </div>';
             delete_transient( 'afcg_validation_error_' . $post->ID );
+        }
+    }
+    /**
+     * AFCGlide Luxury Success Portal
+     * Displays a professional confirmation after the Emerald Button is pressed.
+     */
+    public static function render_success_portal() {
+        global $pagenow, $post;
+
+        // Only show on our specific listing type and after a save/publish
+        if ($pagenow == 'post.php' && isset($_GET['message']) && $_GET['message'] == '6' && get_post_type($post) == 'afcglide_listing') {
+            $view_link = get_permalink($post->ID);
+            ?>
+            <div class="afcglide-success-portal">
+                <div class="afc-portal-icon">🚀</div>
+                <div class="afc-portal-content">
+                    <h3>Listing Successfully Broadcasted!</h3>
+                    <p>Property ID: <strong>#<?php echo $post->ID; ?></strong> | Status: <strong>Live & Verified</strong></p>
+                </div>
+                <div class="afc-portal-actions">
+                    <a href="<?php echo esc_url($view_link); ?>" class="afc-portal-btn view" target="_blank">View Live Listing</a>
+                    <a href="<?php echo admin_url('edit.php?post_type=afcglide_listing'); ?>" class="afc-portal-btn inventory">Back to Inventory</a>
+                </div>
+            </div>
+
+            <style>
+                .afcglide-success-portal {
+                    background: #ffffff;
+                    border-left: 6px solid #10b981;
+                    padding: 25px;
+                    margin: 20px 20px 20px 0;
+                    display: flex;
+                    align-items: center;
+                    gap: 25px;
+                    border-radius: 12px;
+                    box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.1);
+                    animation: slideInUp 0.5s ease-out;
+                }
+                .afc-portal-icon { font-size: 40px; }
+                .afc-portal-content h3 { 
+                    margin: 0; 
+                    color: #10b981; 
+                    font-size: 20px; 
+                    font-weight: 800; 
+                }
+                .afc-portal-content p { margin: 5px 0 0 0; color: #64748b; }
+                .afc-portal-actions { margin-left: auto; display: flex; gap: 15px; }
+                .afc-portal-btn {
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    text-decoration: none;
+                    font-weight: 700;
+                    transition: all 0.2s;
+                }
+                .afc-portal-btn.view { background: #10b981; color: white; }
+                .afc-portal-btn.inventory { background: #f1f5f9; color: #475569; }
+                .afc-portal-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+                
+                @keyframes slideInUp {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+            </style>
+            <?php
         }
     }
 }

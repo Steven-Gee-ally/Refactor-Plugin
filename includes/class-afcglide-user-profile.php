@@ -30,14 +30,30 @@ class AFCGlide_User_Profile {
 
     public static function render_luxury_profile( $user ) {
         wp_nonce_field( 'afcglide_agent_nonce', 'afcglide_agent_nonce' );
+
+        // COMMAND CENTER LOGIC: Check if editing is locked
+        $lockdown_active = get_option('afc_identity_lockdown', 'no') === 'yes';
+        $is_restricted   = !current_user_can('manage_options'); // Only restrict non-admins
+        $should_freeze   = ($lockdown_active && $is_restricted);
         ?>
+        
         <div class="afcglide-luxury-profile-section">
             <h2 class="afc-section-title">
                 <span class="emerald-bar"></span>
                 AFCGlide Agent Identity
             </h2>
 
-            <div class="afc-profile-grid">
+            <?php if ( $should_freeze ) : ?>
+                <div style="background: #eff6ff; border: 1px solid #dbeafe; padding: 20px; border-radius: 12px; color: #1e40af; margin-bottom: 25px; display: flex; align-items: center; gap: 15px;">
+                    <span style="font-size: 24px;">🛡️</span>
+                    <div>
+                        <strong style="display: block; font-size: 15px;">Identity Lockdown Active</strong>
+                        <span style="font-size: 13px; opacity: 0.9;">Your professional profile is currently managed by the office broker to ensure brand consistency.</span>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <div class="afc-profile-grid <?php echo $should_freeze ? 'afc-is-locked' : ''; ?>">
                 <?php foreach ( self::get_fields() as $key => $field ) : 
                     $value = get_user_meta( $user->ID, $key, true );
                     ?>
@@ -48,24 +64,36 @@ class AFCGlide_User_Profile {
                             $img_src = $value ? wp_get_attachment_url( $value ) : '';
                             ?>
                             <div class="afc-image-uploader">
-                                <div class="afcglide-preview-box" style="width:120px; height:120px; border-radius:<?php echo $key === 'agent_photo' ? '50%' : '8px'; ?>; overflow:hidden; border:2px solid #10b981; background:#f8fafc; margin-bottom:15px;">
+                                <div class="afcglide-preview-box" style="width:120px; height:120px; border-radius:<?php echo $key === 'agent_photo' ? '50%' : '8px'; ?>; overflow:hidden; border:2px solid <?php echo $should_freeze ? '#cbd5e1' : '#10b981'; ?>; background:#f8fafc; margin-bottom:15px;">
                                     <?php if ($img_src) : ?>
-                                        <img src="<?php echo esc_url($img_src); ?>" style="width:100%; height:100%; object-fit:cover;">
+                                        <img src="<?php echo esc_url($img_src); ?>" style="width:100%; height:100%; object-fit:cover; <?php echo $should_freeze ? 'filter: grayscale(0.5); opacity: 0.8;' : ''; ?>">
                                     <?php endif; ?>
                                 </div>
                                 
                                 <input type="hidden" name="<?php echo esc_attr($key); ?>" id="afc_<?php echo esc_attr($key); ?>_id" value="<?php echo esc_attr($value); ?>">
                                 
                                 <div class="afc-btn-group">
-                                    <button type="button" class="afcglide-upload-image-btn button" data-target="afc_<?php echo esc_attr($key); ?>_id">Set <?php echo esc_html($field['label']); ?></button>
+                                    <button type="button" 
+                                            class="afcglide-upload-image-btn button" 
+                                            data-target="afc_<?php echo esc_attr($key); ?>_id"
+                                            <?php disabled($should_freeze); ?>>
+                                        <?php echo $should_freeze ? 'Locked' : 'Set ' . esc_html($field['label']); ?>
+                                    </button>
                                 </div>
                             </div>
 
                         <?php elseif ( $field['type'] === 'textarea' ) : ?>
-                            <textarea name="<?php echo esc_attr( $key ); ?>" class="afc-luxury-input" rows="4"><?php echo esc_textarea( $value ); ?></textarea>
+                            <textarea name="<?php echo esc_attr( $key ); ?>" 
+                                      class="afc-luxury-input" 
+                                      rows="4" 
+                                      <?php readonly($should_freeze); ?>><?php echo esc_textarea( $value ); ?></textarea>
                         
                         <?php else : ?>
-                            <input type="text" name="<?php echo esc_attr( $key ); ?>" value="<?php echo esc_attr( $value ); ?>" class="afc-luxury-input">
+                            <input type="text" 
+                                   name="<?php echo esc_attr( $key ); ?>" 
+                                   value="<?php echo esc_attr( $value ); ?>" 
+                                   class="afc-luxury-input"
+                                   <?php readonly($should_freeze); ?>>
                         <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
@@ -79,11 +107,14 @@ class AFCGlide_User_Profile {
             
             .afc-profile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
             .afc-profile-card { background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+            
+            /* Visual feedback for Locked State */
+            .afc-is-locked .afc-profile-card { background: #f8fafc; border-color: #f1f5f9; }
+            .afc-is-locked .afc-luxury-input { background: #f1f5f9; color: #64748b; cursor: not-allowed; }
+            
             .afc-card-label { display: block; font-weight: 700; font-size: 13px; text-transform: uppercase; color: #64748b; margin-bottom: 12px; letter-spacing: 0.5px; }
             .afc-luxury-input { width: 100%; border: 1px solid #cbd5e1 !important; border-radius: 8px !important; padding: 10px !important; font-size: 14px; }
             .afc-luxury-input:focus { border-color: #10b981 !important; outline: none; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important; }
-            
-            /* Photo Card Special Layout */
             .photo-card { grid-row: span 1; display: flex; flex-direction: column; align-items: center; text-align: center; }
         </style>
         <?php
@@ -93,6 +124,14 @@ class AFCGlide_User_Profile {
         if ( ! current_user_can( 'edit_user', $user_id ) ) return;
         if ( ! isset( $_POST['afcglide_agent_nonce'] ) || ! wp_verify_nonce( $_POST['afcglide_agent_nonce'], 'afcglide_agent_nonce' ) ) return;
         
+        // SECURITY: If Lockdown is ON and user is not an Admin, BLOCK the save
+        $lockdown_active = get_option('afc_identity_lockdown', 'no') === 'yes';
+        $is_restricted   = !current_user_can('manage_options');
+
+        if ( $lockdown_active && $is_restricted ) {
+            return; // Exit without saving anything
+        }
+
         foreach ( self::get_fields() as $key => $field ) {
             if ( isset( $_POST[ $key ] ) ) {
                 update_user_meta( $user_id, $key, sanitize_text_field( $_POST[ $key ] ) );
