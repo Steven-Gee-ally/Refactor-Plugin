@@ -1,6 +1,74 @@
 jQuery(document).ready(function ($) {
 
     // ==========================================
+    // 0. LUXURY LAYOUT ENFORCER (FORCE 1-7 ORDER)
+    // ==========================================
+    const enforceLayoutOrder = () => {
+        const container = $('#normal-sortables');
+        if (!container.length) return;
+
+        const order = [
+            'afc_agent',       // 1. Agent Branding
+            'afc_media_hub',   // 2. Visual Command Center
+            'afc_slider',      // 3. Gallery Slider
+            'afc_details',     // 4. Property Specifications
+            'afc_location',    // 5. Location & GPS
+            'afc_amenities',   // 6. Property Features
+            'afc_publish_box'  // 7. Publish
+        ];
+
+        order.forEach(id => {
+            const box = $('#' + id);
+            if (box.length) {
+                container.append(box); // Moves element to end of container in specific order
+            }
+        });
+    };
+
+    // Run immediately
+    enforceLayoutOrder();
+
+    // ==========================================
+    // 1. COMMAND CENTER - INSTANT SAVE TOGGLES
+    // ==========================================
+    $('.afc-toggle').on('click', function (e) {
+        e.preventDefault();
+        const $btn = $(this);
+        const type = $btn.data('type');
+        const currentStatus = $btn.data('status');
+        const newStatus = (currentStatus === 'yes') ? 'no' : 'yes';
+
+        // Visual feedback
+        $btn.text('Saving...').prop('disabled', true).css('opacity', '0.5');
+
+        $.ajax({
+            url: afc_vars.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'afc_toggle_lockdown_ajax', // Ensure this matches your Ajax Handler!
+                nonce: afc_vars.lockdown_nonce,
+                type: type,
+                status: newStatus
+            },
+            success: function (response) {
+                $btn.prop('disabled', false).css('opacity', '1');
+                if (response.success) {
+                    $btn.data('status', newStatus);
+                    $btn.text(newStatus === 'yes' ? 'ON' : 'OFF');
+                    // Luxury touch: Change color based on state
+                    if (newStatus === 'yes') {
+                        $btn.css('background', 'var(--afc-primary)');
+                    } else {
+                        $btn.css('background', 'var(--afc-dark)');
+                    }
+                } else {
+                    alert('Error: ' + response.data);
+                }
+            }
+        });
+    });
+
+    // ==========================================
     // UNSAVED CHANGES WARNING - Prevents Data Loss
     // ==========================================
     let formChanged = false;
@@ -184,7 +252,6 @@ jQuery(document).ready(function ($) {
         formChanged = true;
     });
 
-    // Initial load
     if ($('#afc-slider-container').length) updateSliderCount();
 
-}); // <--- THE FINAL SEAL (No more red line!)
+});

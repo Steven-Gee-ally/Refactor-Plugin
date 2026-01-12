@@ -17,49 +17,9 @@ class AFCGlide_Public {
     }
 
     public static function enqueue_public_styles() {
-        // 1. Master Luxury Styles
-        if ( file_exists( AFCG_PATH . 'assets/css/afcglide-styles.css' ) ) {
-            wp_enqueue_style( 
-                'afcglide-master-style', 
-                AFCG_URL . 'assets/css/afcglide-styles.css', 
-                [], 
-                AFCG_VERSION 
-            );
-        }
-
-        // 2. Shortcode Components
-        if ( file_exists( AFCG_PATH . 'assets/css/shortcodes.css' ) ) {
-            wp_enqueue_style( 
-                'afcglide-shortcodes-style', 
-                AFCG_URL . 'assets/css/shortcodes.css', 
-                [ 'afcglide-master-style' ], // Dependent on master styles
-                AFCG_VERSION 
-            );
-        }
-
-        // 3. Public JavaScript (AJAX Logic)
-        if ( file_exists( AFCG_PATH . 'assets/js/afcglide-public.js' ) ) {
-            wp_enqueue_script( 
-                'afcglide-public-js', 
-                AFCG_URL . 'assets/js/afcglide-public.js', 
-                [ 'jquery' ], 
-                AFCG_VERSION, 
-                true 
-            );
-
-            // Localize for AJAX
-            wp_localize_script( 'afcglide-public-js', 'afcglide_ajax_object', [
-                'ajax_url' => admin_url( 'admin-ajax.php' ),
-                'nonce'    => wp_create_nonce( 'afcglide_ajax_nonce' ), // Matches public AJAX check
-                'strings'  => [
-                    'loading' => __( 'Processing...', 'afcglide' ),
-                    'success' => __( 'Listing submitted successfully!', 'afcglide' ),
-                    'error'   => __( 'Something went wrong. Please try again.', 'afcglide' )
-                ]
-            ]);
-        }
-
-        // 4. WhatsApp Button Inline Style
+        // Assets now handled by afcglide-master.php for efficiency
+        
+        // WhatsApp Button Inline Style (Keep this here as it's dynamic/specific)
         $custom_css = "
             .afcglide-whatsapp-float {
                 position: fixed;
@@ -89,7 +49,7 @@ class AFCGlide_Public {
                 font-size: 20px;
             }
         ";
-        wp_add_inline_style( 'afcglide-master-style', $custom_css ); // Attach to master style if possible
+        wp_add_inline_style( 'afcglide-public-styles', $custom_css );
     }
 
     public static function render_whatsapp_button() {

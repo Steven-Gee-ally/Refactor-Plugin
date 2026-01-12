@@ -93,8 +93,43 @@ jQuery(document).ready(function ($) {
         });
     }
 
+    // ======================================================
+    // 3. AGENT REGISTRATION ENGINE
+    // ======================================================
+    function initAFCGlideAuth() {
+        const $regForm = $('#afcglide-registration');
+        if (!$regForm.length) return;
+
+        $regForm.on('submit', function (e) {
+            e.preventDefault();
+            const $btn = $(this).find('button');
+            const originalText = $btn.text();
+
+            $btn.prop('disabled', true).text(afcglide_ajax_object.strings.loading || 'Registering...');
+
+            $.ajax({
+                url: afcglide_ajax_object.ajax_url,
+                type: 'POST',
+                data: $(this).serialize() + '&action=afc_register_agent&nonce=' + $(this).find('[name="register_nonce"]').val(),
+                success: function (res) {
+                    if (res.success) {
+                        $regForm.html('<div class="afc-success-msg">✨ ' + res.data + '</div>');
+                    } else {
+                        alert(res.data);
+                        $btn.prop('disabled', false).text(originalText);
+                    }
+                },
+                error: function () {
+                    alert('Registration failed. Please try again.');
+                    $btn.prop('disabled', false).text(originalText);
+                }
+            });
+        });
+    }
+
     // Launch Engines
     initAFCGlideAJAX();
     initLuxuryUI();
+    initAFCGlideAuth();
 
 });

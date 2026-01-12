@@ -3,7 +3,7 @@ namespace AFCGlide\Listings;
 
 /**
  * Registers Custom Post Types and Taxonomies.
- * Version 3.8.1 - "The One Page Luxury Glide" Final Sync
+ * Version 3.9.0 - COMPLETE MENU RESTORATION
  *
  * @package AFCGlide_Listings
  */
@@ -26,6 +26,7 @@ class AFCGlide_CPT_Tax {
 
     /**
      * Register the 'afcglide_listing' Custom Post Type
+     * THIS CREATES THE "LISTINGS" MENU IN SIDEBAR
      */
     public static function register_post_type() {
         $labels = [
@@ -34,20 +35,27 @@ class AFCGlide_CPT_Tax {
             'add_new'            => __( 'Add New', 'afcglide' ),
             'add_new_item'       => __( 'Add New Listing', 'afcglide' ),
             'edit_item'          => __( 'Edit Listing', 'afcglide' ),
-            'menu_name'          => __( 'Listings', 'afcglide' ),
+            'new_item'           => __( 'New Listing', 'afcglide' ),
+            'view_item'          => __( 'View Listing', 'afcglide' ),
+            'search_items'       => __( 'Search Listings', 'afcglide' ),
+            'not_found'          => __( 'No listings found', 'afcglide' ),
+            'menu_name'          => __( '🏠 Listings', 'afcglide' ),
         ];
   
         $args = [
             'labels'              => $labels,
             'public'              => true,
             'show_ui'             => true,
-            'show_in_menu'        => 'afcglide-home',
-            
+            'show_in_menu'        => true,
+            'menu_icon'           => 'dashicons-admin-multisite',
+            'menu_position'       => 2,
+            'capability_type'     => 'post',
+            'map_meta_cap'        => true,
             'has_archive'         => 'listings',
             'rewrite'             => [ 'slug' => 'listings', 'with_front' => false ],
-            'supports'            => [ 'title', 'editor', 'thumbnail', 'author' ], // Description/Editor is ON
+            'supports'            => [ 'title', 'editor', 'thumbnail', 'author' ],
             'taxonomies'          => [ 'property_type', 'property_status', 'property_location', 'property_amenity' ],
-            'show_in_rest'        => false, // Forces Classic layout for our custom look
+            'show_in_rest'        => false,
         ];
 
         register_post_type( 'afcglide_listing', $args );
@@ -78,7 +86,7 @@ class AFCGlide_CPT_Tax {
                 'show_in_nav_menus' => true,
                 'show_in_rest'      => true,
                 'rewrite'           => [ 'slug' => $args['slug'], 'with_front' => false ],
-                'meta_box_cb'       => false, // This keeps the sidebar clean!
+                'meta_box_cb'       => false,
             ] );
             
             register_taxonomy_for_object_type( $slug, 'afcglide_listing' );

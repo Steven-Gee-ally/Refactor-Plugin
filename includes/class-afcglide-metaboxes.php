@@ -14,8 +14,8 @@ class AFCGlide_Metaboxes {
 
     private static function meta_schema() {
         return [
-            '_agent_name'            => ['type' => 'text',  'default' => '', 'required' => true],
-            '_agent_phone'           => ['type' => 'phone', 'default' => '', 'required' => true],
+            '_agent_name_display'    => ['type' => 'text',  'default' => '', 'required' => true],
+            '_agent_phone_display'   => ['type' => 'phone', 'default' => '', 'required' => true],
             '_agent_photo_id'        => ['type' => 'attachment', 'default' => 0, 'required' => true],
             '_show_floating_whatsapp'=> ['type' => 'bool',  'default' => 0],
             '_listing_price'         => ['type' => 'float', 'default' => 0, 'required' => true],
@@ -29,7 +29,7 @@ class AFCGlide_Metaboxes {
             '_gps_lng'               => ['type' => 'longitude', 'default' => ''],
             '_listing_amenities'     => ['type' => 'text',  'array' => true, 'default' => []],
             '_hero_image_id'         => ['type' => 'attachment', 'default' => 0, 'required' => true],
-            '_property_stack_ids'    => ['type' => 'attachment', 'array' => true, 'default' => []],
+            '_stack_images_json'     => ['type' => 'attachment', 'array' => true, 'default' => ''],
             '_property_slider_ids'   => ['type' => 'attachment', 'array' => true, 'default' => []],
         ];
     }
@@ -37,29 +37,23 @@ class AFCGlide_Metaboxes {
     public static function init() {
         add_action( 'add_meta_boxes', [ __CLASS__, 'add_metaboxes' ] );
         add_action( 'save_post_afcglide_listing', [ __CLASS__, 'save_metabox' ], 10, 2 );
-        add_action( 'admin_enqueue_scripts', [ __CLASS__, 'admin_assets' ] );
         add_action( 'edit_form_after_title', [ __CLASS__, 'render_description_label' ] );
         add_action( 'admin_notices', [ __CLASS__, 'show_validation_errors' ] );
         add_action( 'admin_notices', [ __CLASS__, 'render_success_portal' ] );
     }
 
-   public static function admin_assets( $hook ) {
-    global $post;
-    
-    // Safety check: Only run on our listing pages
-    if ( ! in_array( $hook, [ 'post.php', 'post-new.php' ], true ) || empty( $post ) || $post->post_type !== 'afcglide_listing' ) {
-        return;
+    private static function get_meta( $post_id, $key ) {
+        $schema = self::meta_schema();
+        $default = isset( $schema[$key]['default'] ) ? $schema[$key]['default'] : '';
+        $value = get_post_meta( $post_id, $key, true );
+        
+        // Return default if empty, but allow 0 for numbers
+        if ( $value === '' || $value === [] ) {
+            return $default;
+        }
+        return $value;
     }
 
-    // Enqueue the main admin styles (Make sure the path and version are correct)
-    wp_enqueue_style( 'afcglide-admin-css', AFCG_URL . 'assets/css/admin.css', [], '3.2.1' );
-    
-    // Enqueue the Media Uploader (required for your 16-photo slider)
-    wp_enqueue_media();
-    
-    // Enqueue your Admin JS
-    wp_enqueue_script( 'afcglide-admin-js', AFCG_URL . 'assets/js/admin.js', ['jquery'], '3.2.1', true );
-}
 
     public static function add_metaboxes() {
         // Clean up the sidebar
@@ -69,20 +63,20 @@ class AFCGlide_Metaboxes {
         add_meta_box( 'afc_agent', '👤 1. Agent Branding', [ __CLASS__, 'render_agent' ], 'afcglide_listing', 'normal', 'high' );
         add_meta_box( 'afc_media_hub', '📸 2. Visual Command Center (Hero & 3-Stack)', [ __CLASS__, 'render_media' ], 'afcglide_listing', 'normal', 'high' );
         add_meta_box( 'afc_slider', '🖼️ 3. Main Property Gallery Slider (Max 16)', [ __CLASS__, 'render_slider' ], 'afcglide_listing', 'normal', 'high' );
-        add_meta_box( 'afc_details', '🏠 4. Property Specifications', [ __CLASS__, 'render_details' ], 'afcglide_listing', 'normal', 'default' );
-        add_meta_box( 'afc_location', '📍 5. Location & GPS', [ __CLASS__, 'render_location' ], 'afcglide_listing', 'normal', 'default' );
-        add_meta_box( 'afc_amenities', '💎 6. Property Features (20 Points)', [ __CLASS__, 'render_amenities' ], 'afcglide_listing', 'normal', 'default' );
-        add_meta_box( 'afc_publish_box', '🚀 7. Publish New Listing', [ __CLASS__, 'render_publish' ], 'afcglide_listing', 'normal', 'low' );
+        add_meta_box( 'afc_details', '🏠 4. Property Specifications', [ __CLASS__, 'render_details' ], 'afcglide_listing', 'normal', 'high' );
+        add_meta_box( 'afc_location', '📍 5. Location & GPS', [ __CLASS__, 'render_location' ], 'afcglide_listing', 'normal', 'high' );
+        add_meta_box( 'afc_amenities', '💎 6. Property Features (20 Points)', [ __CLASS__, 'render_amenities' ], 'afcglide_listing', 'normal', 'high' );
+        add_meta_box( 'afc_publish_box', '🚀 7. Publish New Listing', [ __CLASS__, 'render_publish' ], 'afcglide_listing', 'normal', 'high' );
     }
 
     public static function render_agent( $post ) {
         wp_nonce_field( 'afcglide_meta_nonce', 'afcglide_meta_nonce' );
-        $name = self::get_meta( $post->ID, '_agent_name' );
-        $phone = self::get_meta( $post->ID, '_agent_phone' );
+        $name = self::get_meta( $post->ID, '_agent_name_display' );
+        $phone = self::get_meta( $post->ID, '_agent_phone_display' );
         $whatsapp = self::get_meta( $post->ID, '_show_floating_whatsapp' );
         $photo_id = self::get_meta( $post->ID, '_agent_photo_id' );
         $photo_url = $photo_id ? wp_get_attachment_url( $photo_id ) : '';
-        $placeholder = AFCG_URL . 'assets/images/agent-placeholder.png';
+        $placeholder = AFCG_URL . 'assets/images/placeholder-listings.svg';
         $agents = get_users([ 'role__in' => ['administrator', 'editor', 'author', 'contributor'] ]);
         ?>
         
@@ -119,10 +113,10 @@ class AFCGlide_Metaboxes {
             </div>
             <div class="afcglide-agent-fields">
                 <label class="afcglide-required-field">Agent Full Name</label>
-                <input type="text" name="_agent_name" id="afc_agent_name" value="<?php echo esc_attr( $name ); ?>">
+                <input type="text" name="_agent_name_display" id="afc_agent_name" value="<?php echo esc_attr( $name ); ?>">
                 
                 <label class="afcglide-required-field">Phone Number</label>
-                <input type="text" name="_agent_phone" id="afc_agent_phone" value="<?php echo esc_attr( $phone ); ?>">
+                <input type="text" name="_agent_phone_display" id="afc_agent_phone" value="<?php echo esc_attr( $phone ); ?>">
                 
                 <label><input type="checkbox" name="_show_floating_whatsapp" value="1" <?php checked( $whatsapp, 1 ); ?>> Enable Floating WhatsApp</label>
             </div>
@@ -133,7 +127,9 @@ class AFCGlide_Metaboxes {
     public static function render_media( $post ) {
         $hero_id = self::get_meta( $post->ID, '_hero_image_id' );
         $hero_url = $hero_id ? wp_get_attachment_url( $hero_id ) : '';
-        $stack_ids = self::get_meta( $post->ID, '_property_stack_ids' );
+        $stack_json = self::get_meta( $post->ID, '_stack_images_json' );
+        $stack_ids = is_string( $stack_json ) ? json_decode( $stack_json, true ) : $stack_json;
+        $stack_ids = is_array( $stack_ids ) ? $stack_ids : [];
         ?>
         <div class="afcglide-media-hub">
             <div class="afcglide-hero-section">
@@ -183,19 +179,19 @@ class AFCGlide_Metaboxes {
     }
 
     public static function render_details( $post ) {
-        $price = self::get_meta( $post->ID, '_listing_price' );
-        $beds = self::get_meta( $post->ID, '_listing_beds' );
-        $baths = self::get_meta( $post->ID, '_listing_baths' );
-        $sqft = self::get_meta( $post->ID, '_listing_sqft' );
-        ?>
-        <div class="afcglide-details-grid">
-            <div><label class="afcglide-required-field">Price ($)</label><input type="number" name="_listing_price" value="<?php echo esc_attr($price); ?>"></div>
-            <div><label class="afcglide-required-field">Beds</label><input type="number" name="_listing_beds" value="<?php echo esc_attr($beds); ?>"></div>
-            <div><label class="afcglide-required-field">Baths</label><input type="number" name="_listing_baths" value="<?php echo esc_attr($baths); ?>" step="0.5"></div>
-            <div><label>Sq Ft</label><input type="number" name="_listing_sqft" value="<?php echo esc_attr($sqft); ?>"></div>
-        </div>
-        <?php
-    }
+    // Get values directly from the database with '0' as a hardcoded fallback
+    $price = get_post_meta( $post->ID, '_listing_price', true ) ?: '0';
+    $beds  = get_post_meta( $post->ID, '_listing_beds', true ) ?: '0';
+    $baths = get_post_meta( $post->ID, '_listing_baths', true ) ?: '0';
+    $sqft  = get_post_meta( $post->ID, '_listing_sqft', true ) ?: '0';
+
+    echo '<div class="afcglide-details-grid">';
+        echo '<div class="afc-detail-column"><label class="afcglide-required-field">Price ($)</label><input type="number" name="_listing_price" value="'.esc_attr($price).'"></div>';
+        echo '<div class="afc-detail-column"><label class="afcglide-required-field">Beds</label><input type="number" name="_listing_beds" value="'.esc_attr($beds).'"></div>';
+        echo '<div class="afc-detail-column"><label class="afcglide-required-field">Baths</label><input type="number" name="_listing_baths" value="'.esc_attr($baths).'" step="0.5"></div>';
+        echo '<div class="afc-detail-column"><label>Sq Ft</label><input type="number" name="_listing_sqft" value="'.esc_attr($sqft).'"></div>';
+    echo '</div>';
+}
 
    public static function render_location( $post ) {
         $address = self::get_meta( $post->ID, '_property_address' );
@@ -294,6 +290,12 @@ class AFCGlide_Metaboxes {
                 case 'bool': $value = !empty($value) ? 1 : 0; break;
                 default: $value = is_array($value) ? array_map('sanitize_text_field', $value) : sanitize_text_field($value);
             }
+
+            // Unify: Always save stack images as JSON for JS/Shortcode consistency
+            if ( $key === '_stack_images_json' && is_array( $value ) ) {
+                $value = json_encode( $value );
+            }
+
             update_post_meta( $post_id, $key, $value );
         }
     }

@@ -23,15 +23,17 @@ $lng       = get_post_meta( $post_id, '_gps_lng', true );
 $amenities = get_post_meta( $post_id, '_listing_amenities', true ) ?: [];
 
 // Agent Information
-$agent_name     = get_post_meta( $post_id, '_agent_name', true ) ?: get_the_author_meta( 'display_name', $author_id );
-$agent_phone    = get_post_meta( $post_id, '_agent_phone', true ) ?: get_user_meta( $author_id, 'agent_phone', true );
+$agent_name     = get_post_meta( $post_id, '_agent_name_display', true ) ?: get_the_author_meta( 'display_name', $author_id );
+$agent_phone    = get_post_meta( $post_id, '_agent_phone_display', true ) ?: get_user_meta( $author_id, 'agent_phone', true );
 $agent_whatsapp = get_user_meta( $author_id, 'agent_whatsapp', true ) ?: $agent_phone;
 $agent_photo_id = get_post_meta( $post_id, '_agent_photo_id', true );
 $show_whatsapp  = get_post_meta( $post_id, '_show_floating_whatsapp', true );
 
 // Gallery Data
 $hero_id    = get_post_meta( $post_id, '_hero_image_id', true ) ?: get_post_thumbnail_id();
-$stack_ids  = get_post_meta( $post_id, '_property_stack_ids', true ) ?: [];
+$stack_json = get_post_meta( $post_id, '_stack_images_json', true );
+$stack_ids  = is_string( $stack_json ) ? json_decode( $stack_json, true ) : $stack_json;
+$stack_ids  = is_array( $stack_ids ) ? $stack_ids : [];
 $slider_ids = get_post_meta( $post_id, '_property_slider_ids', true ) ?: [];
 
 // Company Logo
@@ -69,7 +71,6 @@ $whatsapp_clean = preg_replace('/[^0-9]/', '', $agent_whatsapp);
 wp_enqueue_style( 'glightbox', 'https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css', [], '3.2.0' );
 wp_enqueue_style( 'afcglide-single-listing', AFCG_URL . 'assets/css/single-listing.css', [], AFCG_VERSION );
 wp_enqueue_script( 'glightbox', 'https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js', [], '3.2.0', true );
-wp_enqueue_script( 'afcglide-single-listing', AFCG_URL . 'assets/js/single-listing.js', ['glightbox'], AFCG_VERSION, true );
 ?>
 
 <div class="afcglide-wrapper">

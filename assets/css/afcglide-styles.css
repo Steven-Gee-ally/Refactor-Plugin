@@ -1,31 +1,48 @@
 /**
- * AFCGlide Master Luxury Styles v3.2
- * One file to rule the whole site: Listings, Search, & Agent Submission.
+ * AFCGlide Master Luxury Styles v3.5 - Production Ready
+ * Organized, Unified, and Optimized for High-End Performance.
  */
 
 :root {
     --afc-primary: #10b981;
+    /* Signature Green */
+    --afc-accent: #3b82f6;
+    /* Action Blue */
     --afc-dark: #0f172a;
+    /* Slate 900 */
     --afc-text: #334155;
+    /* Slate 700 */
     --afc-muted: #64748b;
+    /* Slate 500 */
     --afc-bg-light: #f8fafc;
+    /* Slate 50 */
     --afc-border: #e2e8f0;
-    --afc-glass: rgba(255, 255, 255, 0.85);
+    /* Slate 200 */
+    --afc-glass: rgba(255, 255, 255, 0.9);
     --afc-shadow-lux: 0 20px 50px rgba(0, 0, 0, 0.05);
-    --afc-radius: 12px;
+    --afc-radius: 16px;
 }
 
-/* 1. FOUNDATION & RESET */
-.afcglide-wrapper,
+/* Public Front-end: Center the layout */
 .afcglide-container {
     max-width: 1400px;
-    margin: 0 auto;
+    margin: 40px auto;
     padding: 0 20px;
-    font-family: 'Inter', -apple-system, sans-serif;
-    -webkit-font-smoothing: antialiased;
+    font-family: 'Inter', sans-serif;
 }
 
-/* 2. SINGLE LISTING HERO (The "Hero-16" Logic) */
+/* WordPress Admin: Dock to the left to protect the sidebar */
+/* We add .wp-admin to ensure we out-rank default WP styles */
+.wp-admin .afcglide-wrapper {
+    max-width: 1200px;
+    margin: 20px 0 !important; 
+    padding: 0 20px;
+    font-family: 'Inter', sans-serif;
+    color: var(--afc-text);
+    display: block;
+    clear: both;
+}
+/* 2. THE LUXURY HERO & GALLERY (Single Listing) */
 .afc-hero-block {
     display: grid;
     grid-template-columns: 2.5fr 1fr;
@@ -36,13 +53,8 @@
     overflow: hidden;
 }
 
-.afc-hero-main {
-    position: relative;
-    height: 100%;
-    overflow: hidden;
-}
-
-.afc-hero-main img {
+.afc-hero-main img,
+.afc-main-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -53,138 +65,48 @@
     transform: scale(1.03);
 }
 
-.afc-price-badge {
-    position: absolute;
-    bottom: 25px;
-    left: 25px;
+/* The Price Tag */
+.afc-price-badge,
+.afc-card-price-tag {
     background: var(--afc-glass);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    padding: 14px 28px;
+    padding: 10px 20px;
     border-radius: 10px;
-    font-size: 26px;
     font-weight: 800;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    color: var(--afc-dark);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     z-index: 10;
 }
 
-.afc-hero-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+/* 3. SHUTTERBUG 4-UP GALLERY */
+.afc-shutterbug-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-top: 15px;
 }
 
-.afc-stack-item {
-    flex: 1;
+.afc-gallery-item {
+    aspect-ratio: 4 / 3;
     overflow: hidden;
     border-radius: 8px;
-    background: #000;
+    border: 1px solid var(--afc-border);
 }
 
-.afc-stack-item img {
+.afc-thumb-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: 0.4s;
+    transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
-.afc-stack-item:hover img {
-    opacity: 0.8;
-    transform: scale(1.05);
+.afc-gallery-item:hover .afc-thumb-img {
+    transform: scale(1.1);
+    filter: brightness(1.05);
 }
 
-/* 3. LISTING CARDS (Used in Grid/Search Results) */
-.afcglide-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 30px;
-}
-
-.afc-listing-card {
-    background: #fff;
-    border-radius: var(--afc-radius);
-    overflow: hidden;
-    border: 1px solid var(--afc-border);
-    transition: all 0.4s ease;
-}
-
-.afc-listing-card:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--afc-shadow-lux);
-}
-
-/* 4. AGENT SUBMISSION UI (No Compromise Professionalism) */
-.afcglide-form-wrapper {
-    background: #fff;
-    padding: 40px;
-    border-radius: 20px;
-    border: 1px solid var(--afc-border);
-    box-shadow: var(--afc-shadow-lux);
-}
-
-.upload-zone {
-    background: var(--afc-bg-light);
-    border: 2px dashed var(--afc-border);
-    padding: 25px;
-    margin-bottom: 20px;
-    border-radius: var(--afc-radius);
-    transition: 0.3s;
-}
-
-.upload-zone:hover {
-    border-color: var(--afc-primary);
-    background: #fff;
-}
-
-.hero-zone {
-    border-left: 5px solid var(--afc-primary);
-}
-
-/* 5. INTERACTIVE ELEMENTS (Buttons & Filters) */
-.afcglide-btn,
-.afc-btn {
-    padding: 14px 28px;
-    border-radius: 10px;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    border: none;
-    cursor: pointer;
-    text-decoration: none;
-}
-
-.afc-btn-whatsapp {
-    background: #25D366;
-    color: #fff;
-}
-
-.afc-btn-call {
-    background: var(--afc-primary);
-    color: #fff;
-}
-
-.afc-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-}
-
-/* 6. RESPONSIVE */
-@media (max-width: 1024px) {
-    .afc-hero-block {
-        height: 450px;
-    }
-
-    .afc-hero-stack {
-        display: none;
-    }
-}
-
-/* --- AFCGlide Front-End Luxury Polish --- */
-
-/* 1. The Listing Grid Layout */
+/* 4. LISTING GRID & CARDS */
 .afcglide-grid {
     display: grid;
     gap: 30px;
@@ -201,59 +123,178 @@
     }
 }
 
-/* 2. The Listing Card Design */
 .afc-listing-card {
-    background: #ffffff;
-    border-radius: 20px;
+    background: #fff;
+    border-radius: var(--afc-radius);
     overflow: hidden;
-    border: 1px solid #eef2f6;
+    border: 1px solid var(--afc-border);
     transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+    position: relative;
 }
 
 .afc-listing-card:hover {
     transform: translateY(-8px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--afc-shadow-lux);
 }
 
-/* 3. The Money Tag (Price) */
-.afc-card-price-tag {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(5px);
-    padding: 8px 15px;
-    border-radius: 10px;
-    font-weight: 800;
-    color: #1e293b;
-    font-size: 14px;
-    z-index: 10;
+/* 5. AGENT SUBMISSION FORM UI */
+.afc-form-wrapper {
+    max-width: 900px;
+    margin: 40px auto;
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: var(--afc-shadow-lux);
+    padding: 40px;
 }
 
-/* 4. The WhatsApp Button (Costa Rica Lead Gen) */
-.afc-whatsapp-btn {
-    background: #22c55e;
+.afc-form-section {
+    margin-bottom: 30px;
+    padding: 25px;
+    background: var(--afc-bg-light);
+    border-radius: 16px;
+    border: 1px solid var(--afc-border);
+}
+
+.afc-dropzone {
+    border: 2px dashed var(--afc-accent);
+    background: #eff6ff;
+    padding: 40px;
+    text-align: center;
+    border-radius: 16px;
+    cursor: pointer;
+}
+
+/* 6. BUTTONS, ALERTS & PREVIEWS */
+.afc-main-btn,
+.afcglide-submit-btn {
+    width: 100%;
+    background: var(--afc-dark);
     color: white !important;
-    padding: 10px 18px;
+    padding: 16px;
     border-radius: 12px;
-    text-decoration: none;
     font-weight: 700;
-    font-size: 13px;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: background 0.2s;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
 }
 
-.afc-whatsapp-btn:hover {
-    background: #16a34a;
+.afc-main-btn:hover {
+    background: #000;
+    transform: translateY(-2px);
 }
 
-/* 5. Standalone Signature Card [afcglide_signature] */
-.afc-agent-signature-card {
-    margin: 30px 0;
-    border: 1px solid #e2e8f0;
-    background: #f8fafc;
-    /* Subtle light gray background */
+/* Submission Button Loading State */
+.afc-main-btn.loading {
+    background: var(--afc-muted);
+    cursor: not-allowed;
+    opacity: 0.8;
+    position: relative;
+    pointer-events: none;
+}
+
+.afc-main-btn.loading::after {
+    content: "...";
+    display: inline-block;
+    animation: afcDots 1.5s infinite;
+}
+
+@keyframes afcDots {
+    0% {
+        content: ".";
+    }
+
+    33% {
+        content: "..";
+    }
+
+    66% {
+        content: "...";
+    }
+}
+
+.afc-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.preview-item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--afc-border);
+}
+
+.preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.size-warning {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    font-size: 10px;
+    text-align: center;
+    padding: 2px;
+}
+
+/* Message Styling */
+#afc-form-status p {
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+#afc-form-status .info {
+    background: #eff6ff;
+    color: var(--afc-accent);
+    border: 1px solid #dbeafe;
+}
+
+#afc-form-status .success {
+    background: #ecfdf5;
+    color: var(--afc-primary);
+    border: 1px solid #d1fae5;
+}
+
+#afc-form-status .error {
+    background: #fef2f2;
+    color: #ef4444;
+    border: 1px solid #fee2e2;
+}
+
+/* 7. RESPONSIVE POLISH */
+@media (max-width: 768px) {
+    .afc-hero-block {
+        height: auto;
+        grid-template-columns: 1fr;
+    }
+
+    .afc-hero-stack {
+        display: none;
+    }
+
+    .afc-shutterbug-row {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        padding-bottom: 10px;
+    }
+
+    .afc-gallery-item {
+        flex: 0 0 80%;
+        scroll-snap-align: start;
+    }
+
+    .afc-form-wrapper {
+        padding: 20px;
+    }
 }

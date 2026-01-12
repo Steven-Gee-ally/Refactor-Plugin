@@ -86,14 +86,14 @@ class AFCGlide_User_Profile {
                             <textarea name="<?php echo esc_attr( $key ); ?>" 
                                       class="afc-luxury-input" 
                                       rows="4" 
-                                      <?php readonly($should_freeze); ?>><?php echo esc_textarea( $value ); ?></textarea>
+                                      <?php echo $should_freeze ? 'readonly="readonly"' : ''; ?>><?php echo esc_textarea( $value ); ?></textarea>
                         
                         <?php else : ?>
                             <input type="text" 
                                    name="<?php echo esc_attr( $key ); ?>" 
                                    value="<?php echo esc_attr( $value ); ?>" 
                                    class="afc-luxury-input"
-                                   <?php readonly($should_freeze); ?>>
+                                   <?php echo $should_freeze ? 'readonly="readonly"' : ''; ?>>
                         <?php endif; ?>
                     </div>
                 <?php endforeach; ?>

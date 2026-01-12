@@ -7,7 +7,6 @@ namespace AFCGlide\Listings;
  * Version: 3.6.7-AGENT-PROOF
  * Author: Stevo
  * Text Domain: afcglide-listings
- * Domain Path: /languages
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
@@ -15,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 /**
  * Define Plugin Constants
  */
-define( 'AFCG_VERSION', '3.6.7' );
+define( 'AFCG_VERSION', '3.6.26' );
 define( 'AFCG_PATH', plugin_dir_path( __FILE__ ) );
 define( 'AFCG_URL', plugin_dir_url( __FILE__ ) );
 define( 'AFCG_BASENAME', plugin_basename( __FILE__ ) );
@@ -37,10 +36,9 @@ class AFCGlide_Plugin {
         // Core Functionality
         'includes/class-cpt-tax.php',
         'includes/class-afcglide-metaboxes.php',
-        'includes/class-afcglide-settings.php',
+    
         'includes/class-afcglide-templates.php',
         'includes/class-afcglide-block-manager.php',
-        'includes/class-afcglide-admin-assets.php',
         'includes/class-afcglide-public.php',
         'includes/class-afcglide-ajax-handler.php',
         'includes/class-afcglide-user-profile.php',
@@ -48,7 +46,7 @@ class AFCGlide_Plugin {
         
         // Admin Enhancements
         'includes/admin/class-afcglide-admin-menu.php',
-        'includes/admin/class-afcglide-agent-protections.php',
+        'includes/admin/class-afcglide-agent-protection.php',
     ];
     
     private static $core_classes = [
@@ -56,10 +54,9 @@ class AFCGlide_Plugin {
         'AFCGlide_Metaboxes',
         'AFCGlide_Shortcodes',
         'AFCGlide_Public',
-        'AFCGlide_Settings',
+        //'AFCGlide_Settings',//
         'AFCGlide_Ajax_Handler',
         'AFCGlide_Block_Manager',
-        'AFCGlide_Admin_Assets',
         'AFCGlide_User_Profile',
         'AFCGlide_Templates', 
     ];
@@ -70,6 +67,10 @@ class AFCGlide_Plugin {
     public static function init() {
         self::load_files();
         add_action( 'init', [ __CLASS__, 'initialize_classes' ], 5 );
+
+        // Enqueue Scripts (Public and Admin)
+        add_action( 'wp_enqueue_scripts', [ __CLASS__, 'enqueue_public_assets' ] );
+        add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_command_center_assets' ] );
         
         // Command Center: Worker Mode Logic
         add_action( 'admin_init', [ __CLASS__, 'apply_worker_mode_permissions' ] );
@@ -78,16 +79,76 @@ class AFCGlide_Plugin {
         register_deactivation_hook( __FILE__, [ __CLASS__, 'on_deactivation' ] );
         
         if ( AFCG_DEBUG ) {
-            add_action( 'wp_footer', [ __CLASS__, 'debug_output' ], 999 );
-            add_action( 'admin_footer', [ __CLASS__, 'debug_output' ], 999 );
             add_action( 'admin_notices', [ __CLASS__, 'admin_debug_notices' ] );
         }
     }
 
     /**
-     * WORKER MODE LOGIC:
-     * This checks the Command Center switch and grants/revokes powers.
+     * ENQUEUE ADMIN SCRIPTS:
+     * This loads the CSS that handles the sidebar protection
      */
+    public static function enqueue_admin_command_center_assets( $hook ) {
+        $screen = get_current_screen();
+        
+        // Only load on our specific pages + User Profile pages
+        if ( strpos( $hook, 'afcglide' ) !== false || 
+             ( $screen && $screen->post_type === 'afcglide_listing' ) ||
+             in_array( $hook, ['profile.php', 'user-edit.php'] )
+           ) {
+            
+            wp_enqueue_media(); 
+            
+            // Luxury Typography (Inter)
+            wp_enqueue_style( 'afcglide-primary-font', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap', [], null );
+
+            // Core Admin Styles
+            wp_enqueue_style( 'afcglide-admin-css', AFCG_URL . 'assets/css/admin.css', [], AFCG_VERSION );
+            
+            // Sidebar & General UI Styles
+            wp_enqueue_style( 'afcglide-master-styles', AFCG_URL . 'assets/css/afcglide-styles.css', [], AFCG_VERSION );
+            
+            // Unified Admin JS
+            wp_enqueue_script( 'afcglide-admin-js', AFCG_URL . 'assets/js/afcglide-admin.js', [ 'jquery', 'jquery-ui-sortable' ], AFCG_VERSION, true );
+
+            wp_localize_script( 'afcglide-admin-js', 'afc_vars', [
+                'ajax_url'       => admin_url( 'admin-ajax.php' ),
+                'lockdown_nonce' => wp_create_nonce( 'afc_lockdown_nonce' )
+            ] );
+        }
+    }
+
+    public static function enqueue_public_assets() {
+        // Luxury Styling
+        wp_enqueue_style( 'afcglide-public-styles', AFCG_URL . 'assets/css/afcglide-styles.css', [], AFCG_VERSION );
+        wp_enqueue_style( 'afcglide-shortcodes', AFCG_URL . 'assets/css/shortcodes.css', [ 'afcglide-public-styles' ], AFCG_VERSION );
+        
+        // Public/AJAX JS
+        wp_enqueue_script( 'afcglide-public-js', AFCG_URL . 'assets/js/afcglide-public.js', [ 'jquery' ], AFCG_VERSION, true );
+        
+        // Submission Form JS (Only if shortcode is present ideally, but loaded globally for now for simplicity)
+        wp_enqueue_script( 'afcglide-submission-js', AFCG_URL . 'assets/js/afcglide-submission.js', [ 'jquery' ], AFCG_VERSION, true );
+
+        wp_localize_script( 'afcglide-public-js', 'afcglide_ajax_object', [
+            'ajax_url' => admin_url( 'admin-ajax.php' ),
+            'nonce'    => wp_create_nonce( 'afcglide_ajax_nonce' ),
+            'strings'  => [
+                'loading' => __( 'Processing Luxury Command...', 'afcglide' ),
+                'success' => __( 'Success!', 'afcglide' ),
+                'error'   => __( 'Error. Please try again.', 'afcglide' )
+            ]
+        ]);
+
+        wp_localize_script( 'afcglide-submission-js', 'afc_ajax_obj', [
+            'ajax_url' => admin_url( 'admin-ajax.php' ),
+            'nonce'    => wp_create_nonce( 'afcglide_ajax_nonce' ),
+            'messages' => [
+                'uploading' => __( 'Uploading Luxury Gallery (up to 16 photos)...', 'afcglide' ),
+                'success'   => __( '🚀 Success! Your listing is live.', 'afcglide' ),
+                'error'     => __( '📸 Error: Please upload at least 4 photos.', 'afcglide' )
+            ]
+        ]);
+    }
+
     public static function apply_worker_mode_permissions() {
         $worker_mode_enabled = get_option('afc_worker_mode', 'no') === 'yes';
         $role = get_role('office_manager');
@@ -95,12 +156,10 @@ class AFCGlide_Plugin {
         if ( ! $role ) return;
 
         if ( $worker_mode_enabled ) {
-            // UNLOCK: Give Office Managers the power to edit/delete other agent listings
             $role->add_cap('edit_others_afcglide_listings');
             $role->add_cap('delete_others_afcglide_listings');
             $role->add_cap('publish_afcglide_listings');
         } else {
-            // LOCK: Take that power away
             $role->remove_cap('edit_others_afcglide_listings');
             $role->remove_cap('delete_others_afcglide_listings');
             $role->remove_cap('publish_afcglide_listings');
@@ -119,17 +178,25 @@ class AFCGlide_Plugin {
     }
     
     public static function initialize_classes() {
+        // 1. Initialize CPT first so Taxonomies exist
         if ( class_exists( __NAMESPACE__ . '\\AFCGlide_CPT_Tax' ) ) {
             AFCGlide_CPT_Tax::init();
         }
         
+        // 2. Initialize Listings Namespace Classes
         foreach ( self::$core_classes as $class ) {
             if ( $class === 'AFCGlide_CPT_Tax' ) continue;
             self::init_class( $class, __NAMESPACE__ );
         }
+
+        // 3. Initialize Admin Namespace Classes (The "Command Center" Brains)
+        if ( class_exists( 'AFCGlide\\Admin\\AFCGlide_Admin_Menu' ) ) {
+            \AFCGlide\Admin\AFCGlide_Admin_Menu::init();
+        }
         
-        if ( class_exists( 'AFCGlide\\Admin\\AFCGlide_Agent_Protections' ) ) {
-            \AFCGlide\Admin\AFCGlide_Agent_Protections::init();
+        // ADD THIS: Turn on the Agent Protection logic
+        if ( class_exists( 'AFCGlide\\Admin\\AFCGlide_Agent_Protection' ) ) {
+            \AFCGlide\Admin\AFCGlide_Agent_Protection::init();
         }
     }
     
@@ -145,12 +212,10 @@ class AFCGlide_Plugin {
     }
     
     public static function on_activation() {
-        // 1. Setup Custom Post Types
         if ( class_exists( __NAMESPACE__ . '\\AFCGlide_CPT_Tax' ) ) {
             AFCGlide_CPT_Tax::init();
         }
 
-        // 2. Create the "Office Manager" Role for Worker Mode
         if ( ! get_role('office_manager') ) {
             add_role( 'office_manager', 'Office Manager', [
                 'read'         => true,
@@ -168,15 +233,10 @@ class AFCGlide_Plugin {
         flush_rewrite_rules();
     }
     
-    public static function debug_output() {
-        if ( ! current_user_can( 'manage_options' ) ) return;
-        echo "\n\n";
-    }
-    
     public static function admin_debug_notices() {
         if ( ! current_user_can( 'manage_options' ) ) return;
         if ( ! empty( self::$missing_files ) || ! empty( self::$failed_classes ) ) {
-            echo '<div class="notice notice-error is-dismissible"><p><strong>AFCGlide:</strong> Issues detected in class loading.</p></div>';
+            echo '<div class="notice notice-error is-dismissible"><p><strong>AFCGlide:</strong> Issues detected in class loading. Please check the includes folder.</p></div>';
         }
     }
 }
