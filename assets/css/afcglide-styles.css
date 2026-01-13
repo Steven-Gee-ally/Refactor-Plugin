@@ -1,29 +1,25 @@
 /**
- * AFCGlide Master Luxury Styles v3.5 - Production Ready
- * Organized, Unified, and Optimized for High-End Performance.
+ * AFCGlide Master Luxury Styles v3.6 - Production Ready
+ * Unified, Optimized, and Integrated Refinements.
  */
 
 :root {
     --afc-primary: #10b981;
-    /* Signature Green */
     --afc-accent: #3b82f6;
-    /* Action Blue */
     --afc-dark: #0f172a;
-    /* Slate 900 */
     --afc-text: #334155;
-    /* Slate 700 */
     --afc-muted: #64748b;
-    /* Slate 500 */
     --afc-bg-light: #f8fafc;
-    /* Slate 50 */
     --afc-border: #e2e8f0;
-    /* Slate 200 */
     --afc-glass: rgba(255, 255, 255, 0.9);
     --afc-shadow-lux: 0 20px 50px rgba(0, 0, 0, 0.05);
     --afc-radius: 16px;
+    /* NEW REFINEMENTS */
+    --afc-ease: cubic-bezier(0.165, 0.84, 0.44, 1);
+    --afc-gold: #b38b59;
 }
 
-/* Public Front-end: Center the layout */
+/* 1. GLOBAL & ADMIN WRAPPERS */
 .afcglide-container {
     max-width: 1400px;
     margin: 40px auto;
@@ -31,18 +27,16 @@
     font-family: 'Inter', sans-serif;
 }
 
-/* WordPress Admin: Dock to the left to protect the sidebar */
-/* We add .wp-admin to ensure we out-rank default WP styles */
 .wp-admin .afcglide-wrapper {
-    max-width: 1200px;
-    margin: 20px 0 !important; 
+    max-width: 95%;
+    /* Updated for better large-screen use */
+    margin: 20px 0 !important;
     padding: 0 20px;
     font-family: 'Inter', sans-serif;
     color: var(--afc-text);
-    display: block;
-    clear: both;
 }
-/* 2. THE LUXURY HERO & GALLERY (Single Listing) */
+
+/* 2. THE LUXURY HERO & GALLERY */
 .afc-hero-block {
     display: grid;
     grid-template-columns: 2.5fr 1fr;
@@ -53,21 +47,18 @@
     overflow: hidden;
 }
 
-.afc-hero-main img,
-.afc-main-img {
+.afc-hero-main img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.8s ease;
+    transition: transform 0.8s var(--afc-ease);
 }
 
 .afc-hero-main:hover img {
     transform: scale(1.03);
 }
 
-/* The Price Tag */
-.afc-price-badge,
-.afc-card-price-tag {
+.afc-price-badge {
     background: var(--afc-glass);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -98,7 +89,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    transition: 0.4s var(--afc-ease);
 }
 
 .afc-gallery-item:hover .afc-thumb-img {
@@ -107,28 +98,12 @@
 }
 
 /* 4. LISTING GRID & CARDS */
-.afcglide-grid {
-    display: grid;
-    gap: 30px;
-    margin: 40px 0;
-}
-
-@media (min-width: 768px) {
-    .afcglide-grid-cols-3 {
-        grid-template-columns: repeat(3, 1fr);
-    }
-
-    .afcglide-grid-cols-2 {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
 .afc-listing-card {
     background: #fff;
     border-radius: var(--afc-radius);
     overflow: hidden;
     border: 1px solid var(--afc-border);
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    transition: all 0.4s var(--afc-ease);
     position: relative;
 }
 
@@ -137,36 +112,8 @@
     box-shadow: var(--afc-shadow-lux);
 }
 
-/* 5. AGENT SUBMISSION FORM UI */
-.afc-form-wrapper {
-    max-width: 900px;
-    margin: 40px auto;
-    background: #fff;
-    border-radius: 24px;
-    box-shadow: var(--afc-shadow-lux);
-    padding: 40px;
-}
-
-.afc-form-section {
-    margin-bottom: 30px;
-    padding: 25px;
-    background: var(--afc-bg-light);
-    border-radius: 16px;
-    border: 1px solid var(--afc-border);
-}
-
-.afc-dropzone {
-    border: 2px dashed var(--afc-accent);
-    background: #eff6ff;
-    padding: 40px;
-    text-align: center;
-    border-radius: 16px;
-    cursor: pointer;
-}
-
-/* 6. BUTTONS, ALERTS & PREVIEWS */
-.afc-main-btn,
-.afcglide-submit-btn {
+/* 5. BUTTONS & LOADING STATES */
+.afc-main-btn {
     width: 100%;
     background: var(--afc-dark);
     color: white !important;
@@ -183,35 +130,28 @@
     transform: translateY(-2px);
 }
 
-/* Submission Button Loading State */
 .afc-main-btn.loading {
-    background: var(--afc-muted);
+    background: var(--afc-muted) !important;
     cursor: not-allowed;
     opacity: 0.8;
     position: relative;
     pointer-events: none;
+    animation: afcPulse 2s infinite ease-in-out;
 }
 
-.afc-main-btn.loading::after {
-    content: "...";
-    display: inline-block;
-    animation: afcDots 1.5s infinite;
-}
+@keyframes afcPulse {
 
-@keyframes afcDots {
-    0% {
-        content: ".";
+    0%,
+    100% {
+        opacity: 0.8;
     }
 
-    33% {
-        content: "..";
-    }
-
-    66% {
-        content: "...";
+    50% {
+        opacity: 0.5;
     }
 }
 
+/* 6. SUBMISSION PREVIEWS & WARNINGS */
 .afc-preview-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -227,74 +167,50 @@
     border: 1px solid var(--afc-border);
 }
 
-.preview-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.size-warning {
+/* Added Remove Button Refinement */
+.preview-item .afc-remove-file {
     position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: rgba(239, 68, 68, 0.9);
+    top: 5px;
+    right: 5px;
+    background: rgba(0, 0, 0, 0.5);
     color: white;
-    font-size: 10px;
-    text-align: center;
-    padding: 2px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    z-index: 5;
 }
 
-/* Message Styling */
-#afc-form-status p {
-    padding: 15px;
-    border-radius: 8px;
-    margin-top: 20px;
-    font-size: 14px;
-}
-
-#afc-form-status .info {
-    background: #eff6ff;
-    color: var(--afc-accent);
-    border: 1px solid #dbeafe;
-}
-
-#afc-form-status .success {
-    background: #ecfdf5;
-    color: var(--afc-primary);
-    border: 1px solid #d1fae5;
-}
-
-#afc-form-status .error {
-    background: #fef2f2;
-    color: #ef4444;
-    border: 1px solid #fee2e2;
+.preview-item .afc-remove-file:hover {
+    background: #ef4444;
 }
 
 /* 7. RESPONSIVE POLISH */
 @media (max-width: 768px) {
-    .afc-hero-block {
-        height: auto;
-        grid-template-columns: 1fr;
-    }
-
-    .afc-hero-stack {
-        display: none;
-    }
-
     .afc-shutterbug-row {
         display: flex;
         overflow-x: auto;
         scroll-snap-type: x mandatory;
-        padding-bottom: 10px;
+        padding-bottom: 15px;
+    }
+
+    /* Elegant Mobile Scrollbar */
+    .afc-shutterbug-row::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    .afc-shutterbug-row::-webkit-scrollbar-thumb {
+        background: var(--afc-border);
+        border-radius: 10px;
     }
 
     .afc-gallery-item {
         flex: 0 0 80%;
         scroll-snap-align: start;
-    }
-
-    .afc-form-wrapper {
-        padding: 20px;
     }
 }

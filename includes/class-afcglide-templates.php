@@ -38,13 +38,18 @@ class AFCGlide_Templates {
      */
     public static function load_listing_template( $template ) {
         if ( is_singular( 'afcglide_listing' ) ) {
-            // Path to your premium file with the underscore
-            $plugin_template = AFCG_PATH . 'templates/single-afcglide_listing.php';
+            // Try hyphen version first (WordPress standard)
+            $hyphen_template = AFCG_PATH . 'templates/single-afcglide-listing.php';
+            if ( file_exists( $hyphen_template ) ) {
+                return $hyphen_template;
+            }
             
-            if ( file_exists( $plugin_template ) ) {
-                return $plugin_template;
+            // Fallback to underscore version
+            $underscore_template = AFCG_PATH . 'templates/single-afcglide_listing.php';
+            if ( file_exists( $underscore_template ) ) {
+                return $underscore_template;
             }
         }
         return $template;
     }
-}
+} // <--- Added this final closing brace to close the class
