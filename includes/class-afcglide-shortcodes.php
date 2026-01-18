@@ -1,194 +1,168 @@
 <?php
-namespace AFCGlide\Listings;
+namespace AFCGlide\Admin;
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+/**
+ * AFCGlide Shortcodes v4.0 - MASTER ENGINE
+ * VERSION: Added jQuery/AJAX support for submission form
+ */
 final class AFCGlide_Shortcodes {
 
     public static function init() {
-        // Use a priority of 20 to ensure all CPTs are registered first
         add_action( 'init', [ __CLASS__, 'register_shortcodes' ], 20 );
-    }
-
-    public static function register_shortcodes() {
-        // Auth Shortcodes
-        add_shortcode( 'afcglide_login', [ __CLASS__, 'render_login_form' ] );
-        add_shortcode( 'afcglide_register', [ __CLASS__, 'render_registration_form' ] );
-        
-        // Display Shortcodes
-        add_shortcode( 'afcglide_signature', [ __CLASS__, 'render_signature_card' ] );
-        add_shortcode( 'afcglide_listings_grid', [ __CLASS__, 'render_listing_grid' ] );
-        add_shortcode( 'afcglide_hero_gallery', [ __CLASS__, 'render_gallery_shortcode' ] );
-
-        // THE MASTER SUBMISSION FORM (Linking to your new template)
-        add_shortcode( 'afcglide_submit_listing', [ __CLASS__, 'render_submission_form' ] );
+        add_action( 'wp_enqueue_scripts', [ __CLASS__, 'enqueue_frontend_assets' ] );
     }
 
     /**
-     * Renders the Professional Submission Form from Template
+     * Enqueue frontend scripts when shortcode is detected
+     */
+    public static function enqueue_frontend_assets() {
+        global $post;
+        
+        // Check if the submission form shortcode is present on the page
+        if ( is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'afcglide_submit_listing' ) ) {
+            // Enqueue jQuery (WordPress comes with it)
+            wp_enqueue_script( 'jquery' );
+            
+            // Enqueue submission form styles if you have them
+            wp_enqueue_style( 'afc-submission-form', AFCG_URL . 'assets/css/admin-submission.css', [], '4.0' );
+            
+            // Optional: Enqueue submission form JS if you want to separate it
+            // wp_enqueue_script( 'afc-submission-js', AFCG_URL . 'assets/js/afcglide-submission.js', ['jquery'], '4.0', true );
+            
+            // Localize script for AJAX (in case you move JS to external file later)
+            wp_localize_script( 'jquery', 'afc_submission_vars', [
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce'    => wp_create_nonce('afc_nonce'),
+            ]);
+        }
+        
+        // Enqueue grid styles when grid shortcode is present
+        if ( is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'afcglide_listings_grid' ) ) {
+            wp_enqueue_style( 'afc-grid-styles', AFCG_URL . 'assets/css/afcglide-shortcodes.css', [], '4.0' );
+        }
+    }
+
+    public static function register_shortcodes() {
+        add_shortcode( 'afcglide_login', [ __CLASS__, 'render_login_form' ] );
+        add_shortcode( 'afcglide_submit_listing', [ __CLASS__, 'render_submission_form' ] );
+        add_shortcode( 'afcglide_listings_grid', [ __CLASS__, 'render_listing_grid' ] );
+        
+        // Agent Scoreboard Handshake
+        if ( class_exists('\AFCGlide\Reporting\AFCGlide_Scoreboard') ) {
+            add_shortcode( 'afc_scoreboard', [ '\AFCGlide\Reporting\AFCGlide_Scoreboard', 'render_scoreboard' ] );
+        }
+    }
+
+    /**
+     * 1. SUBMISSION FORM (Professional Agent Portal)
      */
     public static function render_submission_form() {
         if ( ! is_user_logged_in() ) {
-            return '<div class="afcglide-notice afcglide-notice-error">⚠️ Please log in to submit a luxury listing.</div>';
+            return '<div class="afc-auth-notice" style="padding:40px; text-align:center; background:#f8fafc; border-radius:12px; border:2px dashed #cbd5e1;">
+                        <div style="font-size:48px; margin-bottom:15px;">🔒</div>
+                        <h3 style="margin:0 0 10px 0; color:#1e293b; font-weight:800;">Access Denied</h3>
+                        <p style="color:#64748b; margin:0;">Please log in to the Command Center to submit listings.</p>
+                    </div>';
         }
 
+        // Force enqueue jQuery if not already loaded (fallback)
+        wp_enqueue_script('jquery');
+
         ob_start();
-        // This pulls the professional HTML we created earlier
-        $template_path = AFCG_PATH . 'includes/templates/template-submit-listing.php';
+        $template_path = AFCG_PATH . 'templates/template-submit-listing.php';
         
         if ( file_exists( $template_path ) ) {
             include $template_path;
         } else {
-            echo '<p>Error: Submission template missing.</p>';
+            echo '<div class="afc-error" style="padding:20px; color:#ef4444; border:2px solid #fca5a5; border-radius:8px; background:#fef2f2;">
+                    <strong>⚠️ Template Error:</strong> template-submit-listing.php not found in /templates folder.
+                    <br><small>Expected path: ' . esc_html($template_path) . '</small>
+                  </div>';
         }
         
         return ob_get_clean();
     }
 
     /**
-     * Helper for the Gallery Shortcode
-     */
-    public static function render_gallery_shortcode() {
-        return self::render_luxury_hero_gallery( get_the_ID() );
-    }
-
-    /**
-     * Renders the Login Form
-     */
-    public static function render_login_form() {
-        if ( is_user_logged_in() ) {
-            return sprintf(
-                '<div class="afcglide-notice afcglide-notice-info">You are logged in. <a href="%s">Logout</a></div>',
-                esc_url( wp_logout_url( get_permalink() ) )
-            );
-        }
-        $args = [
-            'echo'     => false,
-            'redirect' => home_url( '/agent-dashboard/' ),
-            'form_id'  => 'afcglide-login-form',
-        ];
-        return '<div class="afcglide-auth-card">' . wp_login_form( $args ) . '</div>';
-    }
-
-    /**
-     * Renders the Registration form
-     */
-    public static function render_registration_form() {
-        if ( is_user_logged_in() ) return '';
-        ob_start(); 
-        ?>
-        <div class="afcglide-auth-container">
-            <form id="afcglide-registration" class="afc-premium-form" method="post">
-                <?php wp_nonce_field( 'afcglide_register_nonce', 'register_nonce' ); ?>
-                <h2>Join the Agent Network</h2>
-                <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" name="agent_name" placeholder="John Doe" required>
-                </div>
-                <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" name="agent_email" required>
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" name="agent_pass" required minlength="8">
-                </div>
-                <button type="submit" class="afcglide-submit-btn">Create Agent Account</button>
-            </form>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
-    /**
-     * Renders the main listings grid
+     * 2. LISTINGS GRID (The High-End Asset Wall)
      */
     public static function render_listing_grid( $atts ) {
-        $atts = shortcode_atts( ['posts_per_page' => 6, 'columns' => 3], $atts );
+        $atts = shortcode_atts( [
+            'posts_per_page' => 9, 
+            'columns' => 3,
+            'status' => 'publish'
+        ], $atts );
+        
         $query = new \WP_Query( [
             'post_type'      => 'afcglide_listing', 
             'posts_per_page' => (int) $atts['posts_per_page'], 
-            'post_status'    => 'publish'
+            'post_status'    => sanitize_text_field( $atts['status'] ),
+            'orderby'        => 'date',
+            'order'          => 'DESC'
         ] );
 
-        if ( ! $query->have_posts() ) return '<p>No properties found.</p>';
+        if ( ! $query->have_posts() ) {
+            return '<div class="afc-no-results" style="padding:60px 20px; text-align:center; background:#f8fafc; border-radius:12px;">
+                        <div style="font-size:64px; margin-bottom:20px; opacity:0.3;">🏠</div>
+                        <p style="color:#64748b; font-size:16px; margin:0;">No luxury assets currently listed.</p>
+                    </div>';
+        }
 
         ob_start();
-        printf( '<div class="afcglide-grid afcglide-grid-cols-%d">', (int) $atts['columns'] );
+        echo '<div class="afc-grid-wrapper" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; padding: 20px 0;">';
+        
         while ( $query->have_posts() ) { 
             $query->the_post(); 
             self::render_listing_card(); 
         }
+        
         echo '</div>';
+        
+        // Pagination (if needed)
+        if ( $query->max_num_pages > 1 ) {
+            echo '<div class="afc-pagination" style="margin-top:40px; text-align:center;">';
+            echo paginate_links([
+                'total' => $query->max_num_pages,
+                'prev_text' => '← Previous',
+                'next_text' => 'Next →',
+            ]);
+            echo '</div>';
+        }
+        
         wp_reset_postdata();
         return ob_get_clean();
     }
 
     /**
-     * Individual Listing Card
+     * 3. LISTING CARD ROUTER (Decoupled Design)
      */
     public static function render_listing_card() {
-        $post_id = get_the_ID();
-        $price   = get_post_meta( $post_id, '_listing_price', true );
-        $beds    = get_post_meta( $post_id, '_listing_beds', true );
-        $baths   = get_post_meta( $post_id, '_listing_baths', true );
-        $hero    = has_post_thumbnail() ? get_the_post_thumbnail( $post_id, 'large' ) : '🏙️';
-        $agent_name = get_post_meta( $post_id, '_agent_name_display', true ) ?: get_the_author();
+        $template_path = AFCG_PATH . 'templates/listing-card.php';
         
-        ?>
-        <article class="afc-listing-card">
-            <div class="afc-card-media">
-                <a href="<?php the_permalink(); ?>"><?php echo $hero; ?></a>
-                <?php if ($price) : ?><div class="afc-card-price-tag">$<?php echo number_format((float)$price); ?></div><?php endif; ?>
-            </div>
-            <div class="afc-card-content">
-                <h3><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
-                <p><?php echo $beds; ?> Beds | <?php echo $baths; ?> Baths</p>
-                <div class="afc-agent-pill"><span><?php echo esc_html($agent_name); ?></span></div>
-            </div>
-        </article>
-        <?php
+        if ( file_exists( $template_path ) ) {
+            include $template_path;
+        } else {
+            echo '<div style="color:#dc2626; border:2px solid #fca5a5; padding:15px; border-radius:8px; background:#fef2f2;">
+                    <strong>⚠️ Missing Card Template:</strong> /templates/listing-card.php
+                  </div>';
+        }
     }
 
     /**
-     * Standalone Signature Card
+     * 4. LOGIN FORM
      */
-    public static function render_signature_card() {
-        $agent_id = get_the_author_meta('ID'); 
-        $photo_id = get_user_meta( $agent_id, 'agent_photo', true );
-        $photo_url = $photo_id ? wp_get_attachment_image_url( $photo_id, 'medium' ) : get_avatar_url($agent_id);
-
-        ob_start();
-        ?>
-        <div class="afc-agent-signature-card">
-            <img src="<?php echo esc_url( $photo_url ); ?>" width="60">
-            <h4><?php echo get_the_author_meta('display_name'); ?></h4>
-        </div>
-        <?php
-        return ob_get_clean();
+    public static function render_login_form() {
+        if ( is_user_logged_in() ) {
+            $user = wp_get_current_user();
+            return '<div class="afc-success-box" style="padding:30px; background:linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border:2px solid #86efac; color:#166534; border-radius:12px; text-align:center;">
+                        <div style="font-size:48px; margin-bottom:15px;">✅</div>
+                        <h3 style="margin:0 0 8px 0; font-weight:800;">Identity Verified</h3>
+                        <p style="margin:0; opacity:0.8;">Welcome back, ' . esc_html($user->display_name) . '. You are logged into the Command Center.</p>
+                    </div>';
+        }
+        
+        return wp_login_form( ['echo' => false] );
     }
-
-    /**
-     * Luxury 4-Up Shutterbug Gallery
-     */
-    public static function render_luxury_hero_gallery($post_id) {
-        $stack_json = get_post_meta($post_id, '_stack_images_json', true);
-        $image_ids  = json_decode($stack_json, true);
-
-        if (empty($image_ids)) return '';
-
-        ob_start();
-        ?>
-        <div class="afc-luxury-gallery-wrapper">
-            <div class="afc-shutterbug-row" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
-                <?php foreach (array_slice((array)$image_ids, 0, 16) as $img_id) : ?>
-                    <div class="afc-gallery-item">
-                        <?php echo wp_get_attachment_image($img_id, 'medium'); ?>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
-    }  
 }

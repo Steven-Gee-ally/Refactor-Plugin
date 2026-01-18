@@ -4,60 +4,25 @@ namespace AFCGlide\Listings;
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
- * AFCGlide Metaboxes
- * Version 4.4.0 – Professional Refactor (CSS Decoupled)
+ * AFCGlide Metaboxes v4.4.2 - FULL INTEGRATION
+ * VERSION: Luxury Photo Wall Sync (Hero + 3-Stack + 16-Slider)
+ * Features: Agent Auto-fill, GPS Logic, Success Portal, and Media Matrix.
  */
 class AFCGlide_Metaboxes {
 
     const MAX_SLIDER_IMAGES = 16;
     const MAX_STACK_IMAGES = 3;
 
-    private static function meta_schema() {
-        return [
-            '_agent_name_display'    => ['type' => 'text',  'default' => '', 'required' => true],
-            '_agent_phone_display'   => ['type' => 'phone', 'default' => '', 'required' => true],
-            '_agent_photo_id'        => ['type' => 'attachment', 'default' => 0, 'required' => true],
-            '_show_floating_whatsapp'=> ['type' => 'bool',  'default' => 0],
-            '_listing_price'         => ['type' => 'float', 'default' => 0, 'required' => true],
-            '_listing_beds'          => ['type' => 'int',   'default' => 0, 'required' => true],
-            '_listing_baths'         => ['type' => 'float', 'default' => 0, 'required' => true],
-            '_listing_sqft'          => ['type' => 'int',   'default' => 0],
-            '_listing_property_type' => ['type' => 'text',  'default' => ''],
-            '_listing_status'        => ['type' => 'text',  'default' => 'for_sale'],
-            '_property_address'      => ['type' => 'text',  'default' => '', 'required' => true],
-            '_gps_lat'               => ['type' => 'latitude',  'default' => ''],
-            '_gps_lng'               => ['type' => 'longitude', 'default' => ''],
-            '_listing_amenities'     => ['type' => 'text',  'array' => true, 'default' => []],
-            '_hero_image_id'         => ['type' => 'attachment', 'default' => 0, 'required' => true],
-            '_stack_images_json'     => ['type' => 'attachment', 'array' => true, 'default' => ''],
-            '_property_slider_ids'   => ['type' => 'attachment', 'array' => true, 'default' => []],
-        ];
-    }
-
     public static function init() {
         add_action( 'add_meta_boxes', [ __CLASS__, 'add_metaboxes' ] );
         add_action( 'save_post_afcglide_listing', [ __CLASS__, 'save_metabox' ], 10, 2 );
         add_action( 'edit_form_after_title', [ __CLASS__, 'render_description_label' ] );
-        add_action( 'admin_notices', [ __CLASS__, 'show_validation_errors' ] );
         add_action( 'admin_notices', [ __CLASS__, 'render_success_portal' ] );
     }
 
-    private static function get_meta( $post_id, $key ) {
-        $schema = self::meta_schema();
-        $default = isset( $schema[$key]['default'] ) ? $schema[$key]['default'] : '';
-        $value = get_post_meta( $post_id, $key, true );
-        
-        // Return default if empty, but allow 0 for numbers
-        if ( $value === '' || $value === [] ) {
-            return $default;
-        }
-        return $value;
-    }
-
-
     public static function add_metaboxes() {
-        // Clean up the sidebar
-        $side_boxes = ['submitdiv', 'postimagediv', 'property_locationdiv', 'property_typediv', 'property_statusdiv', 'property_amenitydiv', 'astra_settings_meta_box', 'authordiv', 'slugdiv'];
+        // Remove default WP clutter
+        $side_boxes = ['submitdiv', 'postimagediv', 'authordiv'];
         foreach ( $side_boxes as $box ) remove_meta_box( $box, 'afcglide_listing', 'side' );
 
         add_meta_box( 'afc_agent', '👤 1. Agent Branding', [ __CLASS__, 'render_agent' ], 'afcglide_listing', 'normal', 'high' );
@@ -65,24 +30,25 @@ class AFCGlide_Metaboxes {
         add_meta_box( 'afc_slider', '🖼️ 3. Main Property Gallery Slider (Max 16)', [ __CLASS__, 'render_slider' ], 'afcglide_listing', 'normal', 'high' );
         add_meta_box( 'afc_details', '🏠 4. Property Specifications', [ __CLASS__, 'render_details' ], 'afcglide_listing', 'normal', 'high' );
         add_meta_box( 'afc_location', '📍 5. Location & GPS', [ __CLASS__, 'render_location' ], 'afcglide_listing', 'normal', 'high' );
-        add_meta_box( 'afc_amenities', '💎 6. Property Features (20 Points)', [ __CLASS__, 'render_amenities' ], 'afcglide_listing', 'normal', 'high' );
+        add_meta_box( 'afc_amenities', '💎 6. Property Features', [ __CLASS__, 'render_amenities' ], 'afcglide_listing', 'normal', 'high' );
         add_meta_box( 'afc_publish_box', '🚀 7. Publish New Listing', [ __CLASS__, 'render_publish' ], 'afcglide_listing', 'normal', 'high' );
     }
 
+    /* ============================================================
+       1. AGENT BRANDING RENDERER
+       ============================================================ */
     public static function render_agent( $post ) {
         wp_nonce_field( 'afcglide_meta_nonce', 'afcglide_meta_nonce' );
-        $name = self::get_meta( $post->ID, '_agent_name_display' );
-        $phone = self::get_meta( $post->ID, '_agent_phone_display' );
-        $whatsapp = self::get_meta( $post->ID, '_show_floating_whatsapp' );
-        $photo_id = self::get_meta( $post->ID, '_agent_photo_id' );
+        $name = get_post_meta($post->ID, '_agent_name_display', true);
+        $phone = get_post_meta($post->ID, '_agent_phone_display', true);
+        $whatsapp = get_post_meta($post->ID, '_show_floating_whatsapp', true);
+        $photo_id = get_post_meta($post->ID, '_agent_photo_id', true);
         $photo_url = $photo_id ? wp_get_attachment_url( $photo_id ) : '';
-        $placeholder = AFCG_URL . 'assets/images/placeholder-listings.svg';
         $agents = get_users([ 'role__in' => ['administrator', 'editor', 'author', 'contributor'] ]);
         ?>
-        
-        <div class="afc-agent-selector-wrapper">
-            <label>👤 Auto-Fill Agent Profile:</label>
-            <select id="afc_agent_selector">
+        <div class="afc-agent-selector-wrapper" style="margin-bottom:20px;">
+            <label><strong>👤 Auto-Fill Agent Profile:</strong></label>
+            <select id="afc_agent_selector" style="width:100%; max-width:400px; display:block; margin-top:5px;">
                 <option value="">-- Choose an Agent --</option>
                 <?php foreach ($agents as $agent): 
                     $a_name = get_user_meta($agent->ID, 'first_name', true) . ' ' . get_user_meta($agent->ID, 'last_name', true);
@@ -100,278 +66,191 @@ class AFCGlide_Metaboxes {
                     </option>
                 <?php endforeach; ?>
             </select>
-            <a href="<?php echo esc_url(admin_url('user-new.php')); ?>" target="_blank" class="button button-secondary">➕ Register New</a>
         </div>
 
-        <div class="afcglide-agent-container">
+        <div class="afcglide-agent-container" style="display:flex; gap:30px; align-items:center;">
             <div class="afcglide-agent-photo-wrapper">
-                <div class="afcglide-preview-box">
-                    <img src="<?php echo esc_url( $photo_url ?: $placeholder ); ?>" class="afcglide-agent-photo">
+                <div class="afcglide-preview-box" style="width:120px; height:120px; border-radius:60px; overflow:hidden; border:2px solid #e2e8f0; margin-bottom:10px;">
+                    <img src="<?php echo esc_url( $photo_url ?: '/wp-content/plugins/afcglide-listings/assets/images/placeholder-agent.png' ); ?>" id="agent-photo-img" style="width:100%; height:100%; object-fit:cover;">
                 </div>
                 <input type="hidden" name="_agent_photo_id" id="agent_photo_id" value="<?php echo esc_attr( $photo_id ); ?>">
-                <button type="button" class="button afcglide-upload-image-btn" data-target="agent_photo_id">Set Agent Photo</button>
+                <button type="button" class="afc-upload-btn" id="set-agent-photo">Set Agent Photo</button>
             </div>
-            <div class="afcglide-agent-fields">
-                <label class="afcglide-required-field">Agent Full Name</label>
-                <input type="text" name="_agent_name_display" id="afc_agent_name" value="<?php echo esc_attr( $name ); ?>">
-                
-                <label class="afcglide-required-field">Phone Number</label>
-                <input type="text" name="_agent_phone_display" id="afc_agent_phone" value="<?php echo esc_attr( $phone ); ?>">
-                
+            <div class="afcglide-agent-fields" style="flex-grow:1;">
+                <label style="display:block; font-weight:bold;">Agent Full Name</label>
+                <input type="text" name="_agent_name_display" id="afc_agent_name" value="<?php echo esc_attr( $name ); ?>" style="width:100%; margin-bottom:15px;">
+                <label style="display:block; font-weight:bold;">Phone Number</label>
+                <input type="text" name="_agent_phone_display" id="afc_agent_phone" value="<?php echo esc_attr( $phone ); ?>" style="width:100%; margin-bottom:10px;">
                 <label><input type="checkbox" name="_show_floating_whatsapp" value="1" <?php checked( $whatsapp, 1 ); ?>> Enable Floating WhatsApp</label>
             </div>
         </div>
         <?php
     }
 
+    /* ============================================================
+       2. MEDIA MATRIX (HERO & STACK)
+       ============================================================ */
     public static function render_media( $post ) {
-        $hero_id = self::get_meta( $post->ID, '_hero_image_id' );
-        $hero_url = $hero_id ? wp_get_attachment_url( $hero_id ) : '';
-        $stack_json = self::get_meta( $post->ID, '_stack_images_json' );
-        $stack_ids = is_string( $stack_json ) ? json_decode( $stack_json, true ) : $stack_json;
-        $stack_ids = is_array( $stack_ids ) ? $stack_ids : [];
+        $hero_id = get_post_meta($post->ID, '_hero_image_id', true);
+        $stack_json = get_post_meta($post->ID, '_stack_images_json', true);
+        $stack_ids = json_decode($stack_json, true) ?: [];
         ?>
-        <div class="afcglide-media-hub">
-            <div class="afcglide-hero-section">
-                <h4 class="afcglide-required-field">Main Hero Image</h4>
-                <div class="afcglide-preview-box" id="hero-preview">
-                    <?php if($hero_url): ?><img src="<?php echo esc_url($hero_url); ?>"><?php else: ?><span>No Hero Set</span><?php endif; ?>
+        <div class="afc-media-matrix">
+            <div class="afc-upload-zone" data-type="hero" data-limit="1">
+                <h4>Main Hero Image</h4>
+                <div class="afc-preview-grid" id="hero-preview">
+                    <?php if($hero_id) echo self::render_thumb($hero_id); ?>
                 </div>
-                <input type="hidden" name="_hero_image_id" id="hero_image_id" value="<?php echo esc_attr($hero_id); ?>">
-                <button type="button" class="button afcglide-upload-image-btn" data-target="hero_image_id">Set Hero Photo</button>
+                <button type="button" class="afc-upload-btn">Set Hero Image</button>
+                <input type="hidden" name="_hero_image_id" value="<?php echo esc_attr($hero_id); ?>">
             </div>
-            <div class="afcglide-stack-section">
-                <h4>3-Photo Stack (Optional)</h4>
-                <div id="stack-images-container" class="afcglide-image-grid">
-                     <?php if ( ! empty( $stack_ids ) ) : 
-                        foreach ( (array)$stack_ids as $id ) : 
-                            $url = wp_get_attachment_url( $id );
-                            if ( $url ) echo '<img src="'.esc_url($url).'">';
-                        endforeach; 
-                     endif; ?>
+
+            <div class="afc-upload-zone" data-type="stack" data-limit="3">
+                <h4>3-Photo Stack</h4>
+                <div class="afc-preview-grid" id="stack-preview">
+                    <?php foreach($stack_ids as $id) echo self::render_thumb($id); ?>
                 </div>
-                <button type="button" class="button afcglide-add-stack-image-btn">Manage Stack</button>
+                <button type="button" class="afc-upload-btn">Manage Stack</button>
+                <input type="hidden" name="_stack_images_raw" value="<?php echo implode(',', $stack_ids); ?>">
             </div>
         </div>
         <?php
     }
 
+    /* ============================================================
+       3. SHUTTER-BUG SLIDER (16 PHOTOS)
+       ============================================================ */
     public static function render_slider( $post ) {
-        $slider_ids = self::get_meta( $post->ID, '_property_slider_ids' );
+        $gallery_ids = get_post_meta($post->ID, '_listing_gallery_ids', true) ?: [];
         ?>
-        <div class="afcglide-slider-wrapper">
-            <div id="afc-slider-container">
-                <?php foreach ( (array)$slider_ids as $id ) : 
-                    $url = wp_get_attachment_url( $id );
-                    if ( ! $url ) continue; ?>
-                    <div class="afcglide-image-item">
-                        <img src="<?php echo esc_url( $url ); ?>">
-                        <input type="hidden" name="_property_slider_ids[]" value="<?php echo esc_attr( $id ); ?>">
-                    </div>
-                <?php endforeach; ?>
+        <div class="afc-upload-zone" data-type="gallery" data-limit="16">
+            <h4>Gallery Slider (Max 16)</h4>
+            <div class="afc-preview-grid" id="gallery-preview">
+                <?php foreach($gallery_ids as $id) echo self::render_thumb($id); ?>
             </div>
-            <div class="afcglide-slider-footer">
-                <button type="button" class="button button-secondary afcglide-add-slider-images-btn">Add Gallery Images (Max 16)</button>
-                <span id="afc-slider-count"><?php echo count((array)$slider_ids); ?> / 16 Photos</span>
-            </div>
+            <button type="button" class="afc-upload-btn">Bulk Upload Gallery</button>
+            <input type="hidden" name="_listing_gallery_raw" value="<?php echo implode(',', $gallery_ids); ?>">
         </div>
         <?php
     }
 
+    /* ============================================================
+       4. PROPERTY SPECS
+       ============================================================ */
     public static function render_details( $post ) {
-    // Get values directly from the database with '0' as a hardcoded fallback
-    $price = get_post_meta( $post->ID, '_listing_price', true ) ?: '0';
-    $beds  = get_post_meta( $post->ID, '_listing_beds', true ) ?: '0';
-    $baths = get_post_meta( $post->ID, '_listing_baths', true ) ?: '0';
-    $sqft  = get_post_meta( $post->ID, '_listing_sqft', true ) ?: '0';
+        $price = get_post_meta( $post->ID, '_listing_price', true );
+        $beds  = get_post_meta( $post->ID, '_listing_beds', true );
+        $baths = get_post_meta( $post->ID, '_listing_baths', true );
+        $sqft  = get_post_meta( $post->ID, '_listing_sqft', true );
+        ?>
+        <div class="afcglide-details-grid">
+            <div class="afc-detail-column"><label>Price ($)</label><input type="number" name="_listing_price" value="<?php echo esc_attr($price); ?>"></div>
+            <div class="afc-detail-column"><label>Beds</label><input type="number" name="_listing_beds" value="<?php echo esc_attr($beds); ?>"></div>
+            <div class="afc-detail-column"><label>Baths</label><input type="number" name="_listing_baths" value="<?php echo esc_attr($baths); ?>" step="0.5"></div>
+            <div class="afc-detail-column"><label>Sq Ft</label><input type="number" name="_listing_sqft" value="<?php echo esc_attr($sqft); ?>"></div>
+        </div>
+        <?php
+    }
 
-    echo '<div class="afcglide-details-grid">';
-        echo '<div class="afc-detail-column"><label class="afcglide-required-field">Price ($)</label><input type="number" name="_listing_price" value="'.esc_attr($price).'"></div>';
-        echo '<div class="afc-detail-column"><label class="afcglide-required-field">Beds</label><input type="number" name="_listing_beds" value="'.esc_attr($beds).'"></div>';
-        echo '<div class="afc-detail-column"><label class="afcglide-required-field">Baths</label><input type="number" name="_listing_baths" value="'.esc_attr($baths).'" step="0.5"></div>';
-        echo '<div class="afc-detail-column"><label>Sq Ft</label><input type="number" name="_listing_sqft" value="'.esc_attr($sqft).'"></div>';
-    echo '</div>';
-}
-
-   public static function render_location( $post ) {
-        $address = self::get_meta( $post->ID, '_property_address' );
-        $lat = self::get_meta( $post->ID, '_gps_lat' );
-        $lng = self::get_meta( $post->ID, '_gps_lng' );
+    /* ============================================================
+       5. LOCATION & GPS
+       ============================================================ */
+    public static function render_location( $post ) {
+        $address = get_post_meta( $post->ID, '_listing_address', true );
+        $lat = get_post_meta( $post->ID, '_gps_lat', true );
+        $lng = get_post_meta( $post->ID, '_gps_lng', true );
         ?>
         <div class="afcglide-location-wrapper">
-            <label class="afcglide-required-field">Street Address / Location Description</label>
-            <input type="text" name="_property_address" value="<?php echo esc_attr($address); ?>" style="width:100%; margin-bottom:15px;">
-            
+            <label style="display:block; margin-bottom:5px;"><strong>Street Address / Area</strong></label>
+            <input type="text" name="_listing_address" value="<?php echo esc_attr($address); ?>" style="width:100%; margin-bottom:15px;">
             <div class="afcglide-gps-row">
-                <div class="gps-field-group">
-                    <label>Latitude</label>
-                    <input type="text" name="_gps_lat" value="<?php echo esc_attr($lat); ?>" placeholder="e.g. 9.7489">
-                </div>
-                <div class="gps-field-group">
-                    <label>Longitude</label>
-                    <input type="text" name="_gps_lng" value="<?php echo esc_attr($lng); ?>" placeholder="e.g. -84.6321">
-                </div>
+                <div class="gps-field-group"><label>Latitude</label><input type="text" name="_gps_lat" value="<?php echo esc_attr($lat); ?>"></div>
+                <div class="gps-field-group"><label>Longitude</label><input type="text" name="_gps_lng" value="<?php echo esc_attr($lng); ?>"></div>
             </div>
         </div>
         <?php
     }
+
+    /* ============================================================
+       6. AMENITIES
+       ============================================================ */
     public static function render_amenities( $post ) {
-        $selected = self::get_meta( $post->ID, '_listing_amenities' );
-        $selected = is_array($selected) ? $selected : [];
+        $selected = get_post_meta( $post->ID, '_listing_amenities', true ) ?: [];
         $amenities = [
             'infinity_pool' => '♾️ Infinity Pool', 'wine_cellar' => '🍷 Wine Cellar',
             'home_theater' => '🎬 Home Theater', 'smart_home' => '📱 Smart Home',
-            'private_gym' => '💪 Private Gym', 'ocean_view' => '🌊 Ocean View',
-            'helipad' => '🚁 Helipad', 'gourmet_kit' => '👨‍🍳 Gourmet Kitchen',
-            'spa_sauna' => '🧖 Spa & Sauna', 'gated_entry' => '🛡️ Gated Entry',
-            'tennis_court' => '🎾 Tennis Court', 'guest_house' => '🏡 Guest House',
-            'elevator' => '🛗 Elevator', 'outdoor_kit' => '🔥 Outdoor Kitchen',
-            'beach_front' => '🏖️ Beach Front', 'solar' => '☀️ Solar Power',
-            'staff_quarters' => '🧹 Staff Quarters', 'garage_4' => '🏎️ 4+ Car Garage',
-            'fire_pit' => '🔥 Fire Pit', 'dock' => '🛥️ Private Dock'
+            'ocean_view' => '🌊 Ocean View', 'private_gym' => '💪 Private Gym'
         ];
-
         echo '<div class="afcglide-amenities-grid">';
         foreach ( $amenities as $key => $label ) {
-            $checked = in_array( $key, $selected, true ) ? 'checked' : '';
-            echo "<label class='afcglide-amenity-label'>";
-            echo "<input type='checkbox' name='_listing_amenities[]' value='{$key}' {$checked}> {$label}</label>";
+            $checked = in_array( $key, $selected ) ? 'checked' : '';
+            echo "<label style='display:block; padding:8px;'><input type='checkbox' name='_listing_amenities[]' value='{$key}' {$checked}> {$label}</label>";
         }
         echo '</div>';
     }
 
     public static function render_publish() {
-        ?>
-        <div class="afc-publish-section">
-            <p>Required fields are marked with <strong>*</strong></p>
-            <input type="submit" name="publish" id="publish" class="afcglide-publish-btn" value="PUBLISH NEW LISTING">
-        </div>
-        <?php
+        echo '<div class="afc-publish-section"><input type="submit" name="publish" id="publish" class="afcglide-publish-btn" value="PUBLISH NEW LISTING"></div>';
     }
 
     public static function render_description_label() {
         global $post;
-        if ( ! isset( $post ) || $post->post_type !== 'afcglide_listing' ) return;
-        echo '<div class="afc-section-header"><h3>Property Description</h3></div>';
+        if ( ! $post || $post->post_type !== 'afcglide_listing' ) return;
+        echo '<div class="afc-section-header" style="background:#f1f5f9; padding:10px 20px; border-radius:10px; margin:20px 0;"><h3>Property Description</h3></div>';
     }
 
-    public static function save_metabox( $post_id, $post ) {
+    private static function render_thumb($id) {
+        $url = wp_get_attachment_thumb_url($id);
+        if(!$url) return '';
+        return sprintf(
+            '<div class="afc-preview-item" data-id="%d"><img src="%s"><span class="afc-remove-img">×</span></div>',
+            $id, $url
+        );
+    }
+
+    /* ============================================================
+       7. THE WORLD-CLASS SAVE LOGIC
+       ============================================================ */
+    public static function save_metabox( $post_id ) {
         if ( ! isset( $_POST['afcglide_meta_nonce'] ) || ! wp_verify_nonce( $_POST['afcglide_meta_nonce'], 'afcglide_meta_nonce' ) ) return;
         if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
-        if ( ! current_user_can( 'edit_post', $post_id ) ) return;
 
-        $is_publishing = ( isset( $_POST['post_status'] ) && $_POST['post_status'] === 'publish' );
-        $missing_fields = [];
-
-        if ( $is_publishing ) {
-            $schema = self::meta_schema();
-            foreach ( $schema as $key => $config ) {
-                if ( ! empty( $config['required'] ) ) {
-                    $value = isset( $_POST[ $key ] ) ? $_POST[ $key ] : '';
-                    if ( empty( $value ) || ( is_array( $value ) && count( $value ) === 0 ) ) {
-                        $missing_fields[] = ucwords( str_replace( '_', ' ', trim( $key, '_' ) ) );
-                    }
-                }
-            }
+        // Photo Matrix Saving
+        if ( isset($_POST['_hero_image_id']) ) {
+            update_post_meta($post_id, '_hero_image_id', intval($_POST['_hero_image_id']));
+            set_post_thumbnail($post_id, intval($_POST['_hero_image_id']));
+        }
+        if ( isset($_POST['_stack_images_raw']) ) {
+            $ids = array_filter(explode(',', $_POST['_stack_images_raw']));
+            update_post_meta($post_id, '_stack_images_json', json_encode(array_map('intval', $ids)));
+        }
+        if ( isset($_POST['_listing_gallery_raw']) ) {
+            $ids = array_filter(explode(',', $_POST['_listing_gallery_raw']));
+            update_post_meta($post_id, '_listing_gallery_ids', array_map('intval', $ids));
         }
 
-        if ( ! empty( $missing_fields ) ) {
-            set_transient( 'afcg_validation_error_' . $post_id, $missing_fields, 45 );
-            remove_action( 'save_post_afcglide_listing', [ __CLASS__, 'save_metabox' ], 10 );
-            wp_update_post(['ID' => $post_id, 'post_status' => 'draft']);
-            add_action( 'save_post_afcglide_listing', [ __CLASS__, 'save_metabox' ], 10, 2 );
+        // Standard Fields
+        $fields = ['_listing_price', '_listing_beds', '_listing_baths', '_listing_sqft', '_listing_address', '_gps_lat', '_gps_lng', '_agent_name_display', '_agent_phone_display', '_show_floating_whatsapp', '_agent_photo_id'];
+        foreach($fields as $field) {
+            if(isset($_POST[$field])) update_post_meta($post_id, $field, sanitize_text_field($_POST[$field]));
         }
 
-        foreach ( self::meta_schema() as $key => $config ) {
-            $value = isset( $_POST[ $key ] ) ? $_POST[ $key ] : $config['default'];
-            switch ( $config['type'] ) {
-                case 'int': $value = is_array($value) ? array_map('intval', $value) : intval($value); break;
-                case 'float': $value = floatval($value); break;
-                case 'bool': $value = !empty($value) ? 1 : 0; break;
-                default: $value = is_array($value) ? array_map('sanitize_text_field', $value) : sanitize_text_field($value);
-            }
-
-            // Unify: Always save stack images as JSON for JS/Shortcode consistency
-            if ( $key === '_stack_images_json' && is_array( $value ) ) {
-                $value = json_encode( $value );
-            }
-
-            update_post_meta( $post_id, $key, $value );
+        if(isset($_POST['_listing_amenities'])) {
+            update_post_meta($post_id, '_listing_amenities', array_map('sanitize_text_field', $_POST['_listing_amenities']));
         }
     }
 
-    public static function show_validation_errors() {
-        global $post;
-        if ( ! $post || $post->post_type !== 'afcglide_listing' ) return;
-        $errors = get_transient( 'afcg_validation_error_' . $post->ID );
-        if ( $errors ) {
-            echo '<div class="notice notice-error is-dismissible">
-                    <p><strong>⚠️ Cannot Publish:</strong> Missing ' . implode(', ', $errors) . '</p>
-                  </div>';
-            delete_transient( 'afcg_validation_error_' . $post->ID );
-        }
-    }
-    /**
-     * AFCGlide Luxury Success Portal
-     * Displays a professional confirmation after the Emerald Button is pressed.
-     */
+    /* ============================================================
+       8. SUCCESS PORTAL
+       ============================================================ */
     public static function render_success_portal() {
         global $pagenow, $post;
-
-        // Only show on our specific listing type and after a save/publish
         if ($pagenow == 'post.php' && isset($_GET['message']) && $_GET['message'] == '6' && get_post_type($post) == 'afcglide_listing') {
-            $view_link = get_permalink($post->ID);
             ?>
-            <div class="afcglide-success-portal">
-                <div class="afc-portal-icon">🚀</div>
-                <div class="afc-portal-content">
-                    <h3>Listing Successfully Broadcasted!</h3>
-                    <p>Property ID: <strong>#<?php echo $post->ID; ?></strong> | Status: <strong>Live & Verified</strong></p>
-                </div>
-                <div class="afc-portal-actions">
-                    <a href="<?php echo esc_url($view_link); ?>" class="afc-portal-btn view" target="_blank">View Live Listing</a>
-                    <a href="<?php echo admin_url('edit.php?post_type=afcglide_listing'); ?>" class="afc-portal-btn inventory">Back to Inventory</a>
-                </div>
+            <div class="afcglide-success-portal" style="background:#10b981; color:white; padding:20px; border-radius:15px; margin:20px 0; display:flex; align-items:center; justify-content:space-between;">
+                <div><strong>🚀 Listing Successfully Broadcasted!</strong> Property is Live & Verified.</div>
+                <a href="<?php echo get_permalink($post->ID); ?>" target="_blank" style="background:white; color:#10b981; padding:8px 15px; border-radius:8px; text-decoration:none; font-weight:bold;">View Live</a>
             </div>
-
-            <style>
-                .afcglide-success-portal {
-                    background: #ffffff;
-                    border-left: 6px solid #10b981;
-                    padding: 25px;
-                    margin: 20px 20px 20px 0;
-                    display: flex;
-                    align-items: center;
-                    gap: 25px;
-                    border-radius: 12px;
-                    box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.1);
-                    animation: slideInUp 0.5s ease-out;
-                }
-                .afc-portal-icon { font-size: 40px; }
-                .afc-portal-content h3 { 
-                    margin: 0; 
-                    color: #10b981; 
-                    font-size: 20px; 
-                    font-weight: 800; 
-                }
-                .afc-portal-content p { margin: 5px 0 0 0; color: #64748b; }
-                .afc-portal-actions { margin-left: auto; display: flex; gap: 15px; }
-                .afc-portal-btn {
-                    padding: 12px 20px;
-                    border-radius: 8px;
-                    text-decoration: none;
-                    font-weight: 700;
-                    transition: all 0.2s;
-                }
-                .afc-portal-btn.view { background: #10b981; color: white; }
-                .afc-portal-btn.inventory { background: #f1f5f9; color: #475569; }
-                .afc-portal-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-                
-                @keyframes slideInUp {
-                    from { opacity: 0; transform: translateY(20px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-            </style>
             <?php
         }
     }

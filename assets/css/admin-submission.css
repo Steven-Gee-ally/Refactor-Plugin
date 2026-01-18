@@ -1,0 +1,98 @@
+:root {
+    --afc-blue: #2563eb;
+    --afc-dark: #1e293b;
+    --afc-ice: #f0f9ff;
+    --afc-glass: rgba(255, 255, 255, 0.95);
+    --afc-prism: linear-gradient(135deg, #E0F2FE 0%, #DCFCE7 25%, #FEF9C3 50%, #FCE7F3 75%, #F3E8FF 100%);
+}
+
+#afcglide-submission-root {
+    max-width: 1100px;
+    margin: 20px auto;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--afc-dark);
+}
+
+.afc-form-header {
+    background: var(--afc-prism);
+    padding: 40px;
+    border-radius: 24px;
+    text-align: center;
+    margin-bottom: 30px;
+    border: 1px solid rgba(255,255,255,0.7);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+}
+
+.afc-form-section {
+    background: var(--afc-glass);
+    padding: 40px;
+    border-radius: 24px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.afc-form-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 16px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--afc-blue);
+}
+
+.step-num {
+    background: var(--afc-blue);
+    color: white;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 12px;
+}
+
+.afc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.full { grid-column: span 2; }
+
+.afc-field label { display: block; font-weight: 700; font-size: 11px; color: #64748b; margin-bottom: 8px; text-transform: uppercase; }
+.afc-field input {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    font-weight: 600;
+}
+
+.specs-inline-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+.amenities-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.afc-checkbox-item { background: #f8fafc; padding: 12px; border-radius: 10px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600; font-size: 13px; }
+
+.afc-media-container { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+.hero-preview-box, .gallery-upload-trigger { 
+    width: 100%; aspect-ratio: 16/9; background: #f1f5f9; border-radius: 15px; border: 2px dashed #cbd5e1; 
+    display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden;
+}
+.gallery-upload-trigger { aspect-ratio: auto; height: 100px; }
+#hero-placeholder, .gallery-upload-trigger span { color: #94a3b8; font-size: 12px; font-weight: 700; }
+
+.afc-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 20px; }
+.afc-preview-item { width: 100%; aspect-ratio: 1/1; border-radius: 8px; object-fit: cover; }
+
+.afc-main-btn {
+    background: #22c55e;
+    color: white;
+    width: 100%;
+    padding: 20px;
+    border-radius: 15px;
+    font-size: 18px;
+    font-weight: 900;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(34, 197, 94, 0.2);
+}

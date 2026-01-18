@@ -1,109 +1,89 @@
+/**
+ * AFCGlide Submission Logic - v3.7.0 (Master Suite Rehab)
+ * Vision: Zero-Error Asset Broadcasting
+ */
 jQuery(document).ready(function ($) {
     const $form = $('#afcglide-front-submission');
-    const $dropzone = $('#afc-upload-dropzone');
-    const $fileInput = $('#afc_photos');
-    const $previewGrid = $('#afc-preview-grid');
-    const $submitBtn = $('#submit-listing-btn');
-    const $statusMsg = $('#afc-form-status');
+    const $submitBtn = $('#afc-submit-btn');
+    const $feedback = $('#afc-feedback');
 
-    // 1. Drag & Drop Visual States
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        $dropzone.on(eventName, (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-        });
-    });
+    /**
+     * 1. HERO QUALITY GATEKEEPER
+     * Prevents low-res assets from damaging the site's luxury brand.
+     */
+    $(document).on('change', '#hero_file', function (e) {
+        const file = e.target.files[0];
+        const $previewBox = $('.hero-preview-box');
 
-    $dropzone.on('dragenter dragover', function () {
-        $(this).addClass('is-dragover');
-    });
-
-    $dropzone.on('dragleave drop', function () {
-        $(this).removeClass('is-dragover');
-    });
-
-    $dropzone.on('drop', function (e) {
-        const files = e.originalEvent.dataTransfer.files;
-        $fileInput[0].files = files;
-        $fileInput.trigger('change');
-    });
-
-    $dropzone.on('click', () => $fileInput.click());
-
-    // 2. High-End Image Preview & Validation
-    $fileInput.on('change', function (e) {
-        const files = Array.from(e.target.files);
-        $previewGrid.empty();
-
-        if (files.length > 16) {
-            alert('⚠️ ' + (afc_ajax_obj.messages.max_files || 'Maximum 16 photos allowed.'));
-            $(this).val('');
-            return;
-        }
-
-        files.forEach((file, index) => {
-            if (!file.type.startsWith('image/')) return;
+        if (file) {
+            // Check file type first
+            if (!file.type.match('image.*')) {
+                alert('🚫 INVALID FILE: Please upload a JPG or PNG.');
+                return;
+            }
 
             const reader = new FileReader();
             reader.onload = function (event) {
                 const img = new Image();
-                img.src = event.target.result;
-
                 img.onload = function () {
-                    let warning = '';
+                    // World-Class Standard: 1200px width minimum
                     if (this.width < 1200) {
-                        warning = `<div class="afc-dim-warning">⚠️ ${this.width}px - ${afc_ajax_obj.messages.low_res || 'Low Res'}</div>`;
+                        alert('⚠️ QUALITY REJECTED: Luxury listings require 1200px width minimum.\nCurrently detected: ' + this.width + 'px');
+                        e.target.value = '';
+                        $previewBox.html('<p style="color:#ef4444; font-size:12px;">Image too small.</p>');
+                        return;
                     }
 
-                    const previewHtml = `
-                        <div class="afc-preview-item" data-index="${index}">
-                            <div class="afc-preview-wrapper">
-                                <img src="${event.target.result}" alt="Preview">
-                                ${warning}
-                                <div class="afc-remove-photo" onclick="this.parentElement.parentElement.remove()">✕</div>
-                            </div>
-                        </div>
-                    `;
-                    $previewGrid.append(previewHtml);
+                    // Smooth Transition to Preview
+                    $previewBox.css('background', 'none').html(
+                        `<img src="${event.target.result}" id="hero-preview" style="width:100%; height:100%; object-fit:cover; border-radius:12px; border: 2px solid #10b981;">`
+                    );
                 };
+                img.src = event.target.result;
             };
             reader.readAsDataURL(file);
-        });
+        }
     });
 
-    // 3. Robust AJAX Submission
+    /**
+     * 2. AJAX BROADCAST (The Emerald Protocol)
+     */
     $form.on('submit', function (e) {
         e.preventDefault();
 
-        $submitBtn.prop('disabled', true).addClass('afc-is-loading');
-        $statusMsg.html(`<div class="afc-loader-dots"><span></span><span></span><span></span></div><p class="info">${afc_ajax_obj.messages.uploading}</p>`);
+        // UI Lockdown: Prevent double-click ghost listings
+        $submitBtn.prop('disabled', true).css('opacity', '0.6').text('🚀 SYNCING ASSET...');
+        $feedback.fadeIn().html('<p style="color: #6366f1;">Initializing secure handshake with server...</p>');
 
         const formData = new FormData(this);
+
+        // Ensure the action matches class-afcglide-ajax-handler.php
         formData.append('action', 'afcglide_submit_listing');
-        formData.append('nonce', afc_ajax_obj.nonce);
+        formData.append('security', afc_vars.nonce); // Added Nonce for security
 
         $.ajax({
-            url: afc_ajax_obj.ajax_url,
+            url: afc_vars.ajax_url,
             type: 'POST',
             data: formData,
             contentType: false,
             processData: false,
             success: function (response) {
                 if (response.success) {
-                    $statusMsg.html(`<p class="success">✨ ${afc_ajax_obj.messages.success}</p>`);
+                    $submitBtn.css({ 'background': '#10b981', 'opacity': '1' }).text('✨ ASSET DEPLOYED');
+                    $feedback.html('<p style="color: #10b981;">Listing Verified. Redirecting...</p>');
+
                     setTimeout(() => {
                         window.location.href = response.data.url;
-                    }, 1500);
+                    }, 1200);
                 } else {
-                    const errorMsg = response.data && response.data.message ? response.data.message : 'Unknown Error';
-                    $statusMsg.html(`<p class="error">❌ ${errorMsg}</p>`);
-                    $submitBtn.prop('disabled', false).removeClass('afc-is-loading');
+                    $feedback.html('<p style="color: #ef4444;">❌ ERROR: ' + response.data.message + '</p>');
+                    $submitBtn.prop('disabled', false).css('opacity', '1').text('PUBLISH GLOBAL LISTING');
                 }
             },
-            error: function (xhr, status, error) {
-                $statusMsg.html('<p class="error">❌ System Timeout. Check file sizes and try again.</p>');
-                $submitBtn.prop('disabled', false).removeClass('afc-is-loading');
+            error: function () {
+                $feedback.html('<p style="color: #ef4444;">⚠️ Critical Connection Failure. Check file sizes.</p>');
+                $submitBtn.prop('disabled', false).css('opacity', '1').text('RETRY SUBMISSION');
             }
         });
     });
-}); 
+});

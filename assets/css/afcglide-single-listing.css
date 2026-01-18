@@ -1,0 +1,285 @@
+/**
+ * AFCGlide Listings - Unified Luxury Backbone v7.0
+ * Optimized for MacBook Pro | Integrated Lightbox | 4px Precise Seams
+ * Glassmorphism "Lamp-light" Price Badge included.
+ */
+
+:root {
+    --afc-primary: var(--afc-brand, #10b981);
+    --afc-brand-soft: var(--afc-brand-soft, rgba(16, 185, 129, 0.1));
+    --afc-dark: #0f172a;
+    --afc-gray: #64748b;
+    --afc-border: #e2e8f0;
+    --afc-radius: 16px;
+    /* Targeted rounding for photos */
+    --afc-radius-lg: 24px;
+    /* Softer rounding for cards */
+    --afc-seam: 4px;
+    /* Your precise 4px separation */
+    --afc-glass: rgba(255, 255, 255, 0.75);
+    --afc-shadow-lux: 0 20px 40px rgba(0, 0, 0, 0.05);
+}
+
+/* 1. LAYOUT ARCHITECTURE */
+.afcglide-wrapper {
+    max-width: 1300px;
+    margin: 40px auto;
+    padding: 0 30px;
+}
+
+.afc-listing-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 50px;
+    margin-top: 40px;
+}
+
+/* 2. THE PHOTO WALL (2.5fr / 1fr Layout) */
+.afcglide-photo-block {
+    display: grid;
+    grid-template-columns: 2.5fr 1fr;
+    gap: var(--afc-seam);
+    height: 700px;
+    margin: 20px 0;
+}
+
+.afcglide-left-column {
+    display: grid;
+    grid-template-rows: 2.5fr 1fr;
+    gap: var(--afc-seam);
+}
+
+/* THE MAGIC: INDIVIDUAL PHOTO ROUNDING */
+.afcglide-hero-main,
+.afc-horizontal-slider,
+.afcglide-stack-item {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--afc-radius);
+    background: #eee;
+    cursor: zoom-in;
+}
+
+.afcglide-photo-block img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.afcglide-photo-block div:hover img {
+    transform: scale(1.05);
+}
+
+/* PRICE TAG (Glassmorphism Lamp-light) */
+.afcglide-price-badge {
+    position: absolute;
+    bottom: 25px;
+    left: 25px;
+    background: var(--afc-glass);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    padding: 15px 30px;
+    border-radius: 12px;
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--afc-dark);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+}
+
+/* 3. SPECS BAR */
+.afcglide-specs-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    background: #ffffff;
+    border: 1px solid var(--afc-border);
+    border-radius: var(--afc-radius-lg);
+    padding: 30px;
+    margin-bottom: 50px;
+    box-shadow: var(--afc-shadow-lux);
+    text-align: center;
+}
+
+.afcglide-spec-item {
+    border-right: 1px solid var(--afc-border);
+}
+
+.afcglide-spec-item:last-child {
+    border-right: none;
+}
+
+.afcglide-spec-item label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--afc-gray);
+    font-weight: 700;
+}
+
+.afcglide-spec-item strong {
+    font-size: 26px;
+    color: var(--afc-dark);
+    display: block;
+    margin-top: 5px;
+}
+
+/* 4. THE 20 AMENITIES GRID */
+.afc-amenities-section {
+    margin-top: 60px;
+    padding: 40px;
+    background: #fff;
+    border-radius: var(--afc-radius-lg);
+    border: 1px solid var(--afc-border);
+}
+
+.afc-amenities-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.afc-amenity-pill {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 15px;
+    color: var(--afc-dark);
+    font-weight: 500;
+}
+
+.afc-icon-check {
+    width: 22px;
+    height: 22px;
+    background: var(--afc-brand-soft);
+    color: var(--afc-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+}
+
+/* 5. AGENT BOUTIQUE CARD (Sidebar) */
+.afcglide-agent-card {
+    background: #fff;
+    border: 1px solid var(--afc-border);
+    padding: 40px;
+    border-radius: var(--afc-radius-lg);
+    box-shadow: var(--afc-shadow-lux);
+    position: sticky;
+    top: 40px;
+    text-align: center;
+}
+
+.afc-agency-logo {
+    max-width: 140px;
+    margin: 0 auto 25px;
+    display: block;
+}
+
+.afc-agent-photo-wrap {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 20px;
+    position: relative;
+}
+
+.afc-agent-photo-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid #fff;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.afc-agent-name {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--afc-dark);
+    margin-bottom: 5px;
+}
+
+/* 6. BUTTONS */
+.afc-btn-primary {
+    background: var(--afc-primary);
+    color: #fff;
+    padding: 16px;
+    border-radius: 8px;
+    display: block;
+    text-decoration: none;
+    font-weight: 700;
+    margin-bottom: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.afc-btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px var(--afc-brand-soft);
+}
+
+/* WhatsApp Float */
+.afc-whatsapp-float {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background-color: #25d366;
+    color: #fff;
+    border-radius: 50px;
+    text-align: center;
+    font-size: 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.afc-whatsapp-float:hover {
+    transform: scale(1.1);
+    background-color: #128c7e;
+    color: white;
+}
+
+.afc-wa-icon {
+    width: 32px;
+    height: 32px;
+}
+
+/* Tooltip on Hover */
+.afc-wa-tooltip {
+    position: absolute;
+    right: 75px;
+    background: #1e293b;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: 0.3s;
+}
+
+.afc-whatsapp-float:hover .afc-wa-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Pulse Animation for attention */
+@keyframes afc-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+    70% { box-shadow: 0 0 0 15px rgba(37, 211, 102, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+}
+.afc-whatsapp-float {
+    animation: afc-pulse 2s infinite;
+}
