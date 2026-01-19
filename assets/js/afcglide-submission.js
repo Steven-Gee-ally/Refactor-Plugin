@@ -46,7 +46,39 @@ jQuery(document).ready(function ($) {
     });
 
     /**
-     * 2. AJAX BROADCAST (The Emerald Protocol)
+     * 2. GALLERY IMAGE PREVIEW
+     * Handles multiple file preview for the slider
+     */
+    $(document).on('change', '#gallery_files', function (e) {
+        const files = e.target.files;
+        if (files.length === 0) return;
+
+        $('#new-gallery-preview').show();
+        const $grid = $('#new-gallery-grid');
+        $grid.empty();
+
+        // Max images allowed (hardcoded to match PHP constant, ideally passed via vars)
+        const maxGallery = 12;
+
+        for (let i = 0; i < files.length && i < maxGallery; i++) {
+            const file = files[i];
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                const $thumb = $('<div class="new-gallery-thumb"><img src="' + e.target.result + '"></div>');
+                $grid.append($thumb);
+            }
+
+            reader.readAsDataURL(file);
+        }
+
+        if (files.length > maxGallery) {
+            alert('Maximum ' + maxGallery + ' images allowed. Only the first ' + maxGallery + ' will be uploaded.');
+        }
+    });
+
+    /**
+     * 3. AJAX BROADCAST (The Emerald Protocol)
      */
     $form.on('submit', function (e) {
         e.preventDefault();

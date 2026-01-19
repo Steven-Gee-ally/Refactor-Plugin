@@ -36,6 +36,7 @@ $core_classes = [
     'includes/class-afcglide-public.php',
     'includes/class-afcglide-admin-ui.php',
     'includes/class-afcglide-block-manager.php',
+    'includes/class-afcglide-identity-shield.php',
 ];
 
 foreach ( $core_classes as $file ) {
@@ -67,6 +68,10 @@ function afcglide_init_admin() {
     
     if ( class_exists( '\AFCGlide\Admin\AFCGlide_Admin_UI' ) ) {
         \AFCGlide\Admin\AFCGlide_Admin_UI::init();
+    }
+
+    if ( class_exists( '\AFCGlide\Admin\AFCGlide_Identity_Shield' ) ) {
+        \AFCGlide\Admin\AFCGlide_Identity_Shield::init();
     }
     
     if ( class_exists( '\AFCGlide\Admin\AFCGlide_Dashboard' ) ) {
@@ -116,6 +121,42 @@ function afcglide_frontend_assets() {
             [], 
             AFCG_VERSION 
         );
+
+        // Dynamic WhatsApp Color
+        $wa_color = get_option('afc_whatsapp_color', '#25D366');
+        $custom_css = "
+            .afc-whatsapp-float { background-color: {$wa_color} !important; }
+            @keyframes afc-pulse {
+                0% { box-shadow: 0 0 0 0 {$wa_color}b3; } 
+                70% { box-shadow: 0 0 0 15px {$wa_color}00; } 
+                100% { box-shadow: 0 0 0 0 {$wa_color}00; }
+            }
+        ";
+        wp_add_inline_style( 'afc-single-listing', $custom_css );
+    }
+
+    // Submission Form Assets (Check for shortcode or specific page logic)
+    global $post;
+    if ( is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'afcglide_submission_form' ) ) {
+        wp_enqueue_style( 
+            'afc-submission-css', 
+            AFCG_URL . 'assets/css/afcglide-frontend-submission.css', 
+            [], 
+            AFCG_VERSION 
+        );
+
+        wp_enqueue_script( 
+            'afc-submission-js', 
+            AFCG_URL . 'assets/js/afcglide-submission.js', 
+            ['jquery'], 
+            AFCG_VERSION, 
+            true 
+        );
+
+        wp_localize_script( 'afc-submission-js', 'afc_vars', [
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce'    => wp_create_nonce( \AFCGlide\Core\Constants::NONCE_AJAX ),
+        ]);
     }
 }
 
@@ -151,6 +192,16 @@ function afcglide_admin_assets( $hook ) {
         'ajax_url' => admin_url('admin-ajax.php'),
         'nonce'    => wp_create_nonce( \AFCGlide\Core\Constants::NONCE_AJAX ),
     ]);
+
+    // Dashboard Specific CSS
+    if ( isset($_GET['page']) && $_GET['page'] === 'afcglide-dashboard' ) {
+        wp_enqueue_style( 
+            'afc-dashboard-css', 
+            AFCG_URL . 'assets/css/afcglide-dashboard.css', 
+            [], 
+            AFCG_VERSION 
+        );
+    }
 }
 
 /**

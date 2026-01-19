@@ -38,30 +38,49 @@ class AFCGlide_Metaboxes {
 
         $screens = [ C::POST_TYPE ];
         foreach ( $screens as $screen ) {
-            // 1. Property Description (The Narrative)
-            add_meta_box( 'afc_description', '📝 1. Property Description', [ __CLASS__, 'render_description_metabox' ], $screen, 'normal', 'high' );
+            // 1. Property Description (New Headers)
+            add_meta_box( 'afc_intro', '📝 1. Property Description', [ __CLASS__, 'render_intro_metabox' ], $screen, 'normal', 'high' );
             
-            // 2. Property Specifications
-            add_meta_box( 'afc_details', '🏠 2. Property Specifications', [ __CLASS__, 'render_details_metabox' ], $screen, 'normal', 'high' );
+            // 2. Property Narrative (Formerly Description)
+            add_meta_box( 'afc_description', '📖 2. Property Narrative', [ __CLASS__, 'render_description_metabox' ], $screen, 'normal', 'high' );
             
-            // 3. Visual Command Center (Hero)
-            add_meta_box( 'afc_media_hub', '📸 3. Visual Command Center', [ __CLASS__, 'render_media_metabox' ], $screen, 'normal', 'high' );
+            // 3. Property Specifications
+            add_meta_box( 'afc_details', '🏠 3. Property Specifications', [ __CLASS__, 'render_details_metabox' ], $screen, 'normal', 'high' );
             
-            // 4. Property Gallery Slider
-            add_meta_box( 'afc_slider', '🖼️ 4. Property Gallery Slider', [ __CLASS__, 'render_gallery_metabox' ], $screen, 'normal', 'high' );
+            // 4. Visual Command Center (Hero)
+            add_meta_box( 'afc_media_hub', '📸 4. Visual Command Center', [ __CLASS__, 'render_media_metabox' ], $screen, 'normal', 'high' );
             
-            // 5. Location & GPS (Reset ID to bypass any hidden state)
-            add_meta_box( 'afc_location_v2', '📍 5. Location & GPS', [ __CLASS__, 'render_location_metabox' ], $screen, 'normal', 'high' );
+            // 5. Property Gallery Slider
+            add_meta_box( 'afc_slider', '🖼️ 5. Property Gallery Slider', [ __CLASS__, 'render_gallery_metabox' ], $screen, 'normal', 'high' );
             
-            // 6. Property Features
-            add_meta_box( 'afc_amenities', '💎 6. Property Features', [ __CLASS__, 'render_amenities_metabox' ], $screen, 'normal', 'high' );
+            // 6. Location & GPS
+            add_meta_box( 'afc_location_v2', '📍 6. Location & GPS', [ __CLASS__, 'render_location_metabox' ], $screen, 'normal', 'high' );
             
-            // 7. Agent Branding
-            add_meta_box( 'afc_agent', '👤 7. Agent Branding', [ __CLASS__, 'render_agent_metabox' ], $screen, 'normal', 'high' );
+            // 7. Property Features
+            add_meta_box( 'afc_amenities', '💎 7. Property Features', [ __CLASS__, 'render_amenities_metabox' ], $screen, 'normal', 'high' );
             
-            // 8. Publish Listing
-            add_meta_box( 'afc_publish_box', '🚀 8. Publish Listing Control', [ __CLASS__, 'render_publish_metabox' ], $screen, 'normal', 'high' );
+            // 8. Agent Branding
+            add_meta_box( 'afc_agent', '👤 8. Agent Branding', [ __CLASS__, 'render_agent_metabox' ], $screen, 'normal', 'high' );
+            
+            // 9. Publish Listing
+            add_meta_box( 'afc_publish_box', '🚀 9. Publish Listing Control', [ __CLASS__, 'render_publish_metabox' ], $screen, 'normal', 'high' );
         }
+    }
+
+    /**
+     * Section 1: Property Description (Header & Intro)
+     */
+    public static function render_intro_metabox( $post ) {
+        $intro = get_post_meta( $post->ID, '_listing_intro_text', true );
+        ?>
+        <div class="afc-metabox-content">
+            <div class="afc-field">
+                <label class="afc-label">Property Headline</label>
+                <input type="text" name="_listing_intro_text" value="<?php echo esc_attr( $intro ); ?>" class="afc-input" placeholder="e.g. Stunning Modern Villa in the Hills" style="font-size: 16px; font-weight: bold;">
+                <p class="afc-help-text">A captivating one-line header for the listing.</p>
+            </div>
+        </div>
+        <?php
     }
 
     /**
@@ -334,6 +353,7 @@ class AFCGlide_Metaboxes {
 
         // Meta Map
         $meta_fields = [
+            '_listing_intro_text'   => '_listing_intro_text', // New Field
             '_agent_name_display'   => C::META_AGENT_NAME,
             '_agent_phone_display'  => C::META_AGENT_PHONE,
             '_agent_photo_id'       => C::META_AGENT_PHOTO,

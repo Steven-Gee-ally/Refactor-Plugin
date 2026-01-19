@@ -160,17 +160,7 @@ $show_wa = get_post_meta(get_the_ID(), '_show_floating_whatsapp', true);
 
 if ( $show_wa === '1' && !empty($clean_phone) ) : 
 ?>
-<style>
-    /* Dynamic Pulse Color based on your Settings Page Selection */
-    .afc-whatsapp-float {
-        background-color: <?php echo esc_attr($wa_brand_color); ?> !important;
-    }
-    @keyframes afc-pulse {
-        0% { box-shadow: 0 0 0 0 <?php echo esc_attr($wa_brand_color); ?>b3; } /* b3 = 70% opacity */
-        70% { box-shadow: 0 0 0 15px <?php echo esc_attr($wa_brand_color); ?>00; } /* 00 = transparent */
-        100% { box-shadow: 0 0 0 0 <?php echo esc_attr($wa_brand_color); ?>00; }
-    }
-</style>
+
 
 <a href="https://wa.me/<?php echo $clean_phone; ?>" class="afc-whatsapp-float" target="_blank" rel="nofollow">
     <svg viewBox="0 0 32 32" class="afc-wa-icon"><path d="M16 0c-8.837 0-16 7.163-16 16 0 2.825.737 5.588 2.137 8.137l-2.137 7.863 8.1-.2.1.2c2.487 1.463 5.112 2.112 7.9 2.112 8.837 0 16-7.163 16-16s-7.163-16-16-16zm8.287 21.825c-.337.95-1.712 1.838-2.737 2.05-.688.138-1.588.25-4.6-1.013-3.862-1.612-6.362-5.538-6.55-5.8-.188-.262-1.525-2.025-1.525-3.862 0-1.838.963-2.738 1.3-3.113.337-.375.75-.463 1-.463s.5 0 .712.013c.225.013.525-.088.825.638.3.713 1.013 2.475 1.1 2.663.088.188.15.413.025.663-.125.263-.188.425-.375.65-.188.225-.412.513-.587.688-.2.2-.412.412-.175.812.238.4.1.863 2.087 2.625 1.637 1.45 3.012 1.9 3.437 2.113.425.213.675.175.925-.113.25-.288 1.075-1.25 1.362-1.688.3-.425.588-.363.988-.212.4.15 2.525 1.188 2.962 1.4.438.213.738.313.838.488.1.175.1.988-.237 1.938z" fill="currentColor"/></svg>
