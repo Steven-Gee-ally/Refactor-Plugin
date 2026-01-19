@@ -1,98 +1,605 @@
-:root {
-    --afc-blue: #2563eb;
-    --afc-dark: #1e293b;
-    --afc-ice: #f0f9ff;
-    --afc-glass: rgba(255, 255, 255, 0.95);
-    --afc-prism: linear-gradient(135deg, #E0F2FE 0%, #DCFCE7 25%, #FEF9C3 50%, #FCE7F3 75%, #F3E8FF 100%);
+/**
+ * AFCGlide Admin Styles
+ * Version 4.0.0 - Production Ready
+ * Clean, professional admin interface
+ */
+
+/* ==========================================
+   1. HIDE WORDPRESS DEFAULT CLUTTER
+   ========================================== */
+
+/* Hide default editor and media buttons for our CPT */
+.post-type-afcglide_listing #postdivrich {
+    display: none !important;
 }
 
-#afcglide-submission-root {
-    max-width: 1100px;
-    margin: 20px auto;
-    font-family: 'Inter', system-ui, sans-serif;
-    color: var(--afc-dark);
+.post-type-afcglide_listing #wp-content-media-buttons {
+    display: none !important;
 }
 
-.afc-form-header {
-    background: var(--afc-prism);
-    padding: 40px;
-    border-radius: 24px;
-    text-align: center;
-    margin-bottom: 30px;
-    border: 1px solid rgba(255,255,255,0.7);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+/* Hide "Add title" placeholder - we have our own */
+.post-type-afcglide_listing #title-prompt-text {
+    display: none !important;
 }
 
-.afc-form-section {
-    background: var(--afc-glass);
-    padding: 40px;
-    border-radius: 24px;
-    border: 1px solid #e2e8f0;
-    margin-bottom: 25px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+/* Clean up sidebar on listing pages */
+.post-type-afcglide_listing #side-sortables {
+    display: none !important;
 }
 
-.afc-form-section h3 {
+/* Make content area full width */
+.post-type-afcglide_listing #post-body.columns-2 #postbox-container-1 {
+    display: none;
+}
+
+.post-type-afcglide_listing #post-body.columns-2 #postbox-container-2 {
+    width: 100% !important;
+    margin-right: 0 !important;
+}
+
+/* ==========================================
+   2. TITLE AREA STYLING (SKY BLUE PASTEL) [cite: 2026-01-18]
+   ========================================== */
+
+/* Custom Title Banner */
+.afc-title-banner {
+    background: linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 50%, #bae6fd 100%) !important;
+    padding: 15px 25px;
+    border-radius: 12px;
+    margin: 0 0 10px 0;
     display: flex;
     align-items: center;
     gap: 15px;
-    font-size: 16px;
-    font-weight: 800;
-    text-transform: uppercase;
-    color: var(--afc-blue);
+    box-shadow: 0 2px 8px rgba(14, 165, 233, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
-.step-num {
-    background: var(--afc-blue);
-    color: white;
-    width: 28px;
-    height: 28px;
+.afc-title-banner .afc-banner-icon {
+    font-size: 28px;
+    line-height: 1;
+}
+
+.afc-title-banner .afc-banner-content h3 {
+    margin: 0 0 3px 0;
+    font-size: 15px;
+    font-weight: 800;
+    color: #0369a1 !important;
+    /* Deep Blue Text */
+    letter-spacing: 0.3px;
+}
+
+.afc-title-banner .afc-banner-content p {
+    margin: 0;
+    font-size: 12px;
+    color: #075985;
+    line-height: 1.4;
+}
+
+/* Custom Title Input Wrapper */
+.afc-title-input {
+    width: 100% !important;
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    padding: 14px 18px !important;
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    background: white !important;
+    transition: all 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+.afc-title-input:focus {
+    border-color: #0ea5e9 !important;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1) !important;
+    outline: none !important;
+}
+
+/* ==========================================
+   3. DESCRIPTION BANNER (SUNSET YELLOW PASTEL) [cite: 2026-01-18]
+   ========================================== */
+
+.afc-description-banner {
+    background: linear-gradient(90deg, #fffbeb 0%, #fef3c7 50%, #fde68a 100%) !important;
+    padding: 20px 30px;
+    border-radius: 12px;
+    margin: 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+/* Unified Section Number Circle [cite: 2026-01-18] */
+.afc-section-number {
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    /* Changed from #1e293b */
+    color: #1e293b;
+    border: 2px solid #1e293b;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    font-size: 12px;
-}
-
-.afc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.full { grid-column: span 2; }
-
-.afc-field label { display: block; font-weight: 700; font-size: 11px; color: #64748b; margin-bottom: 8px; text-transform: uppercase; }
-.afc-field input {
-    width: 100%;
-    padding: 14px;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    background: #f8fafc;
-    font-weight: 600;
-}
-
-.specs-inline-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-
-.amenities-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
-.afc-checkbox-item { background: #f8fafc; padding: 12px; border-radius: 10px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 600; font-size: 13px; }
-
-.afc-media-container { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
-.hero-preview-box, .gallery-upload-trigger { 
-    width: 100%; aspect-ratio: 16/9; background: #f1f5f9; border-radius: 15px; border: 2px dashed #cbd5e1; 
-    display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden;
-}
-.gallery-upload-trigger { aspect-ratio: auto; height: 100px; }
-#hero-placeholder, .gallery-upload-trigger span { color: #94a3b8; font-size: 12px; font-weight: 700; }
-
-.afc-preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 20px; }
-.afc-preview-item { width: 100%; aspect-ratio: 1/1; border-radius: 8px; object-fit: cover; }
-
-.afc-main-btn {
-    background: #22c55e;
-    color: white;
-    width: 100%;
-    padding: 20px;
-    border-radius: 15px;
     font-size: 18px;
     font-weight: 900;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.afc-banner-content h3 {
+    margin: 0 0 5px 0;
+    font-size: 18px;
+    font-weight: 800;
+    color: #92400e !important;
+    /* Amber-Brown for readability on yellow */
+}
+
+.afc-banner-content p {
+    color: #b45309 !important;
+}
+
+/* ==========================================
+   4. DESCRIPTION WRAPPER
+   ========================================== */
+
+.afc-description-wrapper {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.afc-description-wrapper .wp-editor-container {
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    overflow: hidden;
+}
+
+.afc-description-wrapper .wp-editor-area {
+    padding: 15px !important;
+    font-size: 14px !important;
+    line-height: 1.6 !important;
+}
+
+/* ==========================================
+   5. METABOX STYLING
+   ========================================== */
+
+.post-type-afcglide_listing .postbox {
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    margin-bottom: 20px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02) !important;
+    background: white !important;
+}
+
+.post-type-afcglide_listing .postbox .postbox-header {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%) !important;
+    border-bottom: 1px solid #bae6fd !important;
+    padding: 15px 20px !important;
+    border-radius: 12px 12px 0 0 !important;
+}
+
+.post-type-afcglide_listing .postbox .postbox-header h2 {
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    color: #0c4a6e !important;
+    letter-spacing: 0.3px !important;
+}
+
+.post-type-afcglide_listing .postbox .inside {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.afc-metabox-content {
+    padding: 25px;
+}
+
+/* ==========================================
+   6. FORM ELEMENTS
+   ========================================== */
+
+.afc-label {
+    display: block;
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 13px;
+    margin-bottom: 8px;
+    letter-spacing: 0.3px;
     text-transform: uppercase;
-    border: none;
+}
+
+.afc-input,
+.afc-select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    background: #f8fafc;
+}
+
+.afc-input:focus,
+.afc-select:focus {
+    border-color: #6366f1;
+    outline: none;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.afc-field {
+    margin-bottom: 20px;
+}
+
+.afc-help-text {
+    font-size: 12px;
+    color: #64748b;
+    font-style: italic;
+    margin: 8px 0 0 0;
+}
+
+/* ==========================================
+   7. AGENT SECTION
+   ========================================== */
+
+.afc-agent-selector-wrapper {
+    margin-bottom: 25px;
+    padding: 15px;
+    background: #f0f9ff;
+    border-radius: 8px;
+    border: 1px solid #bae6fd;
+}
+
+.afc-agent-container {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.afc-agent-photo-wrapper {
+    text-align: center;
+}
+
+.afc-agent-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #e2e8f0;
+    margin: 0 auto 15px;
+    background: #f1f5f9;
+}
+
+.afc-agent-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.afc-agent-fields {
+    flex: 1;
+}
+
+.afc-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.afc-checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+}
+
+/* ==========================================
+   8. MEDIA UPLOAD ZONES
+   ========================================== */
+
+.afc-media-matrix {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+}
+
+.afc-upload-zone {
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 12px;
+    border: 2px dashed #cbd5e1;
+    transition: all 0.3s;
+}
+
+.afc-upload-zone:hover {
+    border-color: #6366f1;
+    background: #f0f4ff;
+}
+
+.afc-zone-title {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.afc-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+    margin-bottom: 15px;
+    min-height: 90px;
+}
+
+.afc-gallery-preview {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+}
+
+.afc-preview-item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid #e2e8f0;
+    background: white;
+    cursor: move;
+    transition: all 0.2s;
+}
+
+.afc-preview-item:hover {
+    border-color: #6366f1;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.afc-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.afc-remove-img {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(239, 68, 68, 0.95);
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    line-height: 1;
     cursor: pointer;
-    box-shadow: 0 10px 20px rgba(34, 197, 94, 0.2);
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.afc-preview-item:hover .afc-remove-img {
+    opacity: 1;
+}
+
+.afc-remove-img:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+}
+
+/* Sortable Placeholder */
+.afc-sortable-placeholder {
+    background: #e0e7ff;
+    border: 2px dashed #6366f1;
+    border-radius: 8px;
+}
+
+/* ==========================================
+   9. DETAILS & LOCATION GRIDS
+   ========================================== */
+
+.afc-details-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.afc-gps-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 15px;
+}
+
+/* ==========================================
+   10. AMENITIES GRID
+   ========================================== */
+
+.afc-amenities-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.afc-amenity-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+}
+
+.afc-amenity-item:hover {
+    background: #e0e7ff;
+    border-color: #c7d2fe;
+}
+
+.afc-amenity-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+}
+
+.afc-amenity-item span {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+/* ==========================================
+   11. PUBLISH SECTION
+   ========================================== */
+
+.afc-publish-section {
+    text-align: center;
+    padding: 10px 0;
+}
+
+.afc-publish-btn {
+    width: 100%;
+    padding: 15px !important;
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ==========================================
+   12. SUCCESS NOTICES
+   ========================================== */
+
+.afc-success-portal {
+    border-left: 4px solid #10b981 !important;
+    background: #f0fdf4 !important;
+    padding: 15px 20px !important;
+}
+
+.afc-success-portal p {
+    font-size: 14px;
+    margin: 0 !important;
+}
+
+.afc-success-portal strong {
+    color: #065f46;
+    font-size: 15px;
+}
+
+.afc-success-portal a {
+    color: #10b981;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.afc-success-portal a:hover {
+    color: #059669;
+    text-decoration: underline;
+}
+
+/* ==========================================
+   13. RESPONSIVE ADJUSTMENTS
+   ========================================== */
+
+@media (max-width: 1280px) {
+    .afc-media-matrix {
+        grid-template-columns: 1fr;
+    }
+
+    .afc-details-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .afc-agent-container {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .afc-details-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .afc-gps-row {
+        grid-template-columns: 1fr;
+    }
+
+    .afc-amenities-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================
+   14. LOADING STATES
+   ========================================== */
+
+.afc-upload-btn.loading {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+}
+
+.afc-upload-btn.loading::after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: afc-spin 0.8s linear infinite;
+}
+
+@keyframes afc-spin {
+    to {
+        transform: translateY(-50%) rotate(360deg);
+    }
+}
+
+/* ==========================================
+   15. WORDPRESS BUTTON OVERRIDES
+   ========================================== */
+
+.post-type-afcglide_listing .button {
+    border-radius: 8px !important;
+    padding: 8px 16px !important;
+    font-weight: 600 !important;
+}
+
+.post-type-afcglide_listing .button-primary {
+    background: #6366f1 !important;
+    border-color: #6366f1 !important;
+    box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2) !important;
+}
+
+.post-type-afcglide_listing .button-primary:hover {
+    background: #4f46e5 !important;
+    border-color: #4f46e5 !important;
+}
+
+.post-type-afcglide_listing .button-secondary {
+    background: white !important;
+    border-color: #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+.post-type-afcglide_listing .button-secondary:hover {
+    border-color: #cbd5e1 !important;
+    background: #f8fafc !important;
 }

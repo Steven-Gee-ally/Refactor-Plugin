@@ -1,166 +1,322 @@
+/**
+ * AFCGlide Admin JavaScript
+ * Version 4.0.0 - Production Ready
+ * Handles all admin interface interactions
+ */
+
 jQuery(document).ready(function ($) {
 
     // ==========================================
-    // 0. LUXURY LAYOUT ENFORCER
+    // 0. VERIFY DEPENDENCIES
     // ==========================================
-    const enforceLayoutOrder = () => {
-        const container = $('#normal-sortables');
-        if (!container.length) return;
-        const order = ['afc_agent', 'afc_media_hub', 'afc_slider', 'afc_details', 'afc_location', 'afc_amenities', 'afc_publish_box'];
-        order.forEach(id => {
-            const box = $('#' + id);
-            if (box.length) container.append(box);
-        });
-    };
-    enforceLayoutOrder();
+    if (typeof wp === 'undefined' || typeof wp.media === 'undefined') {
+        console.error('AFCGlide Error: WordPress Media Library not loaded');
+        return;
+    }
 
     // ==========================================
     // 1. DATA LOSS PREVENTION
     // ==========================================
     let formChanged = false;
-    $('input, textarea, select').on('change input', () => formChanged = true);
-    $(window).on('beforeunload', (e) => { if (formChanged) return 'Unsaved changes!'; });
-    $('form#post').on('submit', () => formChanged = false);
+
+    $('input, textarea, select').on('change input', function () {
+        formChanged = true;
+    });
+
+    $(window).on('beforeunload', function (e) {
+        if (formChanged) {
+            return 'You have unsaved changes. Are you sure you want to leave?';
+        }
+    });
+
+    $('form#post').on('submit', function () {
+        formChanged = false;
+    });
 
     // ==========================================
-    // 2. HERO & AGENT PHOTO (Single Select)
+    // 2. AGENT PHOTO UPLOAD (Single Select)
     // ==========================================
-    $(document).on('click', '.afc-upload-btn, .afcglide-upload-image-btn', function (e) {
-        const btn = $(this);
-        const zone = btn.closest('.afc-upload-zone');
-        if (zone.data('type') !== 'hero' && !btn.hasClass('afcglide-upload-image-btn')) return;
-
+    $(document).on('click', '.afcglide-upload-image-btn', function (e) {
         e.preventDefault();
-        const frame = wp.media({ title: 'Select Photo', multiple: false });
+
+        const $btn = $(this);
+        const frame = wp.media({
+            title: 'Select Agent Photo',
+            multiple: false,
+            library: { type: 'image' }
+        });
 
         frame.on('select', function () {
             const attachment = frame.state().get('selection').first().toJSON();
-            if (attachment.width < 1200) { alert('⚠️ IMAGE TOO SMALL (Min 1200px)'); return; }
 
-            if (btn.hasClass('afcglide-upload-image-btn')) {
-                // Agent Photo Logic
-                $('#agent_photo_id').val(attachment.id);
-                btn.siblings('.afcglide-preview-box').html(`<img src="${attachment.url}" style="width:100%;">`);
-            } else {
-                // Hero Image Logic
-                zone.find('input[type="hidden"]').val(attachment.id);
-                zone.find('.afc-preview-grid').html(`<div class="afc-preview-item"><img src="${attachment.url}"><span class="afc-remove-img">×</span></div>`);
+            // Validate dimensions
+            if (attachment.width < 500) {
+                alert('⚠️ IMAGE TOO SMALL\nMinimum 500px width required for agent photos.');
+                return;
             }
+
+            // Update preview and hidden field
+            $('#agent_photo_id').val(attachment.id);
+            $('#agent-photo-img').attr('src', attachment.url);
+
             formChanged = true;
         });
+
         frame.open();
     });
 
     // ==========================================
-    // 3. STACK & GALLERY (Multi-Select & Sync)
+    // 3. HERO IMAGE UPLOAD (Single Select)
     // ==========================================
-    $(document).on('click', '.afc-upload-btn', function (e) {
-        const btn = $(this);
-        const zone = btn.closest('.afc-upload-zone');
-        const type = zone.data('type');
-        
-        if (type === 'hero') return; // Hero is handled in Section 2
-
+    $(document).on('click', '.afc-upload-zone[data-type="hero"] .afc-upload-btn', function (e) {
         e.preventDefault();
-        const limit = zone.data('limit');
-        const input = zone.find('input[type="hidden"]');
-        const preview = zone.find('.afc-preview-grid');
 
-        const frame = wp.media({ 
-            title: 'Select Gallery Photos', 
-            multiple: true 
+        const $zone = $(this).closest('.afc-upload-zone');
+        const $input = $zone.find('input[type="hidden"]');
+        const $preview = $zone.find('.afc-preview-grid');
+
+        const frame = wp.media({
+            title: 'Select Hero Image',
+            multiple: false,
+            library: { type: 'image' }
+        });
+
+        frame.on('select', function () {
+            const attachment = frame.state().get('selection').first().toJSON();
+
+            // Validate dimensions
+            if (attachment.width < 1200) {
+                alert('⚠️ IMAGE TOO SMALL\n\nLuxury listings require 1200px width minimum.\n\nCurrently detected: ' + attachment.width + 'px');
+                return;
+            }
+
+            // Update hidden field
+            $input.val(attachment.id);
+
+            // Update preview
+            $preview.html(
+                '<div class="afc-preview-item" data-id="' + attachment.id + '">' +
+                '<img src="' + attachment.url + '" alt="">' +
+                '<span class="afc-remove-img">×</span>' +
+                '</div>'
+            );
+
+            formChanged = true;
+        });
+
+        frame.open();
+    });
+
+    // ==========================================
+    // 4. STACK & GALLERY UPLOAD (Multi-Select)
+    // ==========================================
+    $(document).on('click', '.afc-upload-zone[data-type="stack"] .afc-upload-btn, .afc-upload-zone[data-type="gallery"] .afc-upload-btn', function (e) {
+        e.preventDefault();
+
+        const $zone = $(this).closest('.afc-upload-zone');
+        const type = $zone.data('type');
+        const limit = parseInt($zone.data('limit'));
+        const $input = $zone.find('input[type="hidden"]');
+        const $preview = $zone.find('.afc-preview-grid');
+
+        // Get current IDs
+        let currentIds = $input.val() ? $input.val().split(',').filter(Boolean) : [];
+
+        const frame = wp.media({
+            title: type === 'stack' ? 'Select Stack Images (Max ' + limit + ')' : 'Select Gallery Images (Max ' + limit + ')',
+            multiple: true,
+            library: { type: 'image' }
         });
 
         frame.on('select', function () {
             const selection = frame.state().get('selection');
-            let ids = input.val() ? input.val().split(',') : [];
 
             selection.each(function (attachment) {
                 attachment = attachment.toJSON();
-                // Check if under limit and not a duplicate
-                if (ids.length < limit && !ids.includes(attachment.id.toString())) {
-                    if (attachment.width < 1200) { 
-                        console.log('Skipped small image: ' + attachment.filename); 
-                        return; 
-                    }
-                    
-                    ids.push(attachment.id);
-                    preview.append(`
-                        <div class="afc-preview-item" data-id="${attachment.id}">
-                            <img src="${attachment.url}">
-                            <span class="afc-remove-img">×</span>
-                        </div>
-                    `);
+
+                // Check limit
+                if (currentIds.length >= limit) {
+                    console.log('Limit reached for ' + type);
+                    return false;
                 }
+
+                // Check if already added
+                if (currentIds.includes(attachment.id.toString())) {
+                    return; // Skip duplicates
+                }
+
+                // Validate dimensions
+                if (attachment.width < 1200) {
+                    console.log('Skipped small image: ' + attachment.filename + ' (' + attachment.width + 'px)');
+                    return;
+                }
+
+                // Add to array
+                currentIds.push(attachment.id);
+
+                // Add to preview
+                $preview.append(
+                    '<div class="afc-preview-item" data-id="' + attachment.id + '">' +
+                    '<img src="' + attachment.url + '" alt="">' +
+                    '<span class="afc-remove-img">×</span>' +
+                    '</div>'
+                );
             });
 
-            input.val(ids.join(','));
-            formChanged = true;
+            // Update hidden field
+            $input.val(currentIds.join(','));
 
-            // This triggers Section 6 to allow dragging these new photos
-            $(document).trigger('afc_images_updated'); 
+            // Reinitialize sortable for new items
+            initSortable();
+
+            formChanged = true;
         });
+
         frame.open();
     });
-    // ==========================================
-    // 4. THE REMOVER (Red Glass Sync)
-    // ==========================================
-    $(document).on('click', '.afc-remove-img', function () {
-        const item = $(this).closest('.afc-preview-item');
-        const zone = item.closest('.afc-upload-zone');
-        const input = zone.find('input[type="hidden"]');
-        const id = item.data('id') ? item.data('id').toString() : '';
 
-        let ids = input.val().split(',');
-        ids = ids.filter(val => val !== id);
-        input.val(ids.join(','));
+    // ==========================================
+    // 5. REMOVE IMAGE
+    // ==========================================
+    $(document).on('click', '.afc-remove-img', function (e) {
+        e.preventDefault();
 
-        item.fadeOut(300, function() { $(this).remove(); });
+        const $item = $(this).closest('.afc-preview-item');
+        const $zone = $item.closest('.afc-upload-zone');
+        const $input = $zone.find('input[type="hidden"]');
+        const imageId = $item.data('id').toString();
+
+        // Remove from hidden field
+        let ids = $input.val().split(',').filter(Boolean);
+        ids = ids.filter(id => id !== imageId);
+        $input.val(ids.join(','));
+
+        // Remove from DOM
+        $item.fadeOut(300, function () {
+            $(this).remove();
+        });
+
         formChanged = true;
     });
 
     // ==========================================
-    // 5. AGENT AUTO-FILL
+    // 6. AGENT AUTO-FILL
     // ==========================================
     $(document).on('change', '#afc_agent_selector', function () {
-        const sel = $(this).find(':selected');
-        if (!sel.val()) return;
-        $('#afc_agent_name').val(sel.data('name'));
-        $('#afc_agent_phone').val(sel.data('phone'));
-        $('#agent_photo_id').val(sel.data('photo-id'));
-        if (sel.data('photo-url')) $('#agent-photo-img').attr('src', sel.data('photo-url'));
+        const $selected = $(this).find(':selected');
+
+        if (!$selected.val()) return;
+
+        // Fill in fields
+        $('#afc_agent_name').val($selected.data('name'));
+        $('#afc_agent_phone').val($selected.data('phone'));
+        $('#agent_photo_id').val($selected.data('photo-id'));
+
+        // Update photo preview
+        const photoUrl = $selected.data('photo-url');
+        if (photoUrl) {
+            $('#agent-photo-img').attr('src', photoUrl);
+        }
+
         formChanged = true;
     });
 
     // ==========================================
-// 6. DRAG & DROP SORTING (Gallery & Stack)
-// ==========================================
-const initSortable = () => {
-    $(".afc-preview-grid").sortable({
-        items: ".afc-preview-item",
-        cursor: "grabbing",
-        placeholder: "afc-sortable-placeholder",
-        update: function(event, ui) {
-            const zone = $(this).closest('.afc-upload-zone');
-            const input = zone.find('input[type="hidden"]');
-            
-            // Re-calculate the ID order based on new positions
-            const newIds = [];
-            $(this).find('.afc-preview-item').each(function() {
-                newIds.push($(this).data('id'));
-            });
-            
-            input.val(newIds.join(','));
-            console.log("New Order Saved: " + newIds.join(','));
+    // 7. DRAG & DROP SORTING (Gallery & Stack)
+    // ==========================================
+    function initSortable() {
+        if (typeof $.fn.sortable === 'undefined') {
+            console.warn('jQuery UI Sortable not loaded');
+            return;
         }
-    });
-};
 
-// Initialize on load
-initSortable();
+        $('.afc-preview-grid').sortable({
+            items: '.afc-preview-item',
+            cursor: 'grabbing',
+            placeholder: 'afc-sortable-placeholder',
+            tolerance: 'pointer',
+            update: function (event, ui) {
+                const $zone = $(this).closest('.afc-upload-zone');
+                const $input = $zone.find('input[type="hidden"]');
 
-// Re-initialize if images are added
-$(document).on('afc_images_updated', function() {
+                // Recalculate order
+                const newIds = [];
+                $(this).find('.afc-preview-item').each(function () {
+                    newIds.push($(this).data('id'));
+                });
+
+                $input.val(newIds.join(','));
+
+                console.log('New order saved: ' + newIds.join(','));
+                formChanged = true;
+            }
+        });
+    }
+
+    // Initialize on page load
     initSortable();
-});
+
+    // ==========================================
+    // 8. ENFORCE METABOX ORDER
+    // ==========================================
+    function enforceLayoutOrder() {
+        const $container = $('#normal-sortables');
+        if (!$container.length) return;
+
+        const order = [
+            'afc_description', // 1
+            'afc_details',     // 2
+            'afc_media_hub',   // 3
+            'afc_slider',      // 4
+            'afc_location_v2',    // 5
+            'afc_amenities',   // 6
+            'afc_agent',       // 7
+            'afc_publish_box'  // 8
+        ];
+
+        order.forEach(function (id) {
+            const $box = $('#' + id);
+            if ($box.length) {
+                $container.append($box);
+            }
+        });
+    }
+
+    enforceLayoutOrder();
+
+    // ==========================================
+    // 9. PUBLISH BUTTON ENHANCEMENT
+    // ==========================================
+    $(document).on('click', '#publish', function (e) {
+        const $title = $('#title');
+
+        if ($title.val().trim() === '') {
+            e.preventDefault();
+            alert('⚠️ Please enter a property title before publishing.');
+            $title.focus();
+            return false;
+        }
+
+        // Check if hero image is set
+        const heroId = $('input[name="_listing_hero_id"]').val();
+
+        if (!heroId) {
+            const confirmed = confirm('⚠️ NO HERO IMAGE SET\n\nThis listing does not have a hero image. Publishing without one may result in poor presentation.\n\nDo you want to continue anyway?');
+
+            if (!confirmed) {
+                e.preventDefault();
+                return false;
+            }
+        }
+
+        // Show loading state
+        $(this).prop('disabled', true).val('Publishing...').css('opacity', '0.7');
+    });
+
+    // ==========================================
+    // 10. CONSOLE WELCOME MESSAGE
+    // ==========================================
+    console.log('%c🚀 AFCGlide Admin v4.0.0 Loaded', 'color: #10b981; font-weight: bold; font-size: 14px;');
+    console.log('%cDrag to reorder | Click × to remove | Auto-save on publish', 'color: #64748b; font-size: 12px;');
+
 });

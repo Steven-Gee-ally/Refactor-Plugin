@@ -1,283 +1,478 @@
 /**
- * AFCGlide Listings - Master Admin UI (v3.3 FIXED)
- * SIDEBAR PROTECTED - CONFLICTS RESOLVED
+ * AFCGlide Admin Styles
+ * Version 4.0.0 - Production Ready
+ * Clean, professional admin interface
  */
 
-/* ============================================================
-   CRITICAL: FORCE SIDEBAR TO ALWAYS SHOW
-   ============================================================ */
-#adminmenuwrap,
-#adminmenu,
-#adminmenuback,
-#adminmenumain {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
+/* ==========================================
+   1. HIDE WORDPRESS DEFAULT CLUTTER
+   ========================================== */
+
+/* Hide default WordPress editor - keep support but hide visually */
+.post-type-afcglide_listing #postdivrich {
+    display: none !important;
 }
 
-li.menu-top,
-.wp-submenu,
-.wp-menu-separator {
-    display: block !important;
+.post-type-afcglide_listing #postdiv {
+    display: none !important;
 }
 
-/* ============================================================
-   1. DASHBOARD & GLOBAL WRAPPER
-   ============================================================ */
-.afcglide-admin-wrapper,
-.wrap.afcglide-dashboard {
-    background-color: #f8fafc;
-    padding: 30px;
-    margin-left: -20px;
-    min-height: 100vh;
+/* Hide default media buttons */
+.post-type-afcglide_listing #wp-content-media-buttons {
+    display: none !important;
 }
 
-/* ============================================================
-   2. SHARED CARD UI (Apple-Style Depth)
-   ============================================================ */
-.afcglide-card,
-.post-type-afcglide_listing .postbox {
-    background: #ffffff !important;
-    padding: 35px !important;
-    border-radius: 20px !important;
-    border: 1px solid rgba(226, 232, 240, 0.8) !important;
-    font-family: 'Inter', sans-serif !important;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02) !important;
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
-    margin-bottom: 25px !important;
+/* Hide "Add title" placeholder */
+.post-type-afcglide_listing #title-prompt-text {
+    color: #94a3b8;
 }
 
-.afcglide-card:hover,
-.post-type-afcglide_listing .postbox:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.01) !important;
-    border-color: rgba(226, 232, 240, 1) !important;
+/* Clean up sidebar on listing pages */
+.post-type-afcglide_listing #side-sortables .postbox {
+    display: none !important;
 }
 
-/* ============================================================
-   3. LISTING EDITOR LAYOUT (Full Width)
-   ============================================================ */
-.post-type-afcglide_listing #postbox-container-1 {
-    display: block !important;
+/* Make content area full width */
+.post-type-afcglide_listing #post-body.columns-2 #postbox-container-1 {
+    display: none !important;
 }
 
-.post-type-afcglide_listing #postbox-container-2 {
+.post-type-afcglide_listing #post-body.columns-2 #postbox-container-2 {
     width: 100% !important;
-    float: none !important;
     margin-right: 0 !important;
 }
 
-/* ============================================================
-   4. TITLE HEADER POLISH (Glassmorphism Lite)
-   ============================================================ */
-.post-type-afcglide_listing #titlediv #titlewrap {
-    background: rgba(255, 255, 255, 0.8) !important;
-    backdrop-filter: blur(12px) !important;
-    padding: 24px 32px !important;
-    border-radius: 20px !important;
-    border: 1px solid rgba(203, 213, 225, 0.6) !important;
-    margin-bottom: 35px !important;
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05) !important;
-}
-
-.post-type-afcglide_listing #titlediv #title {
-    background: transparent !important;
-    border: none !important;
-    font-family: 'Inter', sans-serif !important;
-    font-size: 32px !important;
-    color: #334155 !important;
-    font-weight: 500 !important;
-    letter-spacing: -0.5px !important;
-    padding: 0 !important;
-}
-
-/* ============================================================
-   5. GPS COORDINATES LAYOUT
-   ============================================================ */
-.afcglide-gps-row {
-    display: flex !important;
-    gap: 20px !important;
-    background: #f1f5f9 !important;
-    padding: 20px !important;
-    border-radius: 12px !important;
-    border: 1px solid #e2e8f0 !important;
-    margin-top: 15px;
-}
-
-.gps-field-group {
-    flex: 1 !important;
-    position: relative !important;
-}
-
-.gps-field-group label {
+/* Force normal sortables to be visible */
+.post-type-afcglide_listing #normal-sortables {
     display: block !important;
-    font-size: 11px !important;
-    text-transform: uppercase !important;
-    font-weight: 800 !important;
-    color: #64748b !important;
-    margin-bottom: 8px !important;
 }
 
-.gps-field-group input {
+/* ==========================================
+   2. TITLE AREA STYLING
+   ========================================== */
+
+/* Hide default WordPress title field completely */
+.post-type-afcglide_listing #titlewrap {
+    display: none !important;
+}
+
+.post-type-afcglide_listing #titlediv {
+    display: none !important;
+}
+
+/* Custom Title Banner (Yellow/Gold) */
+.afc-title-banner {
+    background: linear-gradient(90deg, #fef3c7 0%, #fde68a 50%, #fbbf24 100%);
+    padding: 15px 25px;
+    border-radius: 12px;
+    margin: 0 0 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 2px 8px rgba(251, 191, 36, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.afc-title-banner .afc-banner-icon {
+    font-size: 28px;
+    line-height: 1;
+}
+
+.afc-title-banner .afc-banner-content h3 {
+    margin: 0 0 3px 0;
+    font-size: 15px;
+    font-weight: 800;
+    color: #78350f;
+    letter-spacing: 0.3px;
+}
+
+.afc-title-banner .afc-banner-content p {
+    margin: 0;
+    font-size: 12px;
+    color: #92400e;
+    line-height: 1.4;
+}
+
+/* Custom Title Input Wrapper */
+.afc-title-input-wrapper {
+    margin-bottom: 20px;
+}
+
+.afc-title-input {
     width: 100% !important;
-    padding: 14px 16px 14px 42px !important;
-    font-family: 'Inter', sans-serif !important;
+    font-size: 20px !important;
+    font-weight: 700 !important;
+    padding: 14px 18px !important;
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    background: white !important;
+    transition: all 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+.afc-title-input:focus {
+    background: white !important;
+    border-color: #fbbf24 !important;
+    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1) !important;
+    outline: none !important;
+}
+
+/* ==========================================
+   3. DESCRIPTION BANNER (Rainbow)
+   ========================================== */
+
+.afc-description-banner {
+    background: linear-gradient(90deg, #ff9a9e 0%, #fad0c4 25%, #a1c4fd 50%, #c2e9fb 75%, #d4fc79 100%);
+    padding: 20px 30px;
+    border-radius: 12px;
+    margin: 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+/* Unified Section Number Circle */
+.afc-section-number {
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    color: #1e293b;
+    border: 2px solid #1e293b;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 900;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.afc-banner-icon {
+    font-size: 36px;
+    line-height: 1;
+}
+
+.afc-banner-content {
+    flex: 1;
+}
+
+.afc-banner-content h3 {
+    margin: 0 0 5px 0;
+    font-size: 18px;
+    font-weight: 800;
+    color: #1e293b;
+    letter-spacing: 0.3px;
+}
+
+.afc-banner-content p {
+    margin: 0;
+    font-size: 13px;
+    color: #475569;
+    line-height: 1.5;
+}
+
+/* ==========================================
+   4. DESCRIPTION WRAPPER
+   ========================================== */
+
+.afc-description-wrapper {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.afc-description-wrapper .wp-editor-container {
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    overflow: hidden;
+}
+
+.afc-description-wrapper .wp-editor-area {
+    padding: 15px !important;
     font-size: 14px !important;
-    font-weight: 600 !important;
-    color: #334155 !important;
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 12px !important;
+    line-height: 1.6 !important;
 }
 
-/* ============================================================
-   6. PROPERTY SPECS
-   ============================================================ */
-.post-type-afcglide_listing .afcglide-details-grid {
-    display: flex !important;
-    gap: 20px !important;
-    align-items: flex-end !important;
-    background: #f8fafc !important;
-    padding: 25px !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 12px !important;
-}
-
-/* ============================================================
-   7. EMERALD PUBLISH BUTTON
-   ============================================================ */
-.post-type-afcglide_listing .afcglide-publish-btn {
-    background: #10b981 !important;
-    color: #ffffff !important;
-    border: none !important;
-    border-radius: 50px !important;
-    width: 100% !important;
-    height: 55px !important;
-    font-weight: 800 !important;
-    text-transform: uppercase !important;
-    box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3) !important;
-    transition: all 0.3s ease !important;
-}
-
-/* ============================================================
-   8. AMENITY CHIPS (4-COLUMN GRID)
-   ============================================================ */
-.post-type-afcglide_listing .afcglide-amenities-grid {
-    display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 12px !important;
-}
-
-/* ============================================================
-   9. MULTI-COLOR PASTEL HEADERS (Rainbow Update)
-   ============================================================ */
-#afc_agent .hndle { background: #dcfce7 !important; color: #166534 !important; }
-#afc_media_hub .hndle { background: #f3e8ff !important; color: #581c87 !important; }
-#afc_slider .hndle { background: #fce7f3 !important; color: #831843 !important; }
-#afc_details .hndle { background: #ffedd5 !important; color: #7c2d12 !important; }
-#afc_location .hndle { background: #dcfce7 !important; color: #14532d !important; }
-#afc_amenities .hndle { background: #cffafe !important; color: #164e63 !important; }
-
-/* ============================================================
-   10. WATERFALL ENTRANCE ANIMATION
-   ============================================================ */
-@keyframes slideUpFade {
-    0% { opacity: 0; transform: translateY(20px); }
-    100% { opacity: 1; transform: translateY(0); }
-}
+/* ==========================================
+   5. METABOX STYLING
+   ========================================== */
 
 .post-type-afcglide_listing .postbox {
-    animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
-    opacity: 0;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    margin-bottom: 20px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02) !important;
+    background: white !important;
 }
 
-/* Staggered Delays */
-.post-type-afcglide_listing .postbox:nth-of-type(1) { animation-delay: 0.1s !important; }
-.post-type-afcglide_listing .postbox:nth-of-type(2) { animation-delay: 0.2s !important; }
-.post-type-afcglide_listing .postbox:nth-of-type(3) { animation-delay: 0.3s !important; }
-
-/* ============================================================
-   11. SETTINGS TOGGLE SWITCHES (V3 Extension)
-   ============================================================ */
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 44px;
-    height: 24px;
+.post-type-afcglide_listing .postbox .postbox-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+    padding: 15px 20px !important;
+    border-radius: 12px 12px 0 0 !important;
 }
 
-.switch input { opacity: 0; width: 0; height: 0; }
-
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-color: #e2e8f0;
-    transition: .4s;
-    border-radius: 34px;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+.post-type-afcglide_listing .postbox .postbox-header h2 {
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.3px !important;
 }
 
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 18px;
-    width: 18px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: .4s;
+.post-type-afcglide_listing .postbox .inside {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* Rainbow Headers - Each Section Different Color */
+
+/* 1. Property Description - Indigo [cite: 2026-01-19] */
+#afc_description .postbox-header {
+    background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%) !important;
+    border-bottom-color: #a5b4fc !important;
+}
+
+#afc_description .postbox-header h2 {
+    color: #3730a3 !important;
+}
+
+/* 2. Property Specifications - Green */
+#afc_details .postbox-header {
+    background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%) !important;
+    border-bottom-color: #86efac !important;
+}
+
+#afc_details .postbox-header h2 {
+    color: #166534 !important;
+}
+
+/* 3. Visual Command Center - Blue */
+#afc_media_hub .postbox-header {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important;
+    border-bottom-color: #93c5fd !important;
+}
+
+#afc_media_hub .postbox-header h2 {
+    color: #1e40af !important;
+}
+
+/* 4. Property Gallery - Teal */
+#afc_slider .postbox-header {
+    background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%) !important;
+    border-bottom-color: #5eead4 !important;
+}
+
+#afc_slider .postbox-header h2 {
+    color: #115e59 !important;
+}
+
+/* 5. Location & GPS - Lime */
+#afc_location_v2 .postbox-header {
+    background: linear-gradient(135deg, #ecfccb 0%, #d9f99d 100%) !important;
+    border-bottom-color: #bef264 !important;
+}
+
+#afc_location_v2 .postbox-header h2 {
+    color: #3f6212 !important;
+}
+
+/* 6. Property Features - Pink */
+#afc_amenities .postbox-header {
+    background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%) !important;
+    border-bottom-color: #f9a8d4 !important;
+}
+
+#afc_amenities .postbox-header h2 {
+    color: #9f1239 !important;
+}
+
+/* 7. Agent Branding - Purple */
+#afc_agent .postbox-header {
+    background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%) !important;
+    border-bottom-color: #d8b4fe !important;
+}
+
+#afc_agent .postbox-header h2 {
+    color: #6b21a8 !important;
+}
+
+/* 8. Publish Control - Orange */
+#afc_publish_box .postbox-header {
+    background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%) !important;
+    border-bottom-color: #fdba74 !important;
+}
+
+#afc_publish_box .postbox-header h2 {
+    color: #9a3412 !important;
+}
+
+.afc-metabox-content {
+    padding: 25px;
+}
+
+/* ==========================================
+   6. FORM ELEMENTS
+   ========================================== */
+
+.afc-label {
+    display: block;
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 13px;
+    margin-bottom: 8px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.afc-input,
+.afc-select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    background: #f8fafc;
+}
+
+.afc-input:focus,
+.afc-select:focus {
+    border-color: #6366f1;
+    outline: none;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.afc-field {
+    margin-bottom: 20px;
+}
+
+.afc-help-text {
+    font-size: 12px;
+    color: #64748b;
+    font-style: italic;
+    margin: 8px 0 0 0;
+}
+
+/* ==========================================
+   7. AGENT SECTION
+   ========================================== */
+
+.afc-agent-selector-wrapper {
+    margin-bottom: 25px;
+    padding: 15px;
+    background: #f0f9ff;
+    border-radius: 8px;
+    border: 1px solid #bae6fd;
+}
+
+.afc-agent-container {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.afc-agent-photo-wrapper {
+    text-align: center;
+}
+
+.afc-agent-preview {
+    width: 120px;
+    height: 120px;
     border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #e2e8f0;
+    margin: 0 auto 15px;
+    background: #f1f5f9;
 }
 
-/* ============================================================
-   12. THE 20-PHOTO MEDIA MATRIX (Shutter-Bug Vision)
-   ============================================================ */
+.afc-agent-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.afc-agent-fields {
+    flex: 1;
+}
+
+.afc-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.afc-checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+}
+
+/* ==========================================
+   8. MEDIA UPLOAD ZONES
+   ========================================== */
+
 .afc-media-matrix {
     display: grid;
-    grid-template-columns: 1fr 1.5fr; /* Hero vs Gallery */
+    grid-template-columns: 1fr 1fr;
     gap: 25px;
-    padding: 10px 0;
 }
 
 .afc-upload-zone {
-    background: #ffffff;
-    border: 2px dashed #e2e8f0;
-    border-radius: 20px;
-    padding: 30px;
-    text-align: center;
-    transition: all 0.3s ease;
-}
-
-.afc-upload-zone h4 {
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 20px;
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 12px;
+    border: 2px dashed #cbd5e1;
+    transition: all 0.3s;
 }
 
 .afc-upload-zone:hover {
-    border-color: #10b981; /* Emerald border on hover */
-    background: #f0fdf4;
+    border-color: #6366f1;
+    background: #f0f4ff;
 }
 
-/* THE PREVIEW TILES */
+.afc-zone-title {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
 .afc-preview-grid {
     display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+    margin-bottom: 15px;
+    min-height: 90px;
+}
+
+.afc-gallery-preview {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 12px;
-    margin-bottom: 20px;
 }
 
 .afc-preview-item {
     position: relative;
-    aspect-ratio: 1/1;
-    border-radius: 12px;
+    aspect-ratio: 1;
+    border-radius: 8px;
     overflow: hidden;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border: 2px solid #e2e8f0;
+    background: white;
+    cursor: move;
+    transition: all 0.2s;
+}
+
+.afc-preview-item:hover {
+    border-color: #6366f1;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .afc-preview-item img {
@@ -286,140 +481,280 @@ li.menu-top,
     object-fit: cover;
 }
 
-/* REMOVE BUTTON (Red Glass) */
 .afc-remove-img {
     position: absolute;
     top: 5px;
     right: 5px;
-    background: rgba(239, 68, 68, 0.85);
-    backdrop-filter: blur(4px);
+    background: rgba(239, 68, 68, 0.95);
     color: white;
-    border-radius: 50%;
     width: 24px;
     height: 24px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
+    font-size: 18px;
+    line-height: 1;
     cursor: pointer;
-    transition: transform 0.2s ease;
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.afc-preview-item:hover .afc-remove-img {
+    opacity: 1;
 }
 
 .afc-remove-img:hover {
+    background: #dc2626;
     transform: scale(1.1);
-    background: #ef4444;
 }
 
-/* THE ACTION BUTTONS */
-.afc-upload-btn {
-    background: #f1f5f9 !important;
-    border: 1px solid #e2e8f0 !important;
-    color: #475569 !important;
-    border-radius: 10px !important;
-    padding: 8px 20px !important;
-    font-weight: 600 !important;
-    cursor: pointer;
-    transition: all 0.2s ease !important;
+/* Sortable Placeholder */
+.afc-sortable-placeholder {
+    background: #e0e7ff;
+    border: 2px dashed #6366f1;
+    border-radius: 8px;
 }
 
-.afc-upload-btn:hover {
-    background: #10b981 !important;
-    color: white !important;
-    border-color: #10b981 !important;
+/* ==========================================
+   9. DETAILS & LOCATION GRIDS
+   ========================================== */
+
+.afc-details-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
 }
 
-input:checked + .slider { background-color: #10b981; }
-input:checked + .slider:before { transform: translateX(20px); }
-
-/* ============================================================
-   13. AFCGlide GLOBAL DASHBOARD (THE THREE BLUES)
-   ============================================================ */
-
-/* Top Operator Bar */
-.afc-top-bar { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center;
-    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-    padding: 20px 30px;
-    border-radius: 12px;
-    margin-bottom: 40px;
-    border: 1px solid #fde68a;
+.afc-gps-section {
+    margin-top: 25px;
 }
 
-/* Metrics Grid Container */
-.afc-metrics-grid {
+.afc-gps-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 20px !important;
+}
+
+.afc-gps-row .afc-field {
+    margin-bottom: 0 !important;
+}
+
+.afc-gps-row .afc-input {
+    width: 100% !important;
+    display: block !important;
+}
+
+/* ==========================================
+   10. AMENITIES GRID
+   ========================================== */
+
+.afc-amenities-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 30px;
-    margin-bottom: 40px;
+    gap: 12px;
 }
 
-/* Base Metric Card */
-.afc-metric-card {
-    padding: 40px 35px;
-    border-radius: 20px;
-    border-left: 10px solid; /* Thick high-end accent */
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: #ffffff;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
-}
-
-/* 1. Portfolio Volume - Deep Navy Blue */
-.metric-blue { 
-    background: linear-gradient(135deg, #f0f7ff 0%, #e0efff 100%);
-    border-left-color: #1e40af; 
-}
-
-/* 2. Active Listings - Electric Blue */
-.metric-green { 
-    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-    border-left-color: #2563eb;
-}
-
-/* 3. Pending Approval - Slate/Steel Blue */
-.metric-red { 
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border-left-color: #64748b;
-}
-
-/* Metric Typography */
-.metric-label {
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 2px;
-    color: #1e3a8a; /* Navy labels */
-    margin-bottom: 12px;
-    text-transform: uppercase;
-}
-
-.metric-value {
-    font-size: 48px;
-    font-weight: 900;
-    color: #0f172a;
-    letter-spacing: -2px;
-}
-
-/* Security Lockdown UI */
-.afc-security-section {
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    padding: 35px;
-}
-
-.afc-execute-btn {
-    background: #1e293b !important; /* Professional Dark Slate */
-    color: white !important;
-    border: none !important;
-    padding: 15px 35px !important;
-    border-radius: 12px !important;
-    font-weight: 800 !important;
+.afc-amenity-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 8px;
     cursor: pointer;
-    transition: 0.2s;
+    transition: all 0.2s;
+    border: 2px solid transparent;
 }
 
-.afc-execute-btn:hover {
-    background: #0f172a !important;
-    transform: translateY(-2px);
+.afc-amenity-item:hover {
+    background: #e0e7ff;
+    border-color: #c7d2fe;
+}
+
+.afc-amenity-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.afc-amenity-item input[type="checkbox"]:checked {
+    accent-color: #6366f1;
+}
+
+.afc-amenity-item span {
+    font-size: 11px;
+    font-weight: 600;
+    color: #1e293b;
+    user-select: none;
+}
+
+.afc-amenity-item .amenity-icon {
+    font-size: 16px;
+    margin-right: 4px;
+}
+
+/* ==========================================
+   11. PUBLISH SECTION
+   ========================================== */
+
+.afc-publish-section {
+    text-align: center;
+    padding: 10px 0;
+}
+
+.afc-publish-btn {
+    width: 100%;
+    padding: 15px !important;
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ==========================================
+   12. SUCCESS NOTICES
+   ========================================== */
+
+.afc-success-portal {
+    border-left: 4px solid #10b981 !important;
+    background: #f0fdf4 !important;
+    padding: 15px 20px !important;
+}
+
+.afc-success-portal p {
+    font-size: 14px;
+    margin: 0 !important;
+}
+
+.afc-success-portal strong {
+    color: #065f46;
+    font-size: 15px;
+}
+
+.afc-success-portal a {
+    color: #10b981;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.afc-success-portal a:hover {
+    color: #059669;
+    text-decoration: underline;
+}
+
+/* ==========================================
+   13. RESPONSIVE ADJUSTMENTS
+   ========================================== */
+
+@media (max-width: 1280px) {
+    .afc-media-matrix {
+        grid-template-columns: 1fr;
+    }
+
+    .afc-details-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .afc-agent-container {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .afc-details-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .afc-gps-row {
+        grid-template-columns: 1fr;
+    }
+
+    .afc-amenities-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================
+   14. LOADING STATES
+   ========================================== */
+
+.afc-upload-btn.loading {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+}
+
+.afc-upload-btn.loading::after {
+    content: '';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: afc-spin 0.8s linear infinite;
+}
+
+@keyframes afc-spin {
+    to {
+        transform: translateY(-50%) rotate(360deg);
+    }
+}
+
+/* ==========================================
+   15. WORDPRESS BUTTON OVERRIDES
+   ========================================== */
+
+.post-type-afcglide_listing .button {
+    border-radius: 8px !important;
+    padding: 8px 16px !important;
+    font-weight: 600 !important;
+}
+
+.post-type-afcglide_listing .button-primary {
+    background: #bbf7d0 !important;
+    border-color: #86efac !important;
+    color: #064e3b !important;
+    box-shadow: 0 2px 4px rgba(22, 101, 52, 0.1) !important;
+    text-shadow: none !important;
+}
+
+.post-type-afcglide_listing .button-primary:hover {
+    background: #86efac !important;
+    border-color: #4ade80 !important;
+    color: #064e3b !important;
+}
+
+.post-type-afcglide_listing .button-secondary {
+    background: white !important;
+    border-color: #e2e8f0 !important;
+    color: #1e293b !important;
+}
+
+.post-type-afcglide_listing .button-secondary:hover {
+    border-color: #cbd5e1 !important;
+    background: #f8fafc !important;
+}
+
+/* ==========================================
+   16. VISIBILITY ENFORCEMENT (SECTION 5)
+   ========================================== */
+#afc_location,
+#afc_location_v2,
+#section-5,
+#section-5-v2,
+.afc-gps-row,
+.afc-gps-section,
+.afc-gps-grid {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }

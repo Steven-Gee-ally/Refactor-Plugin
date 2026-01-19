@@ -115,10 +115,20 @@ $clean_phone = preg_replace('/[^0-9]/', '', $a_phone);
             <div class="afc-amenities-section">
                 <h2 class="afc-section-heading">Premium Amenities</h2>
                 <div class="afc-amenities-grid-modern">
-                    <?php foreach ( $amenities as $amenity ) : ?>
+                    <?php 
+                    $amenity_icons = [
+                        'Gourmet Kitchen' => '🍳', 'Infinity Pool' => '🌊', 'Ocean View' => '🌅', 'Wine Cellar' => '🍷',
+                        'Private Gym' => '🏋️', 'Smart Home Tech' => '📱', 'Outdoor Cinema' => '🎬', 'Helipad Access' => '🚁',
+                        'Gated Community' => '🏰', 'Guest House' => '🏠', 'Solar Power' => '☀️', 'Beach Front' => '🏖️',
+                        'Spa / Sauna' => '🧖', '3+ Car Garage' => '🚗', 'Luxury Fire Pit' => '🔥', 'Concierge Service' => '🛎️',
+                        'Walk-in Closet' => '👗', 'High Ceilings' => '⤴️', 'Staff Quarters' => '👨‍💼', 'Backup Generator' => '⚡'
+                    ];
+                    foreach ( $amenities as $amenity ) : 
+                        $display_icon = isset($amenity_icons[$amenity]) ? $amenity_icons[$amenity] : '💎';
+                    ?>
                         <div class="afc-amenity-item">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981;"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                            <?php echo esc_html( ucfirst( str_replace('_', ' ', $amenity ) ) ); ?>
+                            <span class="afc-amenity-icon"><?php echo $display_icon; ?></span>
+                            <?php echo esc_html( $amenity ); ?>
                         </div>
                     <?php endforeach; ?>
                 </div>
