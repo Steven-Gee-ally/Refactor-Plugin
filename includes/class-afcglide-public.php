@@ -12,6 +12,7 @@ class AFCGlide_Public {
     public static function init() {
         // Hook the button into the footer of all pages
         add_action( 'wp_footer', [ __CLASS__, 'render_whatsapp_button' ] );
+        add_action( 'wp_footer', [ __CLASS__, 'render_agent_login_link' ] );
         // Add the button styling
         add_action( 'wp_enqueue_scripts', [ __CLASS__, 'enqueue_public_styles' ] );
     }
@@ -88,6 +89,15 @@ class AFCGlide_Public {
             <span class="afcglide-whatsapp-icon">💬</span>
             <?php echo esc_html__( 'WhatsApp Agent', 'afcglide' ); ?>
         </a>
+        <?php
+    }
+
+    public static function render_agent_login_link() {
+        if ( is_user_logged_in() ) return;
+        ?>
+        <div style="position: fixed; bottom: 15px; left: 20px; z-index: 9999;">
+            <a href="<?php echo wp_login_url(); ?>" style="color: rgba(0,0,0,0.3); font-size: 10px; font-weight: 800; text-decoration: none; text-transform: uppercase; letter-spacing: 1.5px; transition: 0.3s;" onmouseover="this.style.color='rgba(0,0,0,0.8)'" onmouseout="this.style.color='rgba(0,0,0,0.3)'">🚀 Agent Access</a>
+        </div>
         <?php
     }
 }

@@ -48,8 +48,8 @@ class AFCGlide_CPT_Tax {
             'show_ui'             => true,
             'show_in_menu'        => true,
             'menu_icon'           => 'dashicons-admin-multisite',
-            'menu_position'       => 2,
-            'capability_type'     => 'post',
+            'menu_position'       => 6,
+            'capability_type'     => 'post', // BUILD MODE: Using standard 'post' caps for friction-free testing
             'map_meta_cap'        => true,
             'has_archive'         => 'listings',
             'rewrite'             => [ 'slug' => 'listings', 'with_front' => false ],

@@ -34,6 +34,7 @@ $core_classes = [
     'includes/class-afcglide-table.php',
     'includes/class-afcglide-user-profile.php',
     'includes/class-afcglide-public.php',
+    'includes/class-afcglide-admin-ui.php',
     'includes/class-afcglide-block-manager.php',
 ];
 
@@ -64,12 +65,12 @@ add_action( 'init', 'afcglide_init_admin', 10 );
 
 function afcglide_init_admin() {
     
-    if ( class_exists( '\AFCGlide\Admin\AFCGlide_Dashboard' ) ) {
-        \AFCGlide\Admin\AFCGlide_Dashboard::init();
+    if ( class_exists( '\AFCGlide\Admin\AFCGlide_Admin_UI' ) ) {
+        \AFCGlide\Admin\AFCGlide_Admin_UI::init();
     }
     
-    if ( class_exists( '\AFCGlide\Admin\AFCGlide_Settings' ) ) {
-        \AFCGlide\Admin\AFCGlide_Settings::init();
+    if ( class_exists( '\AFCGlide\Admin\AFCGlide_Dashboard' ) ) {
+        \AFCGlide\Admin\AFCGlide_Dashboard::init();
     }
     
     if ( class_exists( '\AFCGlide\Listings\AFCGlide_Metaboxes' ) ) {
@@ -246,6 +247,9 @@ function afcglide_activate() {
         \AFCGlide\Core\Constants::OPT_WA_GLOBAL      => '0',
     ];
     
+    // Initialize Roles
+    afcglide_init_roles();
+
     foreach ( $defaults as $key => $value ) {
         if ( false === get_option( $key ) ) {
             add_option( $key, $value );
@@ -254,7 +258,68 @@ function afcglide_activate() {
 }
 
 /**
- * 10. DEACTIVATION HOOK
+ * 10. ROLE INITIALIZATION
+ */
+function afcglide_init_roles() {
+    // 1. Managing Broker (Full Access)
+    add_role( 'managing_broker', 'Managing Broker', [
+        'read'                        => true,
+        'manage_options'              => true,
+        'upload_files'                => true,
+        'edit_afc_listing'            => true,
+        'read_afc_listing'            => true,
+        'delete_afc_listing'          => true,
+        'edit_afc_listings'           => true,
+        'edit_others_afc_listings'    => true,
+        'publish_afc_listings'        => true,
+        'read_private_afc_listings'   => true,
+        'delete_afc_listings'         => true,
+        'delete_private_afc_listings' => true,
+        'delete_published_afc_listings'=> true,
+        'delete_others_afc_listings'  => true,
+        'edit_private_afc_listings'   => true,
+        'create_afc_listings'         => true,
+    ]);
+
+    // 2. Listing Agent (Production Only - Elevated for Build Phase)
+    add_role( 'listing_agent', 'Listing Agent', [
+        'read'                        => true,
+        'manage_options'              => true, // Temporary for testing/building
+        'upload_files'                => true,
+        'edit_afc_listing'            => true,
+        'read_afc_listing'            => true,
+        'delete_afc_listing'          => true,
+        'edit_afc_listings'           => true,
+        'publish_afc_listings'        => true,
+        'delete_afc_listings'         => true,
+        'delete_published_afc_listings'=> true,
+        'edit_published_afc_listings' => true,
+        'create_afc_listings'         => true,
+        'edit_others_afc_listings'    => true, // Temporary for building
+    ]);
+
+    // Ensure administrator always has full control
+    $admin = get_role('administrator');
+    if ($admin) {
+        $admin->add_cap('edit_afc_listing');
+        $admin->add_cap('read_afc_listing');
+        $admin->add_cap('delete_afc_listing');
+        $admin->add_cap('edit_afc_listings');
+        $admin->add_cap('edit_others_afc_listings');
+        $admin->add_cap('publish_afc_listings');
+        $admin->add_cap('read_private_afc_listings');
+        $admin->add_cap('delete_afc_listings');
+        $admin->add_cap('delete_private_afc_listings');
+        $admin->add_cap('delete_published_afc_listings');
+        $admin->add_cap('delete_others_afc_listings');
+        $admin->add_cap('edit_private_afc_listings');
+        $admin->add_cap('edit_published_afc_listings');
+        $admin->add_cap('create_afc_listings');
+    }
+}
+
+/**
+ * 11. DEACTIVATION HOOK
  */
 register_deactivation_hook( __FILE__, 'afcglide_deactivate' );
 
