@@ -18,10 +18,25 @@ class AFCGlide_CPT_Tax {
     public static function init() {
         self::register_post_type();
         self::register_taxonomies();
+        self::register_post_statuses();
         
         if ( is_admin() ) {
             add_action( 'admin_init', [ __CLASS__, 'populate_default_amenities' ] );
         }
+    }
+
+    /**
+     * Register Custom Post Statuses
+     */
+    public static function register_post_statuses() {
+        register_post_status( 'sold', [
+            'label'                     => _x( 'Sold', 'post' ),
+            'public'                    => true,
+            'exclude_from_search'       => false,
+            'show_in_admin_all_list'    => true,
+            'show_in_admin_status_list' => true,
+            'label_count'               => _n_noop( 'Sold <span class="count">(%s)</span>', 'Sold <span class="count">(%s)</span>' ),
+        ]);
     }
 
     /**

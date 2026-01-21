@@ -13,6 +13,7 @@ class AFCGlide_Public {
         // Hook the button into the footer of all pages
         add_action( 'wp_footer', [ __CLASS__, 'render_whatsapp_button' ] );
         add_action( 'wp_footer', [ __CLASS__, 'render_agent_login_link' ] );
+        add_action( 'template_redirect', [ __CLASS__, 'track_listing_views' ] );
         // Add the button styling
         add_action( 'wp_enqueue_scripts', [ __CLASS__, 'enqueue_public_styles' ] );
     }
@@ -99,5 +100,25 @@ class AFCGlide_Public {
             <a href="<?php echo wp_login_url(); ?>" style="color: rgba(0,0,0,0.3); font-size: 10px; font-weight: 800; text-decoration: none; text-transform: uppercase; letter-spacing: 1.5px; transition: 0.3s;" onmouseover="this.style.color='rgba(0,0,0,0.8)'" onmouseout="this.style.color='rgba(0,0,0,0.3)'">🚀 Agent Access</a>
         </div>
         <?php
+    }
+
+    /**
+     * Track Unique Network Hits
+     */
+    public static function track_listing_views() {
+        if ( ! is_singular( 'afcglide_listing' ) ) return;
+        
+        // Don't track admins/brokers to keep data pure
+        if ( current_user_can('manage_options') ) return;
+
+        $post_id = get_the_ID();
+        $views = intval( get_post_meta( $post_id, '_listing_views_count', true ) );
+        
+        // Simple Cookie Gate (24h)
+        $cookie_name = 'afc_viewed_' . $post_id;
+        if ( ! isset( $_COOKIE[$cookie_name] ) ) {
+            setcookie( $cookie_name, '1', time() + 86400, COOKIEPATH, COOKIE_DOMAIN );
+            update_post_meta( $post_id, '_listing_views_count', $views + 1 );
+        }
     }
 }

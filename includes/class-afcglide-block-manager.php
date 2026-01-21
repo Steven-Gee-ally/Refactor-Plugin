@@ -60,6 +60,7 @@ class AFCGlide_Block_Manager {
         return [
             'postsToShow' => [ 'type' => 'number', 'default' => 6 ],
             'columns'     => [ 'type' => 'number', 'default' => 3 ],
+            'showSearch'  => [ 'type' => 'boolean', 'default' => true ],
         ];
     }
 
@@ -76,6 +77,7 @@ class AFCGlide_Block_Manager {
     var InspectorControls = wp.editor.InspectorControls;
     var PanelBody = components.PanelBody;
     var RangeControl = components.RangeControl;
+    var ToggleControl = components.ToggleControl;
     
     blocks.registerBlockType('afcglide/listings-grid', {
         title: 'AFCGlide Listings Grid',
@@ -84,13 +86,19 @@ class AFCGlide_Block_Manager {
         category: 'widgets',
         attributes: {
             postsToShow: { type: 'number', default: 6 },
-            columns: { type: 'number', default: 3 }
+            columns: { type: 'number', default: 3 },
+            showSearch: { type: 'boolean', default: true }
         },
         edit: function(props) {
             var attrs = props.attributes;
             return el(Fragment, {},
                 el(InspectorControls, {},
                     el(PanelBody, { title: 'Grid Settings', initialOpen: true },
+                        el(ToggleControl, {
+                            label: 'Show Search Terminal',
+                            checked: attrs.showSearch,
+                            onChange: function(val) { props.setAttributes({ showSearch: val }); }
+                        }),
                         el(RangeControl, {
                             label: 'Posts to Show',
                             value: attrs.postsToShow,
@@ -108,6 +116,7 @@ class AFCGlide_Block_Manager {
                 el('div', { className: 'afcglide-block-preview', style: { padding: '20px', border: '2px dashed #0073aa', background: '#f0f6fc', textAlign: 'center' } },
                     el('div', { style: { fontSize: '30px' } }, '🏠'),
                     el('h3', { style: { color: '#0073aa' } }, 'AFCGlide Listings Grid'),
+                    el('div', { style: { margin: '10px 0', fontSize: '13px', color: '#555' } }, attrs.showSearch ? '🔍 Search Terminal: ACTIVE' : '🔍 Search Terminal: HIDDEN'),
                     el('p', {}, 'Showing ' + attrs.postsToShow + ' listings in ' + attrs.columns + ' columns')
                 )
             );
@@ -124,15 +133,17 @@ JS;
     public static function render_listings_grid( $attributes ) {
         $posts_to_show = isset( $attributes['postsToShow'] ) ? Sanitizer::int( $attributes['postsToShow'] ) : 6;
         $columns = isset( $attributes['columns'] ) ? Sanitizer::int( $attributes['columns'] ) : 3;
+        $show_search = isset( $attributes['showSearch'] ) && $attributes['showSearch'] ? 'yes' : 'no';
         
         // Final sanity check on ranges
         $posts_to_show = max( 1, min( 24, $posts_to_show ) );
         $columns = max( 1, min( 4, $columns ) );
         
         return do_shortcode( sprintf(
-            '[afcglide_listings_grid posts_per_page="%d" columns="%d"]',
+            '[afcglide_listings_grid posts_per_page="%d" columns="%d" show_search="%s"]',
             $posts_to_show,
-            $columns
+            $columns,
+            $show_search
         ));
     }
 }

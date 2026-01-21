@@ -21,6 +21,8 @@ final class Constants {
     /**
      * Meta Keys - Listing Data
      */
+    const META_INTRO       = '_listing_intro_text';
+    const META_NARRATIVE   = '_listing_narrative';
     const META_PRICE       = '_listing_price';
     const META_BEDS        = '_listing_beds';
     const META_BATHS       = '_listing_baths';
@@ -28,6 +30,9 @@ final class Constants {
     const META_ADDRESS     = '_listing_address';
     const META_STATUS      = '_listing_status';
     const META_AMENITIES   = '_listing_amenities';
+    const META_VIEWS       = '_listing_views_count';
+    const META_PDF_ID      = '_listing_pdf_id';
+    const META_OPEN_HOUSE  = '_listing_showing_schedule';
     
     /**
      * Meta Keys - Location

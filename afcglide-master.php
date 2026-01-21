@@ -31,12 +31,15 @@ $core_classes = [
     'includes/class-afcglide-metaboxes.php',
     'includes/class-afcglide-ajax-handler.php',
     'includes/class-afcglide-shortcodes.php',
+    'includes/class-afcglide-scoreboard.php',
     'includes/class-afcglide-table.php',
     'includes/class-afcglide-user-profile.php',
     'includes/class-afcglide-public.php',
     'includes/class-afcglide-admin-ui.php',
     'includes/class-afcglide-block-manager.php',
     'includes/class-afcglide-identity-shield.php',
+    'includes/class-afcglide-inventory.php',
+    'includes/class-afcglide-welcome.php',
 ];
 
 foreach ( $core_classes as $file ) {
@@ -105,6 +108,15 @@ function afcglide_init_admin() {
     if ( class_exists( '\AFCGlide\Listings\AFCGlide_Block_Manager' ) ) {
         \AFCGlide\Listings\AFCGlide_Block_Manager::init();
     }
+    
+    
+    if ( class_exists( '\AFCGlide\Admin\AFCGlide_Inventory' ) ) {
+        \AFCGlide\Admin\AFCGlide_Inventory::init();
+    }
+    
+    if ( class_exists( '\AFCGlide\Admin\AFCGlide_Welcome' ) ) {
+        \AFCGlide\Admin\AFCGlide_Welcome::init();
+    }
 }
 
 /**
@@ -165,7 +177,11 @@ function afcglide_admin_assets( $hook ) {
     
     $is_afc_page = ( 
         \AFCGlide\Core\Constants::POST_TYPE === $post_type || 
-        ( isset($_GET['page']) && strpos($_GET['page'], 'afcglide') !== false ) 
+        ( isset($_GET['page']) && strpos($_GET['page'], 'afcglide') !== false ) ||
+        'profile.php' === $hook ||
+        'user-edit.php' === $hook ||
+        'users.php' === $hook ||
+        'user-new.php' === $hook
     );
     
     if ( ! $is_afc_page ) return;
@@ -370,7 +386,45 @@ function afcglide_init_roles() {
 }
 
 /**
- * 11. DEACTIVATION HOOK
+ * 11. ASSET OPTIMIZATION & MACHINE LOGIC
+ */
+
+// Enable WebP support for older WP versions (if applicable)
+add_filter( 'upload_mimes', function( $mimes ) {
+    $mimes['webp'] = 'image/webp';
+    return $mimes;
+});
+
+// High-Res Auto-Resizer: Prevents site bloat from 50MB photos
+add_filter( 'wp_handle_upload_prefilter', function( $file ) {
+    if ( ! get_option('afc_quality_gatekeeper', 1) ) return $file;
+
+    $img = getimagesize( $file['tmp_name'] );
+    $minimum_width = 1200;
+    
+    // Hard rejection if too small (The 1200px Gate)
+    if ( $img && $img[0] < $minimum_width ) {
+        $file['error'] = "⚠️ ASSET REJECTED: Luxury listings require 1200px minimum width. Detected: {$img[0]}px";
+    }
+
+    return $file;
+});
+
+// SUCCESS NOTIFICATION LOGIC: When a listing hits "SOLD"
+add_action( 'save_post_afcglide_listing', function( $post_id, $post, $update ) {
+    if ( ! $update || $post->post_status !== 'sold' ) return;
+    
+    // Check if it was already sold (prevent duplicate logs)
+    if ( get_post_meta( $post_id, '_afc_sold_logged', true ) ) return;
+
+    // Log the success for the Broker Activity Stream
+    update_post_meta( $post_id, '_afc_sold_logged', time() );
+    
+    // Pro-tip: Here is where we would trigger an email or SMS notification
+}, 10, 3 );
+
+/**
+ * 12. DEACTIVATION HOOK
  */
 register_deactivation_hook( __FILE__, 'afcglide_deactivate' );
 

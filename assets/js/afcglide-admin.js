@@ -66,6 +66,32 @@ jQuery(document).ready(function ($) {
     });
 
     // ==========================================
+    // 2.2 PDF UPLOAD (Asset Intelligence)
+    // ==========================================
+    $(document).on('click', '.afc-pdf-upload-btn', function (e) {
+        e.preventDefault();
+
+        const frame = wp.media({
+            title: 'Select Property Fact Sheet (PDF)',
+            multiple: false,
+            library: { type: 'application/pdf' }
+        });
+
+        frame.on('select', function () {
+            const attachment = frame.state().get('selection').first().toJSON();
+            if (attachment.mime !== 'application/pdf') {
+                alert('⚠️ INVALID FILE TYPE\nPlease upload a PDF document.');
+                return;
+            }
+            $('#afc_pdf_id').val(attachment.id);
+            $('#pdf-filename').text(attachment.filename);
+            formChanged = true;
+        });
+
+        frame.open();
+    });
+
+    // ==========================================
     // 3. HERO IMAGE UPLOAD (Single Select)
     // ==========================================
     $(document).on('click', '.afc-upload-zone[data-type="hero"] .afc-upload-btn', function (e) {
@@ -264,14 +290,16 @@ jQuery(document).ready(function ($) {
         if (!$container.length) return;
 
         const order = [
-            'afc_description', // 1
-            'afc_details',     // 2
-            'afc_media_hub',   // 3
-            'afc_slider',      // 4
-            'afc_location_v2',    // 5
-            'afc_amenities',   // 6
-            'afc_agent',       // 7
-            'afc_publish_box'  // 8
+            'afc_intro',       // 1. Property Description (Headline)
+            'afc_description', // 2. Property Narrative
+            'afc_details',     // 3. Property Specifications
+            'afc_media_hub',   // 4. Visual Command Center
+            'afc_slider',      // 5. Gallery Slider
+            'afc_location_v2', // 6. Location & GPS
+            'afc_amenities',   // 7. Property Features
+            'afc_agent',       // 8. Agent Branding
+            'afc_intelligence',// 10. Intelligence & Files
+            'afc_publish_box'  // 11. Publish Control
         ];
 
         order.forEach(function (id) {

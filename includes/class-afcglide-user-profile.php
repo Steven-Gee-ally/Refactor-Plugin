@@ -49,62 +49,7 @@ class AFCGlide_User_Profile {
      * Add custom styling to profile page
      */
     public static function profile_page_styles() {
-        ?>
-        <style>
-            .afc-profile-section {
-                background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-                border: 2px solid #0ea5e9;
-                border-radius: 16px;
-                padding: 30px;
-                margin: 30px 0 20px 0;
-            }
-            .afc-profile-section h2 {
-                margin: 0 0 20px 0;
-                font-size: 22px;
-                font-weight: 800;
-                color: #0c4a6e;
-                display: flex;
-                align-items: center;
-                gap: 12px;
-            }
-            .afc-profile-section .form-table th {
-                font-weight: 700;
-                color: #1e293b;
-                width: 200px;
-            }
-            .afc-profile-section .form-table td input[type="text"],
-            .afc-profile-section .form-table td textarea {
-                border: 2px solid #cbd5e1;
-                border-radius: 8px;
-                padding: 10px 15px;
-                font-size: 14px;
-            }
-            .afc-profile-section .form-table td input[type="text"]:focus,
-            .afc-profile-section .form-table td textarea:focus {
-                border-color: #0ea5e9;
-                box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
-            }
-            .afc-profile-section .form-table td input:disabled,
-            .afc-profile-section .form-table td textarea:disabled {
-                background: #f1f5f9;
-                border-color: #e2e8f0;
-                cursor: not-allowed;
-                opacity: 0.7;
-            }
-            .afc-locked-field {
-                display: inline-flex;
-                align-items: center;
-                gap: 8px;
-                background: #fee2e2;
-                color: #dc2626;
-                padding: 6px 12px;
-                border-radius: 6px;
-                font-size: 12px;
-                font-weight: 700;
-                margin-top: 8px;
-            }
-        </style>
-        <?php
+        // Styles moved to assets/css/afcglide-admin.css
     }
 
     /**

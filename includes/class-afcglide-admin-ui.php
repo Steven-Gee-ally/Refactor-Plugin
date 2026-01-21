@@ -14,12 +14,22 @@ class AFCGlide_Admin_UI {
         add_action( 'admin_bar_menu', [ __CLASS__, 'add_admin_bar_shortcut' ], 999 );
         add_action( 'pre_get_posts', [ __CLASS__, 'filter_inventory_for_agents' ] );
         add_filter( 'admin_footer_text', [ __CLASS__, 'custom_admin_footer' ] );
+        add_filter( 'admin_body_class', [ __CLASS__, 'add_role_body_class' ] );
         
         // 🚀 GLOBAL AGENT PORTAL: Login Customization
         add_action( 'login_enqueue_scripts', [ __CLASS__, 'custom_login_styles' ] );
         add_filter( 'login_headerurl', [ __CLASS__, 'custom_login_url' ] );
         add_filter( 'login_headertext', [ __CLASS__, 'custom_login_title' ] );
         add_filter( 'login_redirect', [ __CLASS__, 'agent_login_redirect' ], 10, 3 );
+        add_action( 'admin_enqueue_scripts', [ __CLASS__, 'global_admin_styles' ] );
+    }
+
+    /**
+     * AFCGlide Global Admin Refinement
+     * Applies the "Pazaaz" theme to standard WP pages.
+     */
+    public static function global_admin_styles() {
+        // Styles moved to assets/css/afcglide-admin.css
     }
 
     /**
@@ -59,36 +69,48 @@ class AFCGlide_Admin_UI {
     }
 
     /**
-     * Ghost Mode: Hide WP Clutter for non-admins
+     * Real Estate Machine: Role-Based Sidebar
+     * Agents get minimal, focused UI / Brokers get full command center
      */
     public static function streamline_admin_menu() {
-        if ( current_user_can('manage_options') ) return; // Brokers/Admins see more
+        $is_broker = current_user_can('manage_options');
+        $is_agent = in_array('listing_agent', wp_get_current_user()->roles);
 
-        // 👻 GHOST MODE: Remove standard WP noise
-        remove_menu_page( 'edit.php' );                   // Posts
-        remove_menu_page( 'upload.php' );                 // Media (handled via listing)
-        remove_menu_page( 'edit-comments.php' );          // Comments
-        remove_menu_page( 'tools.php' );                  // Tools
-        remove_menu_page( 'options-general.php' );        // Settings
-        
-        // Streamline AFCGlide menu
-        remove_submenu_page( 'afcglide-dashboard', 'afcglide-settings' ); // Merged into dashboard
-        
-        // Hide Taxonomies from sidebar to keep it clean
-        remove_submenu_page( 'edit.php?post_type=afcglide_listing', 'edit-tags.php?taxonomy=property_type&amp;post_type=afcglide_listing' );
-        remove_submenu_page( 'edit.php?post_type=afcglide_listing', 'edit-tags.php?taxonomy=property_status&amp;post_type=afcglide_listing' );
-        remove_submenu_page( 'edit.php?post_type=afcglide_listing', 'edit-tags.php?taxonomy=property_location&amp;post_type=afcglide_listing' );
-        remove_submenu_page( 'edit.php?post_type=afcglide_listing', 'edit-tags.php?taxonomy=property_amenity&amp;post_type=afcglide_listing' );
+        // ==========================================
+        // AGENTS: Ultra-Clean Real Estate Machine
+        // ==========================================
+        if ($is_agent && !$is_broker) {
+            
+            // 👻 Remove ALL WordPress Default Menus
+            remove_menu_page( 'index.php' );                  // Dashboard
+            remove_menu_page( 'edit.php' );                   // Posts
+            remove_menu_page( 'upload.php' );                 // Media
+            remove_menu_page( 'edit.php?post_type=page' );    // Pages
+            remove_menu_page( 'edit-comments.php' );          // Comments
+            remove_menu_page( 'themes.php' );                 // Appearance
+            remove_menu_page( 'plugins.php' );                // Plugins
+            remove_menu_page( 'users.php' );                  // Users
+            remove_menu_page( 'tools.php' );                  // Tools
+            remove_menu_page( 'options-general.php' );        // Settings
+            
+            // Remove the default "Listings" CPT menu entirely
+            remove_menu_page( 'edit.php?post_type=afcglide_listing' );
+            
+            // Keep ONLY AFCGlide menu items (already registered in dashboard)
+            // This gives agents: Hub, Add New Asset, Inventory (via custom pages)
+            
+        }
 
-        // 🚑 EMERGENCY RECOVERY: Ensure "Add New" is present for the CPT
-        // Sometimes custom capabilities hide it if not perfectly mapped
-        add_submenu_page(
-            'edit.php?post_type=afcglide_listing',
-            'Add New Listing',
-            'Add New',
-            'edit_posts',
-            'post-new.php?post_type=afcglide_listing'
-        );
+        // ==========================================
+        // BROKERS: Full Command Center Access
+        // ==========================================
+        if ($is_broker) {
+            // Brokers see everything, but we can still hide taxonomies for cleanliness
+            remove_submenu_page( 'edit.php?post_type=afcglide_listing', 'edit-tags.php?taxonomy=property_type&post_type=afcglide_listing' );
+            remove_submenu_page( 'edit.php?post_type=afcglide_listing', 'edit-tags.php?taxonomy=property_status&post_type=afcglide_listing' );
+            remove_submenu_page( 'edit.php?post_type=afcglide_listing', 'edit-tags.php?taxonomy=property_location&post_type=afcglide_listing' );
+            remove_submenu_page( 'edit.php?post_type=afcglide_listing', 'edit-tags.php?taxonomy=property_amenity&post_type=afcglide_listing' );
+        }
     }
 
     /**
@@ -108,5 +130,20 @@ class AFCGlide_Admin_UI {
 
     public static function custom_admin_footer() {
         return '<span id="footer-thankyou">AFCGlide Global infrastructure &copy; ' . date('Y') . ' | <span style="color:#10b981; font-weight:900;">SYSTEM ACTIVE</span></span>';
+    }
+
+    /**
+     * Add role-specific body class for theme separation
+     */
+    public static function add_role_body_class( $classes ) {
+        $user = wp_get_current_user();
+        
+        if ( in_array( 'listing_agent', $user->roles ) && ! current_user_can('manage_options') ) {
+            $classes .= ' afc-agent-portal';
+        } elseif ( current_user_can('manage_options') ) {
+            $classes .= ' afc-broker-command';
+        }
+        
+        return $classes;
     }
 }

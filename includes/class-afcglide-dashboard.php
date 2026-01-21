@@ -26,14 +26,30 @@ class AFCGlide_Dashboard {
     }
 
     public static function register_welcome_page() {
-        // Main Group - Shifted to position 5.9 (Above Listings at 6.0)
-        add_menu_page('AFCGlide Hub', 'AFCGlide', 'read', 'afcglide-dashboard', [ __CLASS__, 'render_welcome_screen' ], 'dashicons-dashboard', 5.9);
+        $is_broker = current_user_can('manage_options');
+        $system_label = get_option('afc_system_label', 'AFCGlide');
         
-        // Submenus
-        add_submenu_page('afcglide-dashboard', 'Hub Overview', 'Hub Overview', 'read', 'afcglide-dashboard', [ __CLASS__, 'render_welcome_screen' ]);
+        // Main AFCGlide Menu (Everyone sees this)
+        add_menu_page($system_label . ' Hub', $system_label, 'read', 'afcglide-dashboard', [ __CLASS__, 'render_welcome_screen' ], 'dashicons-dashboard', 5.9);
         
-        // ✨ PRO ACCESS: Direct Entry Link for Agents/Brokers
-        add_submenu_page('afcglide-dashboard', '🛸 ADD NEW ASSET', '🛸 ADD NEW ASSET', 'read', 'post-new.php?post_type=afcglide_listing');
+        // Hub Overview (Everyone)
+        add_submenu_page('afcglide-dashboard', 'Hub Overview', '📊 Hub Overview', 'read', 'afcglide-dashboard', [ __CLASS__, 'render_welcome_screen' ]);
+        
+        // My Portfolio (Agents) / Global Inventory (Brokers)
+        if ($is_broker) {
+            add_submenu_page('afcglide-dashboard', 'Global Inventory', '💼 Global Inventory', 'read', 'afcglide-inventory', '');
+        } else {
+            add_submenu_page('afcglide-dashboard', 'My Portfolio', '💼 My Portfolio', 'read', 'afcglide-inventory', '');
+        }
+        
+        // Add New Asset (Everyone)
+        add_submenu_page('afcglide-dashboard', 'Add New Asset', '🛸 Add New Asset', 'read', 'post-new.php?post_type=afcglide_listing');
+        
+        // My Profile (Everyone)
+        add_submenu_page('afcglide-dashboard', 'My Profile', '👤 My Profile', 'read', 'profile.php');
+
+        // System Manual (Everyone)
+        add_submenu_page('afcglide-dashboard', 'System Manual', '📘 System Manual', 'read', 'afcglide-manual', [ __CLASS__, 'render_manual_page' ]);
     }
 
     public static function handle_protocol_execution() {
@@ -95,7 +111,7 @@ class AFCGlide_Dashboard {
         <div class="afc-control-center">
             <div class="afc-top-bar">
                 <div class="afc-top-bar-section">SYSTEM OPERATOR: <span><?php echo esc_html($display_name); ?></span></div>
-                <div class="afc-top-bar-section" style="font-weight:900;">AFCGlide GLOBAL INFRASTRUCTURE</div>
+                <div class="afc-top-bar-section" style="font-weight:900; text-transform:uppercase;"><?php echo esc_html(get_option('afc_system_label', 'AFCGlide')); ?> GLOBAL INFRASTRUCTURE</div>
                 <div class="afc-top-bar-section">SYSTEM NODE: <span style="font-weight:900;">AFCG-PRO-v5.0</span></div>
             </div>
 
@@ -111,35 +127,104 @@ class AFCGlide_Dashboard {
             </div>
             <?php endif; ?>
 
-            <div class="afc-metrics-grid">
-                <div class="afc-metric-card metric-blue">
-                    <div class="metric-label"><?php echo $is_broker ? 'GLOBAL PORTFOLIO VOLUME' : 'MY PORTFOLIO VOLUME'; ?></div>
-                    <div class="metric-value"><?php echo esc_html($portfolio_display); ?></div>
-                </div>
-                <div class="afc-metric-card metric-green">
-                    <div class="metric-label"><?php echo $is_broker ? 'TOTAL ACTIVE UNITS' : 'MY ACTIVE UNITS'; ?></div>
-                    <div class="metric-value"><?php echo esc_html($total_listings); ?></div>
-                </div>
-                <div class="afc-metric-card metric-red">
-                    <div class="metric-label"><?php echo $is_broker ? 'PENDING AGENCY REVIEW' : 'MY PENDING APPROVAL'; ?></div>
-                    <div class="metric-value"><?php echo esc_html($pending_listings); ?></div>
-                </div>
-            </div>
+            <!-- 🚀 THE REAL ESTATE MACHINE: MODERN SCOREBOARD -->
+            <?php echo \AFCGlide\Reporting\AFCGlide_Scoreboard::render_scoreboard( $is_broker ? null : $current_user->ID ); ?>
 
+            <?php if (!$is_broker) : 
+                // Get actionable data for agents
+                $drafts = get_posts(['post_type' => 'afcglide_listing', 'post_status' => 'draft', 'author' => $current_user->ID, 'posts_per_page' => -1]);
+                $recent_listings = get_posts(['post_type' => 'afcglide_listing', 'post_status' => 'publish', 'author' => $current_user->ID, 'posts_per_page' => 5, 'orderby' => 'date', 'order' => 'DESC']);
+                $has_profile_photo = get_user_meta($current_user->ID, '_agent_photo_id', true);
+                $total_views = 0;
+                foreach ($recent_listings as $listing) {
+                    $total_views += intval(get_post_meta($listing->ID, '_listing_views_count', true));
+                }
+            ?>
+            
+            <!-- Agent Insight Cards -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; margin-bottom: 35px;">
+                
+                <!-- Quick Start Card -->
+                <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 30px; border-radius: 16px; border: 2px solid #93c5fd;">
+                    <div style="font-size: 24px; margin-bottom: 12px;">🎯</div>
+                    <h3 style="margin: 0 0 15px 0; font-size: 16px; font-weight: 800; color: #1e40af;">Quick Start</h3>
+                    <ul style="margin: 0; padding: 0; list-style: none; font-size: 14px; color: #1e293b;">
+                        <?php if (!$has_profile_photo) : ?>
+                        <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                            <span style="color: #f59e0b;">⚠️</span>
+                            <a href="<?php echo admin_url('profile.php'); ?>" style="color: #1e40af; text-decoration: none; font-weight: 600;">Complete Your Profile</a>
+                        </li>
+                        <?php endif; ?>
+                        <?php if (empty($recent_listings)) : ?>
+                        <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                            <span style="color: #059669;">✓</span>
+                            <a href="<?php echo admin_url('post-new.php?post_type=afcglide_listing'); ?>" style="color: #1e40af; text-decoration: none; font-weight: 600;">Upload Your First Listing</a>
+                        </li>
+                        <?php else : ?>
+                        <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                            <span style="color: #059669;">✓</span>
+                            <a href="<?php echo admin_url('admin.php?page=afcglide-inventory'); ?>" style="color: #1e40af; text-decoration: none; font-weight: 600;">Review Active Listings</a>
+                        </li>
+                        <?php endif; ?>
+                        <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                            <span style="color: #059669;">✓</span>
+                            <a href="<?php echo admin_url('post-new.php?post_type=afcglide_listing'); ?>" style="color: #1e40af; text-decoration: none; font-weight: 600;">Create New Listing</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Performance Card -->
+                <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); padding: 30px; border-radius: 16px; border: 2px solid #86efac;">
+                    <div style="font-size: 24px; margin-bottom: 12px;">📈</div>
+                    <h3 style="margin: 0 0 15px 0; font-size: 16px; font-weight: 800; color: #166534;">Your Performance</h3>
+                    <div style="font-size: 14px; color: #1e293b; line-height: 1.8;">
+                        <div style="margin-bottom: 12px;">
+                            <span style="font-weight: 700; color: #059669;"><?php echo count($recent_listings); ?></span> Active Listings
+                        </div>
+                        <div style="margin-bottom: 12px;">
+                            <span style="font-weight: 700; color: #059669;"><?php echo number_format($total_views); ?></span> Total Views
+                        </div>
+                        <div>
+                            <span style="font-weight: 700; color: #f59e0b;"><?php echo $pending_listings; ?></span> Pending Sale<?php echo $pending_listings != 1 ? 's' : ''; ?>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Need Attention Card -->
+                <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 30px; border-radius: 16px; border: 2px solid #fbbf24;">
+                    <div style="font-size: 24px; margin-bottom: 12px;">⚡</div>
+                    <h3 style="margin: 0 0 15px 0; font-size: 16px; font-weight: 800; color: #92400e;">Need Attention</h3>
+                    <?php if (!empty($drafts)) : ?>
+                        <div style="font-size: 14px; color: #1e293b; margin-bottom: 12px;">
+                            <span style="font-weight: 700; color: #f59e0b;"><?php echo count($drafts); ?></span> Draft<?php echo count($drafts) != 1 ? 's' : ''; ?> Need Completion
+                        </div>
+                        <a href="<?php echo admin_url('admin.php?page=afcglide-inventory'); ?>" style="display: inline-block; background: #f59e0b; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 700;">View Drafts →</a>
+                    <?php else : ?>
+                        <div style="font-size: 14px; color: #64748b;">
+                            <span style="color: #059669;">✓</span> All listings up to date!
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+            </div>
+            <?php endif; ?>
+
+            <?php if ($is_broker) : ?>
             <div class="afc-quick-actions">
                 <a href="<?php echo admin_url('post-new.php?post_type=afcglide_listing'); ?>" class="afc-action-card action-add">
                     <span>➕</span><h3>Add Asset</h3>
                 </a>
-                <a href="<?php echo admin_url('edit.php?post_type=afcglide_listing' . (!$is_broker ? '&author='.$current_user->ID : '')); ?>" class="afc-action-card action-inventory">
+                <a href="<?php echo admin_url('admin.php?page=afcglide-inventory'); ?>" class="afc-action-card action-inventory">
                     <span>💼</span><h3>Inventory</h3>
                 </a>
-                <a href="<?php echo $is_broker ? admin_url('users.php') : admin_url('profile.php'); ?>" class="afc-action-card action-identity">
-                    <span>👥</span><h3>Identity</h3>
+                <a href="<?php echo admin_url('profile.php'); ?>" class="afc-action-card action-identity">
+                    <span>👤</span><h3>Profile</h3>
                 </a>
                 <a href="#backbone-settings" class="afc-action-card action-config">
                     <span>⚙️</span><h3>Backbone</h3>
                 </a>
             </div>
+            <?php endif; ?>
 
             <?php if ($is_broker) : ?>
             <div class="afc-section" style="background:#fef2f2 !important; border-color:#fecaca !important;">
@@ -242,13 +327,13 @@ Password: <?php echo esc_html($guide['pass']); ?></textarea>
     }
 
     public static function render_activity_stream() {
-        $recent = get_posts(['post_type'=>'afcglide_listing','post_status'=>['publish','pending','draft'],'posts_per_page'=>8,'orderby'=>'modified']);
+        $recent = get_posts(['post_type'=>'afcglide_listing','post_status'=>['publish','pending','sold','draft'],'posts_per_page'=>8, 'orderby'=>'modified']);
         if (empty($recent)) { echo '<p style="font-size:13px; color:#64748b; padding:20px; font-style:italic;">No recent activity detected.</p>'; return; }
         foreach ($recent as $post) {
             $author = get_the_author_meta('display_name', $post->post_author);
             $time = human_time_diff(get_the_modified_time('U', $post->ID), current_time('timestamp')).' ago';
-            $status = strtoupper($post->post_status === 'publish' ? 'live' : $post->post_status);
-            $bg = $status === 'LIVE' ? '#10b981' : ($status === 'PENDING' ? '#f59e0b' : '#64748b');
+            $status = strtoupper($post->post_status === 'publish' ? 'live' : ($post->post_status === 'sold' ? 'closed' : $post->post_status));
+            $bg = $status === 'LIVE' ? '#10b981' : ($status === 'CLOSED' ? '#ef4444' : ($status === 'PENDING' ? '#f59e0b' : '#64748b'));
             echo '<div style="display:flex; justify-content:space-between; padding:20px; border-bottom:1px solid #f1f5f9; align-items:center; transition:0.2s;">';
             echo '<div style="font-size:14px;"><span style="color:white; background:'.$bg.'; font-weight:900; padding:4px 10px; border-radius:6px; font-size:10px; margin-right:15px; letter-spacing:1px;">'.$status.'</span><strong style="color:#1e293b;">'.esc_html($post->post_title).'</strong> <span style="color:#94a3b8; font-size:12px; margin-left:10px;">by '.$author.'</span></div>';
             echo '<div style="font-size:11px; color:#94a3b8; font-weight:800; text-transform:uppercase;">'.$time.'</div></div>';
@@ -272,5 +357,97 @@ Password: <?php echo esc_html($guide['pass']); ?></textarea>
         $sql = "SELECT SUM(CAST(meta_value AS UNSIGNED)) FROM $wpdb->postmeta pm JOIN $wpdb->posts p ON pm.post_id = p.ID WHERE pm.meta_key = '_listing_price' AND p.post_status = 'publish'";
         if ($author_id) { $sql .= $wpdb->prepare(" AND p.post_author = %d", $author_id); }
         return (float) $wpdb->get_var($sql) ?: 0;
+    }
+
+    public static function render_manual_page() {
+        ?>
+        <div class="wrap afc-system-manual">
+            <style>
+                .afc-manual-container { max-width: 900px; margin: 40px auto; background: white; padding: 60px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); font-family: 'Inter', sans-serif; color: #1e293b; line-height: 1.6; }
+                .afc-cover { text-align: center; margin-bottom: 60px; padding: 60px 20px; background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%); border-radius: 16px; border: 4px solid #bae6fd; }
+                .afc-manual-h1 { font-size: 42px; color: #1e40af; margin: 0 0 15px 0; font-weight: 900; letter-spacing: -1px; }
+                .afc-manual-h2 { font-size: 24px; color: #0f172a; margin: 50px 0 20px 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; font-weight: 800; }
+                .afc-manual-h3 { font-size: 18px; color: #334155; margin: 30px 0 15px 0; font-weight: 700; }
+                .afc-tips-box { background: #fef9c3; border-left: 5px solid #facc15; padding: 20px; border-radius: 8px; margin: 30px 0; font-size: 15px; }
+                .afc-step-box { background: white; border: 1px solid #e2e8f0; padding: 25px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+                .afc-step-num { display: inline-block; background: #0ea5e9; color: white; width: 28px; height: 28px; border-radius: 50%; text-align: center; line-height: 28px; font-weight: bold; margin-right: 12px; font-size: 13px; }
+                .afc-role-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+                .bg-broker { background: #dcfce7; color: #166534; }
+                .bg-agent { background: #e0f2fe; color: #0369a1; }
+                .afc-print-btn { float: right; background: white; border: 2px solid #e2e8f0; color: #64748b; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+                .afc-print-btn:hover { background: #f8fafc; border-color: #cbd5e1; color: #1e293b; }
+            </style>
+
+            <button onclick="window.print()" class="afc-print-btn">🖨️ Print to PDF</button>
+            <div style="clear: both;"></div>
+
+            <div class="afc-manual-container">
+                <!-- Cover -->
+                <div class="afc-cover">
+                    <h1 class="afc-manual-h1">THE REAL ESTATE MACHINE</h1>
+                    <p style="font-size: 20px; color: #64748b; font-weight: 600; margin-bottom: 30px;">How to Dominate the Market Without Losing Your Keys</p>
+                    <div style="font-size: 13px; opacity: 0.7; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Volume 4.0 • S-Grade Edition</div>
+                </div>
+
+                <!-- Intro -->
+                <h2 class="afc-manual-h2">1. Welcome to the "Ferrari" of Plugins</h2>
+                <p>Congratulations. By installing AFCGlide, you have essentially traded in a bicycle for a rocket ship. This isn't just a "listing plugin"—it's a <strong>Real Estate Machine</strong> designed to make you look expensive, organized, and terrifyingly efficient.</p>
+                <div class="afc-tips-box">
+                    <strong>💡 Pro Tip:</strong> If something looks too good, that's just the "S-Grade design" kicking in. Do not panic. It is meant to look that cool.
+                </div>
+
+                <!-- Roles -->
+                <h2 class="afc-manual-h2">2. The Crew: Who does what?</h2>
+                <div class="afc-step-box" style="border-left: 5px solid #10b981;">
+                    <h3 class="afc-manual-h3" style="margin-top:0;"><span class="afc-role-badge bg-broker">MANAGING BROKER</span> (The Boss)</h3>
+                    <p>You have the "Keys to the City." You see everything.</p>
+                    <ul style="margin: 0; padding-left: 20px;">
+                        <li><strong>Theme:</strong> Emerald Green Command Center.</li>
+                        <li><strong>Powers:</strong> Add agents, edit anyone's listings, global settings.</li>
+                        <li><strong>Vibe:</strong> "I run this town."</li>
+                    </ul>
+                </div>
+                <div class="afc-step-box" style="border-left: 5px solid #0ea5e9;">
+                    <h3 class="afc-manual-h3" style="margin-top:0;"><span class="afc-role-badge bg-agent">LISTING AGENT</span> (The Producer)</h3>
+                    <p>You are here to sell. We stripped away all the boring stuff for you.</p>
+                    <ul style="margin: 0; padding-left: 20px;">
+                        <li><strong>Theme:</strong> Sky Blue Productivity Zone.</li>
+                        <li><strong>Powers:</strong> Add listings, manage YOUR portfolio, track YOUR stats.</li>
+                        <li><strong>Vibe:</strong> "Show me the money."</li>
+                    </ul>
+                </div>
+
+                <!-- How to Add Listing -->
+                <h2 class="afc-manual-h2">3. Launching an Asset (Adding a Listing)</h2>
+                <p>We've replaced the old boring form with the <strong>"Submission Matrix."</strong> Just follow the rainbow headers:</p>
+                
+                <div class="afc-step-box">
+                    <div style="margin-bottom: 15px;"><span class="afc-step-num" style="background: #6366f1;">1</span> <strong>Narrative (Indigo):</strong> Tell the story. Wax poetic about "sun-drenched foyers."</div>
+                    <div style="margin-bottom: 15px;"><span class="afc-step-num" style="background: #166534;">2</span> <strong>Details (Green):</strong> The hardcore stats. Price, beds, baths. The "money" section.</div>
+                    <div style="margin-bottom: 15px;"><span class="afc-step-num" style="background: #3b82f6;">3</span> <strong>Files (Pastel Blue):</strong> Upload floor plans or intelligence docs.</div>
+                    <div><span class="afc-step-num" style="background: #f97316;">4</span> <strong>Publish (Orange):</strong> The big "Go Live" button. Push it and win.</div>
+                </div>
+
+                <div class="afc-tips-box">
+                    <strong>⚠️ The Gatekeeper:</strong> The system will gently REJECT any photo smaller than 1200px wide. We run a luxury establishment here. No blurry photos allowed!
+                </div>
+
+                <!-- Bells & Whistles -->
+                <h2 class="afc-manual-h2">4. The Bells & Whistles</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="afc-step-box">
+                        <h4 style="margin:0 0 10px 0;">🏆 The Scoreboard</h4>
+                        <p style="font-size: 14px;">Tracks your Active Portfolio Value. Watch the numbers go up. It releases dopamine. That is science.</p>
+                    </div>
+                    <div class="afc-step-box">
+                        <h4 style="margin:0 0 10px 0;">🎊 The Success Protocol</h4>
+                        <p style="font-size: 14px;">Mark a listing as <strong>SOLD</strong> and the system throws a digital party. You deserve it.</p>
+                    </div>
+                </div>
+
+                <p style="text-align: center; margin-top: 60px; font-weight: 600; color: #94a3b8;">AFCGlide Global Infrastructure &copy; <?php echo date('Y'); ?></p>
+            </div>
+        </div>
+        <?php
     }
 }

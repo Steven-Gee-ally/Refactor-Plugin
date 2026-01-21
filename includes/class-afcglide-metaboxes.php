@@ -62,8 +62,11 @@ class AFCGlide_Metaboxes {
             // 8. Agent Branding
             add_meta_box( 'afc_agent', '👤 8. Agent Branding', [ __CLASS__, 'render_agent_metabox' ], $screen, 'normal', 'high' );
             
+            // 10. Intelligence & Files
+            add_meta_box( 'afc_intelligence', '📊 10. Asset Intelligence & Files', [ __CLASS__, 'render_intelligence_metabox' ], $screen, 'normal', 'high' );
+
             // 9. Publish Listing
-            add_meta_box( 'afc_publish_box', '🚀 9. Publish Listing Control', [ __CLASS__, 'render_publish_metabox' ], $screen, 'normal', 'high' );
+            add_meta_box( 'afc_publish_box', '🚀 11. Publish Listing Control', [ __CLASS__, 'render_publish_metabox' ], $screen, 'normal', 'high' );
         }
     }
 
@@ -209,19 +212,24 @@ class AFCGlide_Metaboxes {
     }
 
     /**
-     * Section 1: Property Description
+     * Section 2: Property Narrative
      */
     public static function render_description_metabox( $post ) {
+        $narrative = C::get_meta( $post->ID, C::META_NARRATIVE );
         ?>
         <div class="afc-metabox-content">
             <p class="afc-help-text" style="margin-bottom: 20px;">Craft a compelling story for this luxury asset. Highlight unique heritage and bespoke features.</p>
             <?php 
-            wp_editor( $post->post_content, 'content', [
-                'textarea_name' => 'content',
-                'media_buttons' => true,
+            wp_editor( $narrative, 'afc_listing_narrative', [
+                'textarea_name' => '_listing_narrative',
+                'media_buttons' => false,
                 'textarea_rows' => 12,
                 'teeny'         => false,
-                'quicktags'     => true
+                'quicktags'     => true,
+                'tinymce'       => [
+                    'toolbar1' => 'formatselect,bold,italic,bullist,numlist,link,unlink,blockquote',
+                    'toolbar2' => ''
+                ]
             ] );
             ?>
         </div>
@@ -241,7 +249,10 @@ class AFCGlide_Metaboxes {
             <div class="afc-details-grid">
                 <div class="afc-field">
                     <label class="afc-label">Listing Price (USD)</label>
-                    <input type="text" name="_listing_price" value="<?php echo esc_attr( $price ); ?>" class="afc-input" placeholder="e.g. 5,000,000">
+                    <div style="position: relative;">
+                        <span style="position: absolute; left: 15px; top: 12px; font-weight: 900; color: #059669; font-size: 16px;">$</span>
+                        <input type="text" name="_listing_price" value="<?php echo esc_attr( $price ); ?>" class="afc-input" placeholder="e.g. 5,000,000" style="padding-left: 35px; font-size: 18px; font-weight: 900; color: #059669;">
+                    </div>
                 </div>
                 <div class="afc-field">
                     <label class="afc-label">Bedrooms</label>
@@ -321,18 +332,81 @@ class AFCGlide_Metaboxes {
     }
 
     /**
-     * Section 7: Publish Control
+     * Section 10: Intelligence & Files
+     */
+    public static function render_intelligence_metabox( $post ) {
+        $pdf_id     = C::get_meta( $post->ID, C::META_PDF_ID );
+        $showing    = C::get_meta( $post->ID, C::META_OPEN_HOUSE );
+        $stats      = intval( C::get_meta( $post->ID, C::META_VIEWS ) );
+        
+        $pdf_name = $pdf_id ? basename( get_attached_file( $pdf_id ) ) : 'No document attached';
+        ?>
+        <div class="afc-metabox-content">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <!-- Column 1: Document Upload -->
+                <div class="afc-field">
+                    <label class="afc-label">📄 Property Fact Sheet (PDF)</label>
+                    <div style="display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <input type="hidden" name="_listing_pdf_id" id="afc_pdf_id" value="<?php echo esc_attr( $pdf_id ); ?>">
+                        <div style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: #64748b;">
+                            <strong id="pdf-filename"><?php echo esc_html( $pdf_name ); ?></strong>
+                        </div>
+                        <button type="button" class="button afc-pdf-upload-btn">Upload / Change</button>
+                    </div>
+                    <p class="afc-help-text">Attach a floorplan or luxury brochure for buyers.</p>
+                </div>
+
+                <!-- Column 2: Showing Schedule -->
+                <div class="afc-field">
+                    <label class="afc-label">🗓️ Showing / Open House Schedule</label>
+                    <input type="text" name="_listing_showing_schedule" value="<?php echo esc_attr( $showing ); ?>" class="afc-input" placeholder="e.g. Sunday 2 PM - 4 PM">
+                    <p class="afc-help-text">Subtle note for buyers (City or Country friendly).</p>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 20px;">📈</span>
+                    <div>
+                        <span style="display: block; font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Real-Time Interest Pulse</span>
+                        <strong style="font-size: 14px; color: #1e293b;"><?php echo number_format($stats); ?> Unique Network Hits</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Section 11: Publish Control
      */
     public static function render_publish_metabox( $post ) {
         $status = $post->post_status;
+        $statuses = [
+            'publish' => '🟢 ACTIVE (Live on Market)',
+            'pending' => '🟡 PENDING (Under Contract)',
+            'sold'    => '🔴 SOLD (Transaction Closed)',
+            'draft'   => '⚪ DRAFT (Private)',
+        ];
         ?>
         <div class="afc-metabox-content">
-            <div class="afc-publish-section">
-                <?php if ( $status === 'publish' ) : ?>
-                    <button type="submit" name="publish" id="publish" class="button button-primary button-large afc-publish-btn">🚀 Broadcast Listing Updates</button>
-                <?php else : ?>
-                    <button type="submit" name="publish" id="publish" class="button button-primary button-large afc-publish-btn">🚀 Launch Global Listing</button>
-                <?php endif; ?>
+            <div class="afc-field" style="margin-bottom: 30px;">
+                <label class="afc-label">Current Market Status</label>
+                <select name="_listing_market_status" class="afc-select" style="font-weight: 900; height: 50px; font-size: 14px;">
+                    <?php foreach ( $statuses as $val => $label ) : ?>
+                        <option value="<?php echo esc_attr($val); ?>" <?php selected($status, $val); ?>><?php echo esc_html($label); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <p class="afc-help-text">Update this when the property moves from Active to Pending or Sold.</p>
+            </div>
+
+            <div class="afc-publish-section" style="border-top: 1px solid #eee; padding-top: 25px;">
+                <button type="submit" name="publish" id="publish" class="button button-primary button-large afc-publish-btn" style="height: 60px !important; font-size: 16px !important; width: 100%;">
+                    🚀 BROADCAST GLOBAL UPDATES
+                </button>
+                <p style="text-align: center; font-size: 11px; color: #94a3b8; margin-top: 15px; font-weight: 700;">
+                    Your updates will be synced across the global infrastructure immediately.
+                </p>
             </div>
         </div>
         <?php
@@ -353,7 +427,8 @@ class AFCGlide_Metaboxes {
 
         // Meta Map
         $meta_fields = [
-            '_listing_intro_text'   => '_listing_intro_text', // New Field
+            '_listing_intro_text' => C::META_INTRO,
+            '_listing_narrative'    => C::META_NARRATIVE,
             '_agent_name_display'   => C::META_AGENT_NAME,
             '_agent_phone_display'  => C::META_AGENT_PHONE,
             '_agent_photo_id'       => C::META_AGENT_PHOTO,
@@ -366,11 +441,20 @@ class AFCGlide_Metaboxes {
             '_listing_address'      => C::META_ADDRESS,
             '_gps_lat'              => C::META_GPS_LAT,
             '_gps_lng'              => C::META_GPS_LNG,
+            '_listing_pdf_id'       => C::META_PDF_ID,
+            '_listing_showing_schedule' => C::META_OPEN_HOUSE,
         ];
+
 
         foreach ( $meta_fields as $form_key => $meta_key ) {
             if ( isset( $_POST[$form_key] ) ) {
-                $value = sanitize_text_field( $_POST[$form_key] );
+                // Use wp_kses_post for narrative to preserve HTML from wp_editor
+                if ( $form_key === '_listing_narrative' ) {
+                    $value = wp_kses_post( $_POST[$form_key] );
+                } else {
+                    $value = sanitize_text_field( $_POST[$form_key] );
+                }
+                
                 C::update_meta( $post_id, $meta_key, $value );
 
                 // Sync Hero to Featured Image
@@ -393,6 +477,28 @@ class AFCGlide_Metaboxes {
         } else {
             delete_post_meta( $post_id, C::META_AMENITIES );
         }
+
+        // Market Status Sync (WordPress Core Level)
+        if ( isset( $_POST['_listing_market_status'] ) ) {
+            $new_status = sanitize_text_field( $_POST['_listing_market_status'] );
+            if ( $new_status !== $post->post_status ) {
+                // Remove the action to avoid infinite loops
+                remove_action( 'save_post', [ __CLASS__, 'save_metaboxes' ] );
+                wp_update_post( [
+                    'ID'          => $post_id,
+                    'post_status' => $new_status
+                ]);
+
+                // If marked as SOLD, add a special flag for the notice
+                if ( $new_status === 'sold' ) {
+                    add_filter( 'redirect_post_location', function( $location ) {
+                        return add_query_arg( 'afc_sold_success', '1', $location );
+                    });
+                }
+
+                add_action( 'save_post', [ __CLASS__, 'save_metaboxes' ], 10, 2 );
+            }
+        }
     }
 
     /**
@@ -404,6 +510,14 @@ class AFCGlide_Metaboxes {
             ?>
             <div class="notice notice-success is-dismissible afc-success-portal">
                 <p>🚀 <strong>GLOBAL BROADCAST SUCCESSFUL:</strong> Listing is now live on the luxury network. <a href="<?php echo get_permalink( $post->ID ); ?>" target="_blank">View Live Asset &rarr;</a></p>
+            </div>
+            <?php
+        }
+
+        if ( isset( $_GET['afc_sold_success'] ) ) {
+            ?>
+            <div class="notice notice-success is-dismissible afc-success-portal" style="border-left-color: #ef4444 !important; background: #fff1f2 !important;">
+                <p>🎊 <strong>CONGRATULATIONS ON THE SALE!</strong> This asset has been successfully marked as <strong>SOLD</strong>. Career volume updated. 🥂</p>
             </div>
             <?php
         }

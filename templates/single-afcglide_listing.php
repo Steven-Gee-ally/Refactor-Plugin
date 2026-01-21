@@ -26,6 +26,11 @@ $gallery  = get_post_meta($post_id, '_listing_gallery_ids', true) ?: [];
 // AMENITIES (Matches your Section 6)
 $amenities = get_post_meta($post_id, '_listing_amenities', true);
 
+// INTELLIGENCE & FILES
+$showing   = get_post_meta($post_id, '_listing_showing_schedule', true);
+$pdf_id    = get_post_meta($post_id, '_listing_pdf_id', true);
+$pdf_url   = $pdf_id ? wp_get_attachment_url($pdf_id) : '';
+
 // AGENT DATA (Matches your Section 1)
 $a_name   = get_post_meta($post_id, '_agent_name_display', true);
 $a_phone  = get_post_meta($post_id, '_agent_phone_display', true);
@@ -104,6 +109,16 @@ $clean_phone = preg_replace('/[^0-9]/', '', $a_phone);
                 </div>
             </div>
 
+            <?php if ( ! empty( $showing ) ) : ?>
+            <div class="afc-showing-alert" style="background: #fff8e1; border-left: 5px solid #ffc107; padding: 15px 20px; border-radius: 12px; margin-bottom: 30px; display: flex; align-items: center; gap: 15px;">
+                <span style="font-size: 24px;">🗓️</span>
+                <div>
+                    <strong style="display: block; font-size: 11px; text-transform: uppercase; color: #b58500; letter-spacing: 1px;">Upcoming Showing Schedule</strong>
+                    <span style="font-size: 15px; font-weight: 700; color: #000;"><?php echo esc_html( $showing ); ?></span>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <div class="afc-description-section">
                 <h2 class="afc-section-heading">Property Narrative</h2>
                 <div class="afc-description-content">
@@ -151,6 +166,14 @@ $clean_phone = preg_replace('/[^0-9]/', '', $a_phone);
                     <a href="https://wa.me/<?php echo $clean_phone; ?>" class="afc-btn-whatsapp">💬 WhatsApp</a>
                 </div>
             </div>
+
+            <?php if ( $pdf_url ) : ?>
+            <div class="afc-asset-files" style="margin-top: 20px;">
+                <a href="<?php echo esc_url( $pdf_url ); ?>" target="_blank" class="afc-btn-download" style="display: flex; align-items: center; justify-content: center; gap: 10px; background: #0f172a; color: white; padding: 18px; border-radius: 12px; text-decoration: none; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; width: 100%; box-sizing: border-box;">
+                    <span>📄 Download Property Fact Sheet</span>
+                </a>
+            </div>
+            <?php endif; ?>
         </aside>
     </div>
 </div>

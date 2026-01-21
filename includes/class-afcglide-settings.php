@@ -26,6 +26,7 @@ class AFCGlide_Settings {
     }
 
     public static function register_settings() {
+        register_setting( 'afcglide_settings_group', 'afc_system_label' );
         register_setting( 'afcglide_settings_group', 'afc_agent_name' );
         register_setting( 'afcglide_settings_group', 'afc_agent_phone_display' ); 
         register_setting( 'afcglide_settings_group', 'afc_primary_color' );
@@ -107,6 +108,13 @@ class AFCGlide_Settings {
 
                 <div class="afc-settings-card section-identity">
                     <h2>👤 Identity & Branding</h2>
+                    <div class="afc-settings-row">
+                        <div class="afc-label">
+                            System Label (White Label)
+                            <span class="afc-description">Renames the main menu item (e.g. "Smith Realty Hub"). Default: AFCGlide</span>
+                        </div>
+                        <input type="text" name="afc_system_label" value="<?php echo esc_attr( get_option('afc_system_label', 'AFCGlide') ); ?>" placeholder="AFCGlide">
+                    </div>
                     <div class="afc-settings-row">
                         <div class="afc-label">Broker/Agent Name</div>
                         <input type="text" name="afc_agent_name" value="<?php echo esc_attr( get_option('afc_agent_name') ); ?>" placeholder="e.g. John Smith Realty">
