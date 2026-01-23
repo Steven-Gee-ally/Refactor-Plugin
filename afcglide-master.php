@@ -1,11 +1,13 @@
 <?php
-/**
- * Plugin Name: AFCGlide Listings v4 - Production Ready
- * Description: High-end Real Estate Asset Management System
- * Version: 4.0.0
- * Author: AFCGlide
- * Text Domain: afcglide
- */
+/*
+Plugin Name: AFCGlide Listings
+Plugin URI: http://testsite-50-astra.local/
+Description: Core real estate engine plugin.
+Version: 1.0
+Author: Stevo
+Author URI: http://your-site.local
+*/
+
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 

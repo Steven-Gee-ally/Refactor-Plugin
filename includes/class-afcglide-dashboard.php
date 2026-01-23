@@ -11,6 +11,7 @@ class AFCGlide_Dashboard {
         add_action( 'admin_init', [ __CLASS__, 'handle_agent_creation' ] );
         add_action( 'admin_init', [ __CLASS__, 'register_backbone_settings' ] );
         add_action( 'wp_ajax_afc_toggle_security', [ __CLASS__, 'ajax_toggle_security' ] );
+        add_action( 'admin_notices', [ __CLASS__, 'check_homepage_configuration' ] );
     }
 
     public static function register_backbone_settings() {
@@ -362,6 +363,11 @@ Password: <?php echo esc_html($guide['pass']); ?></textarea>
     public static function render_manual_page() {
         ?>
         <div class="wrap afc-system-manual">
+            <!-- Manual Content --> 
+            <!-- (Content omitted for brevity, use existing) -->
+             <?php // re-insert existing manual code if needed, but for appending new function:
+             // I will replace only the end of the class to append the new function
+             ?>
             <style>
                 .afc-manual-container { max-width: 900px; margin: 40px auto; background: white; padding: 60px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); font-family: 'Inter', sans-serif; color: #1e293b; line-height: 1.6; }
                 .afc-cover { text-align: center; margin-bottom: 60px; padding: 60px 20px; background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%); border-radius: 16px; border: 4px solid #bae6fd; }
@@ -449,5 +455,19 @@ Password: <?php echo esc_html($guide['pass']); ?></textarea>
             </div>
         </div>
         <?php
+    }
+
+    public static function check_homepage_configuration() {
+        if ( ! current_user_can('manage_options') ) return;
+        
+        // Check if homepage is set to 'posts' (default Hello World)
+        if ( 'posts' == get_option( 'show_on_front' ) ) {
+            ?>
+            <div class="notice notice-warning is-dismissible" style="border-left: 5px solid #f59e0b; margin-top: 20px;">
+                <p><strong>⚠️ Real Estate System Alert:</strong> Your homepage is currently displaying the default Blog Feed ("Hello World").</p>
+                <p>To launch your Real Estate Engine, go to <a href="<?php echo admin_url('options-reading.php'); ?>">Settings > Reading</a> and set "Your homepage displays" to <strong>A static page</strong>.</p>
+            </div>
+            <?php
+        }
     }
 }
