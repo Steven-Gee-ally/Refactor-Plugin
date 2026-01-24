@@ -115,8 +115,18 @@ class AFCGlide_Ajax_Handler {
         self::save_amenities( $final_id );
 
         // Handle uploads
-        $hero_saved    = self::upload_image('hero_file', $final_id, C::META_HERO_ID, C::MIN_IMAGE_WIDTH);
-        $gallery_saved = self::upload_gallery('gallery_files', $final_id, C::META_GALLERY_IDS, C::MAX_GALLERY);
+        $hero_saved = self::upload_image( 'hero_file', $final_id, C::META_HERO_ID, C::MIN_IMAGE_WIDTH );
+
+        // Enforce cumulative gallery limit: existing + incoming <= MAX_GALLERY
+        $existing_gallery = C::get_meta( $final_id, C::META_GALLERY_IDS, true ) ?: [];
+        $existing_count = is_array( $existing_gallery ) ? count( $existing_gallery ) : 0;
+        $allowed = max( 0, C::MAX_GALLERY - $existing_count );
+        $gallery_saved = [];
+        if ( $allowed > 0 ) {
+            $gallery_saved = self::upload_gallery( 'gallery_files', $final_id, C::META_GALLERY_IDS, $allowed );
+        } else {
+            self::log_error( "Gallery limit reached for post {$final_id}; skipping additional uploads." );
+        }
 
         self::send_success( $message, [
             'url'        => get_permalink( $final_id ),
@@ -170,9 +180,24 @@ class AFCGlide_Ajax_Handler {
     private static function upload_image( $file_key, $post_id, $meta_key, $min_width = 0 ) {
         if ( empty($_FILES[$file_key]['name']) ) return false;
 
-        $allowed = ['image/jpeg','image/png','image/webp'];
-        if ( ! in_array($_FILES[$file_key]['type'], $allowed) ) {
-            self::log_error("Invalid upload type: {$_FILES[$file_key]['type']}");
+        // Server-side limits and validation
+        $max_bytes = 5 * 1024 * 1024; // 5MB per image
+        if ( ! empty( $_FILES[$file_key]['error'] ) ) {
+            self::log_error( "Upload error ({$file_key}): " . intval( $_FILES[$file_key]['error'] ) );
+            return false;
+        }
+
+        if ( ! empty( $_FILES[$file_key]['size'] ) && intval( $_FILES[$file_key]['size'] ) > $max_bytes ) {
+            self::log_error( "Upload too large ({$file_key}): {$_FILES[$file_key]['size']} bytes" );
+            return false;
+        }
+
+        // Validate mime/extension using WP helper
+        $check = wp_check_filetype_and_ext( $_FILES[$file_key]['tmp_name'], $_FILES[$file_key]['name'] );
+        $mime = $check['type'] ?? '';
+        $allowed = [ 'image/jpeg', 'image/png', 'image/webp', 'image/gif' ];
+        if ( empty( $mime ) || ! in_array( $mime, $allowed, true ) ) {
+            self::log_error( "Invalid upload type: {$mime}" );
             return false;
         }
 
@@ -186,18 +211,40 @@ class AFCGlide_Ajax_Handler {
             return false;
         }
 
-        if ( $min_width ) {
-            $meta = wp_get_attachment_metadata($attachment_id);
-            if ( isset($meta['width']) && $meta['width'] < $min_width ) {
-                wp_delete_attachment($attachment_id,true);
-                self::log_error("Upload too small: {$meta['width']}px (min: {$min_width})");
-                return false;
+
+        // Enforce minimum width and optionally resize large images for performance
+        $meta = wp_get_attachment_metadata( $attachment_id );
+        if ( $min_width && isset( $meta['width'] ) && $meta['width'] < $min_width ) {
+            wp_delete_attachment( $attachment_id, true );
+            self::log_error( "Upload too small: {$meta['width']}px (min: {$min_width})" );
+            return false;
+        }
+
+        // Resize excessively large images to a sane maximum for storage (e.g., 2000px)
+        $max_store_width = 2000;
+        $file_path = get_attached_file( $attachment_id );
+        if ( $file_path ) {
+            $editor = wp_get_image_editor( $file_path );
+            if ( ! is_wp_error( $editor ) ) {
+                $size = $editor->get_size();
+                if ( isset( $size['width'] ) && $size['width'] > $max_store_width ) {
+                    $res = $editor->resize( $max_store_width, null );
+                    if ( ! is_wp_error( $res ) ) {
+                        $saved = $editor->save( $file_path );
+                        if ( ! is_wp_error( $saved ) ) {
+                            $new_meta = wp_generate_attachment_metadata( $attachment_id, $file_path );
+                            if ( ! is_wp_error( $new_meta ) ) {
+                                wp_update_attachment_metadata( $attachment_id, $new_meta );
+                            }
+                        }
+                    }
+                }
             }
         }
 
         set_post_thumbnail( $post_id, $attachment_id );
         C::update_meta( $post_id, $meta_key, $attachment_id );
-        return true;
+        return $attachment_id;
     }
 
     /**
@@ -214,35 +261,81 @@ class AFCGlide_Ajax_Handler {
         $files = $_FILES[$file_key];
 
         if ( is_array($files['name']) ) {
-            for ( $i = 0; $i < count($files['name']); $i++ ) {
-                if ( empty($files['name'][$i]) ) continue;
-                if ( count($gallery_ids) >= $max_files ) break;
+            for ( $i = 0; $i < count( $files['name'] ); $i++ ) {
+                if ( empty( $files['name'][ $i ] ) ) continue;
+                if ( count( $gallery_ids ) >= $max_files ) break;
 
-                $_FILES['gallery_file'] = [
-                    'name'     => $files['name'][$i],
-                    'type'     => $files['type'][$i],
-                    'tmp_name' => $files['tmp_name'][$i],
-                    'error'    => $files['error'][$i],
-                    'size'     => $files['size'][$i],
-                ];
-
-                $attach_id = media_handle_upload('gallery_file', $post_id);
-                if ( is_wp_error($attach_id) ) {
-                    self::log_error('Gallery upload failed: ' . $attach_id->get_error_message());
+                // Basic per-file validation
+                if ( ! empty( $files['error'][ $i ] ) ) {
+                    self::log_error( "Gallery upload error: " . intval( $files['error'][ $i ] ) );
                     continue;
                 }
 
-                $meta = wp_get_attachment_metadata($attach_id);
-                if ( isset($meta['width']) && $meta['width'] < C::MIN_IMAGE_WIDTH ) {
-                    wp_delete_attachment($attach_id,true);
+                $max_bytes = 5 * 1024 * 1024; // 5MB
+                if ( ! empty( $files['size'][ $i ] ) && intval( $files['size'][ $i ] ) > $max_bytes ) {
+                    self::log_error( "Gallery upload too large: {$files['size'][$i]} bytes" );
                     continue;
+                }
+
+                $check = wp_check_filetype_and_ext( $files['tmp_name'][ $i ], $files['name'][ $i ] );
+                $mime = $check['type'] ?? '';
+                $allowed = [ 'image/jpeg', 'image/png', 'image/webp', 'image/gif' ];
+                if ( empty( $mime ) || ! in_array( $mime, $allowed, true ) ) {
+                    self::log_error( "Invalid gallery type: {$mime}" );
+                    continue;
+                }
+
+                $_FILES['gallery_file'] = [
+                    'name'     => $files['name'][ $i ],
+                    'type'     => $files['type'][ $i ],
+                    'tmp_name' => $files['tmp_name'][ $i ],
+                    'error'    => $files['error'][ $i ],
+                    'size'     => $files['size'][ $i ],
+                ];
+
+                $attach_id = media_handle_upload( 'gallery_file', $post_id );
+                if ( is_wp_error( $attach_id ) ) {
+                    self::log_error( 'Gallery upload failed: ' . $attach_id->get_error_message() );
+                    continue;
+                }
+
+                $meta = wp_get_attachment_metadata( $attach_id );
+                if ( isset( $meta['width'] ) && $meta['width'] < C::MIN_IMAGE_WIDTH ) {
+                    wp_delete_attachment( $attach_id, true );
+                    continue;
+                }
+
+                // Resize too-large images to a sane maximum (2000px)
+                $max_store_width = 2000;
+                $file_path = get_attached_file( $attach_id );
+                if ( $file_path ) {
+                    $editor = wp_get_image_editor( $file_path );
+                    if ( ! is_wp_error( $editor ) ) {
+                        $size = $editor->get_size();
+                        if ( isset( $size['width'] ) && $size['width'] > $max_store_width ) {
+                            $res = $editor->resize( $max_store_width, null );
+                            if ( ! is_wp_error( $res ) ) {
+                                $saved = $editor->save( $file_path );
+                                if ( ! is_wp_error( $saved ) ) {
+                                    $new_meta = wp_generate_attachment_metadata( $attach_id, $file_path );
+                                    if ( ! is_wp_error( $new_meta ) ) {
+                                        wp_update_attachment_metadata( $attach_id, $new_meta );
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
 
                 $gallery_ids[] = $attach_id;
             }
 
             if ( $gallery_ids ) {
-                C::update_meta( $post_id, $meta_key, $gallery_ids );
+                // Merge with existing gallery ids if present
+                $existing = C::get_meta( $post_id, $meta_key, true ) ?: [];
+                if ( ! is_array( $existing ) ) $existing = [];
+                $merged = array_values( array_merge( $existing, $gallery_ids ) );
+                C::update_meta( $post_id, $meta_key, $merged );
             }
         }
 
