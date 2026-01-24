@@ -29,28 +29,29 @@ class AFCGlide_Dashboard {
     public static function register_welcome_page() {
         $is_broker = current_user_can('manage_options');
         $system_label = get_option('afc_system_label', 'AFCGlide');
-        
-        // Main AFCGlide Menu (Everyone sees this)
-        add_menu_page($system_label . ' Hub', $system_label, 'read', 'afcglide-dashboard', [ __CLASS__, 'render_welcome_screen' ], 'dashicons-dashboard', 5.9);
-        
-        // Hub Overview (Everyone)
-        add_submenu_page('afcglide-dashboard', 'Hub Overview', '📊 Hub Overview', 'read', 'afcglide-dashboard', [ __CLASS__, 'render_welcome_screen' ]);
-        
-        // My Portfolio (Agents) / Global Inventory (Brokers)
-        if ($is_broker) {
-            add_submenu_page('afcglide-dashboard', 'Global Inventory', '💼 Global Inventory', 'read', 'afcglide-inventory', '');
-        } else {
-            add_submenu_page('afcglide-dashboard', 'My Portfolio', '💼 My Portfolio', 'read', 'afcglide-inventory', '');
-        }
-        
-        // Add New Asset (Everyone)
-        add_submenu_page('afcglide-dashboard', 'Add New Asset', '🛸 Add New Asset', 'read', 'post-new.php?post_type=afcglide_listing');
-        
-        // My Profile (Everyone)
-        add_submenu_page('afcglide-dashboard', 'My Profile', '👤 My Profile', 'read', 'profile.php');
+        $capability = 'create_afc_listings';
 
-        // System Manual (Everyone)
-        add_submenu_page('afcglide-dashboard', 'System Manual', '📘 System Manual', 'read', 'afcglide-manual', [ __CLASS__, 'render_manual_page' ]);
+        // Main AFCGlide Menu (Agents + Brokers)
+        add_menu_page( $system_label . ' Hub', $system_label, $capability, 'afcglide-dashboard', [ __CLASS__, 'render_welcome_screen' ], 'dashicons-dashboard', 5.9 );
+
+        // Hub Overview
+        add_submenu_page( 'afcglide-dashboard', 'Hub Overview', '📊 Hub Overview', $capability, 'afcglide-dashboard', [ __CLASS__, 'render_welcome_screen' ] );
+
+        // My Portfolio (Agents) / Global Inventory (Brokers)
+        if ( $is_broker ) {
+            add_submenu_page( 'afcglide-dashboard', 'Global Inventory', '💼 Global Inventory', $capability, 'afcglide-inventory', '' );
+        } else {
+            add_submenu_page( 'afcglide-dashboard', 'My Portfolio', '💼 My Portfolio', $capability, 'afcglide-inventory', '' );
+        }
+
+        // Add New Asset
+        add_submenu_page( 'afcglide-dashboard', 'Add New Asset', '🛸 Add New Asset', $capability, 'post-new.php?post_type=afcglide_listing' );
+
+        // My Profile
+        add_submenu_page( 'afcglide-dashboard', 'My Profile', '👤 My Profile', $capability, 'profile.php' );
+
+        // System Manual
+        add_submenu_page( 'afcglide-dashboard', 'System Manual', '📘 System Manual', $capability, 'afcglide-manual', [ __CLASS__, 'render_manual_page' ] );
     }
 
     public static function handle_protocol_execution() {
@@ -93,6 +94,15 @@ class AFCGlide_Dashboard {
     }
 
     public static function render_welcome_screen() {
+        // Protect this screen: only users with the agent capability (or admins) may access
+        if ( ! current_user_can( 'create_afc_listings' ) ) {
+            if ( ! is_user_logged_in() ) {
+                wp_redirect( wp_login_url() );
+                exit;
+            }
+            wp_die( __( 'Unauthorized access', 'afcglide' ), 403 );
+        }
+
         $current_user = wp_get_current_user();
         $is_broker = current_user_can('manage_options');
         $display_name = strtoupper($current_user->first_name ?: $current_user->display_name);
