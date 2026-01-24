@@ -1,10 +1,10 @@
 <?php
 /**
- * AFCGlide AJAX Handler
- * Handles all AJAX requests with proper error handling and logging
- * 
+ * AFCGlide AJAX Handler (Refactored)
+ * Handles all AJAX requests with robust validation, uploads, and standardized responses
+ *
  * @package AFCGlide\Listings
- * @version 4.0.0
+ * @version 4.1.0
  */
 
 namespace AFCGlide\Listings;
@@ -19,46 +19,69 @@ class AFCGlide_Ajax_Handler {
      * Initialize AJAX hooks
      */
     public static function init() {
-        // Frontend submission (logged in users)
+        // Frontend submission
         add_action( 'wp_ajax_' . C::AJAX_SUBMIT, [ __CLASS__, 'handle_front_submission' ] );
-        
+
         // Lockdown toggle (admin only)
         add_action( 'wp_ajax_' . C::AJAX_LOCKDOWN, [ __CLASS__, 'handle_lockdown_toggle' ] );
-        
+
         // Listings filter (public + logged in)
         add_action( 'wp_ajax_' . C::AJAX_FILTER, [ __CLASS__, 'handle_listings_filter' ] );
         add_action( 'wp_ajax_nopriv_' . C::AJAX_FILTER, [ __CLASS__, 'handle_listings_filter' ] );
     }
 
     /**
+     * Standardized success response
+     */
+    private static function send_success( $message = '', $data = [] ) {
+        wp_send_json_success([
+            'message' => $message,
+            'data'    => $data,
+        ]);
+    }
+
+    /**
+     * Standardized error response
+     */
+    private static function send_error( $message = '', $data = [] ) {
+        wp_send_json_error([
+            'message' => $message,
+            'data'    => $data,
+        ]);
+    }
+
+    /**
+     * Log errors (optional persistent logging)
+     */
+    private static function log_error( $message ) {
+        if ( defined('WP_DEBUG') && WP_DEBUG ) {
+            error_log( 'AFCGlide Error: ' . $message );
+        }
+        // Could extend: store in transient or DB table for production tracking
+    }
+
+    /**
      * Handle Frontend Listing Submission
-     * Processes both new listings and updates
      */
     public static function handle_front_submission() {
-        
-        // 1. SECURITY CHECKS
         check_ajax_referer( C::NONCE_AJAX, 'security' );
-        
+
         $user_id = get_current_user_id();
         if ( ! $user_id ) {
-            self::send_error( 'Session expired. Please log in again.' );
+            self::send_error( __( 'Session expired. Please log in again.', 'afcglide' ) );
         }
-        
-        // 2. GLOBAL LOCKDOWN CHECK
+
         if ( C::get_option( C::OPT_GLOBAL_LOCKDOWN ) === '1' && ! current_user_can( C::CAP_MANAGE ) ) {
-            self::send_error( '🔒 SYSTEM LOCKDOWN ACTIVE: All listing updates are currently frozen by the Lead Broker.' );
+            self::send_error( __( '🔒 SYSTEM LOCKDOWN ACTIVE: Listing updates are frozen.', 'afcglide' ) );
         }
-        
-        // 3. VALIDATE REQUIRED FIELDS
+
         $title = sanitize_text_field( $_POST['listing_title'] ?? '' );
-        
         if ( empty( $title ) ) {
-            self::send_error( 'Property title is required.' );
+            self::send_error( __( 'Property title is required.', 'afcglide' ) );
         }
-        
-        // 4. PREPARE POST DATA
-        $post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : 0;
-        
+
+        $post_id = intval( $_POST['post_id'] ?? 0 );
+
         $post_data = [
             'post_title'   => $title,
             'post_content' => wp_kses_post( $_POST['listing_description'] ?? '' ),
@@ -66,62 +89,48 @@ class AFCGlide_Ajax_Handler {
             'post_type'    => C::POST_TYPE,
             'post_author'  => $user_id,
         ];
-        
-        // 5. UPDATE vs INSERT
+
+        // Update vs Insert
         if ( $post_id > 0 ) {
-            // Verify ownership
             $existing_post = get_post( $post_id );
-            
-            if ( ! $existing_post ) {
-                self::send_error( 'Listing not found.' );
-            }
-            
+            if ( ! $existing_post ) self::send_error( __( 'Listing not found.', 'afcglide' ) );
             if ( $existing_post->post_author != $user_id && ! current_user_can( C::CAP_MANAGE ) ) {
-                self::send_error( 'Access Denied: You do not own this asset.' );
+                self::send_error( __( 'Access Denied: You do not own this asset.', 'afcglide' ) );
             }
-            
             $post_data['ID'] = $post_id;
             $final_id = wp_update_post( $post_data, true );
-            $message = '✅ Asset Updated Successfully!';
-            
+            $message = __( '✅ Asset Updated Successfully!', 'afcglide' );
         } else {
-            // Create new listing
             $final_id = wp_insert_post( $post_data, true );
-            $message = '🚀 Asset Published Live!';
+            $message = __( '🚀 Asset Published Live!', 'afcglide' );
         }
-        
-        // Check for errors
+
         if ( is_wp_error( $final_id ) ) {
             self::log_error( 'Post save failed: ' . $final_id->get_error_message() );
-            self::send_error( 'Database sync failed. Please try again.' );
+            self::send_error( __( 'Database sync failed. Please try again.', 'afcglide' ) );
         }
-        
-        // 6. SAVE STANDARD META FIELDS
+
+        // Save all meta
         self::save_standard_meta( $final_id );
-        
-        // 7. SAVE AMENITIES
         self::save_amenities( $final_id );
-        
-        // 8. HANDLE HERO IMAGE UPLOAD
-        $hero_saved = self::handle_hero_upload( $final_id );
-        
-        // 9. HANDLE GALLERY IMAGES (if provided)
-        self::handle_gallery_upload( $final_id );
-        
-        // 10. SUCCESS RESPONSE
-        wp_send_json_success([
-            'url'     => get_permalink( $final_id ),
-            'message' => $message,
-            'post_id' => $final_id,
-            'hero_saved' => $hero_saved
+
+        // Handle uploads
+        $hero_saved    = self::upload_image('hero_file', $final_id, C::META_HERO_ID, C::MIN_IMAGE_WIDTH);
+        $gallery_saved = self::upload_gallery('gallery_files', $final_id, C::META_GALLERY_IDS, C::MAX_GALLERY);
+
+        self::send_success( $message, [
+            'url'        => get_permalink( $final_id ),
+            'post_id'    => $final_id,
+            'hero_saved' => $hero_saved,
+            'gallery_saved_count' => count($gallery_saved),
         ]);
     }
-    
+
     /**
-     * Save standard listing meta fields
+     * Save standard meta fields
      */
     private static function save_standard_meta( $post_id ) {
-        $meta_fields = [
+        $meta_map = [
             'listing_price'   => C::META_PRICE,
             'listing_address' => C::META_ADDRESS,
             'listing_beds'    => C::META_BEDS,
@@ -129,126 +138,86 @@ class AFCGlide_Ajax_Handler {
             'listing_sqft'    => C::META_SQFT,
             'listing_status'  => C::META_STATUS,
         ];
-        
-        foreach ( $meta_fields as $form_key => $meta_key ) {
-            if ( isset( $_POST[$form_key] ) ) {
-                $value = sanitize_text_field( $_POST[$form_key] );
-                C::update_meta( $post_id, $meta_key, $value );
+
+        foreach ( $meta_map as $field => $meta ) {
+            if ( isset( $_POST[$field] ) ) {
+                $value = is_numeric($_POST[$field]) ? floatval($_POST[$field]) : sanitize_text_field($_POST[$field]);
+                C::update_meta( $post_id, $meta, $value );
             }
         }
-        
-        // GPS Coordinates
-        if ( isset( $_POST['gps_lat'] ) ) {
-            C::update_meta( $post_id, C::META_GPS_LAT, sanitize_text_field( $_POST['gps_lat'] ) );
-        }
-        if ( isset( $_POST['gps_lng'] ) ) {
-            C::update_meta( $post_id, C::META_GPS_LNG, sanitize_text_field( $_POST['gps_lng'] ) );
-        }
+
+        // GPS
+        C::update_meta( $post_id, C::META_GPS_LAT, floatval($_POST['gps_lat'] ?? 0) );
+        C::update_meta( $post_id, C::META_GPS_LNG, floatval($_POST['gps_lng'] ?? 0) );
     }
-    
+
     /**
      * Save amenities array
      */
     private static function save_amenities( $post_id ) {
-        if ( isset( $_POST['listing_amenities'] ) && is_array( $_POST['listing_amenities'] ) ) {
-            $amenities = array_map( 'sanitize_text_field', $_POST['listing_amenities'] );
-            C::update_meta( $post_id, C::META_AMENITIES, $amenities );
+        $amenities = $_POST['listing_amenities'] ?? [];
+        if ( is_array($amenities) ) {
+            $sanitized = array_map('sanitize_text_field', $amenities);
+            C::update_meta( $post_id, C::META_AMENITIES, $sanitized );
         } else {
-            // Clear amenities if none selected
             delete_post_meta( $post_id, C::META_AMENITIES );
         }
     }
-    
+
     /**
-     * Handle Hero Image Upload
-     * Returns true if upload succeeded or was skipped
+     * Generic single image upload
      */
-    private static function handle_hero_upload( $post_id ) {
-        
-        // Check if file was uploaded
-        if ( empty( $_FILES['hero_file']['name'] ) ) {
-            return false; // No file uploaded (not an error)
-        }
-        
-        // Validate file type
-        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-        $file_type = $_FILES['hero_file']['type'];
-        
-        if ( ! in_array( $file_type, $allowed_types ) ) {
-            self::log_error( "Invalid hero file type: {$file_type}" );
+    private static function upload_image( $file_key, $post_id, $meta_key, $min_width = 0 ) {
+        if ( empty($_FILES[$file_key]['name']) ) return false;
+
+        $allowed = ['image/jpeg','image/png','image/webp'];
+        if ( ! in_array($_FILES[$file_key]['type'], $allowed) ) {
+            self::log_error("Invalid upload type: {$_FILES[$file_key]['type']}");
             return false;
         }
-        
-        // Require WordPress upload functions
-        if ( ! function_exists( 'media_handle_upload' ) ) {
-            require_once( ABSPATH . 'wp-admin/includes/image.php' );
-            require_once( ABSPATH . 'wp-admin/includes/file.php' );
-            require_once( ABSPATH . 'wp-admin/includes/media.php' );
-        }
-        
-        // Upload the file
-        $hero_id = media_handle_upload( 'hero_file', $post_id );
-        
-        if ( is_wp_error( $hero_id ) ) {
-            self::log_error( 'Hero upload failed: ' . $hero_id->get_error_message() );
+
+        require_once( ABSPATH . 'wp-admin/includes/image.php' );
+        require_once( ABSPATH . 'wp-admin/includes/file.php' );
+        require_once( ABSPATH . 'wp-admin/includes/media.php' );
+
+        $attachment_id = media_handle_upload( $file_key, $post_id );
+        if ( is_wp_error($attachment_id) ) {
+            self::log_error('Upload failed: ' . $attachment_id->get_error_message());
             return false;
         }
-        
-        // Validate image dimensions
-        $image_data = wp_get_attachment_metadata( $hero_id );
-        
-        if ( isset( $image_data['width'] ) && $image_data['width'] < C::MIN_IMAGE_WIDTH ) {
-            // Delete the uploaded file
-            wp_delete_attachment( $hero_id, true );
-            self::log_error( "Hero image too small: {$image_data['width']}px (min: " . C::MIN_IMAGE_WIDTH . "px)" );
-            return false;
+
+        if ( $min_width ) {
+            $meta = wp_get_attachment_metadata($attachment_id);
+            if ( isset($meta['width']) && $meta['width'] < $min_width ) {
+                wp_delete_attachment($attachment_id,true);
+                self::log_error("Upload too small: {$meta['width']}px (min: {$min_width})");
+                return false;
+            }
         }
-        
-        // Save as featured image AND meta
-        set_post_thumbnail( $post_id, $hero_id );
-        C::update_meta( $post_id, C::META_HERO_ID, $hero_id );
-        
+
+        set_post_thumbnail( $post_id, $attachment_id );
+        C::update_meta( $post_id, $meta_key, $attachment_id );
         return true;
     }
-    
+
     /**
-     * Handle Gallery Images Upload
-     * Supports multiple file upload for gallery slider
+     * Handle multiple gallery images
      */
-    private static function handle_gallery_upload( $post_id ) {
-        
-        // Check if gallery files exist
-        if ( empty( $_FILES['gallery_files'] ) ) {
-            return; // No gallery uploaded (not an error)
-        }
-        
-        // Require upload functions
-        if ( ! function_exists( 'media_handle_upload' ) ) {
-            require_once( ABSPATH . 'wp-admin/includes/image.php' );
-            require_once( ABSPATH . 'wp-admin/includes/file.php' );
-            require_once( ABSPATH . 'wp-admin/includes/media.php' );
-        }
-        
+    private static function upload_gallery( $file_key, $post_id, $meta_key, $max_files = 10 ) {
+        if ( empty($_FILES[$file_key]) ) return [];
+
+        require_once( ABSPATH . 'wp-admin/includes/image.php' );
+        require_once( ABSPATH . 'wp-admin/includes/file.php' );
+        require_once( ABSPATH . 'wp-admin/includes/media.php' );
+
         $gallery_ids = [];
-        $files = $_FILES['gallery_files'];
-        
-        // Check if multiple files uploaded
-        if ( is_array( $files['name'] ) ) {
-            
-            $file_count = count( $files['name'] );
-            
-            for ( $i = 0; $i < $file_count; $i++ ) {
-                
-                // Skip if no file name
-                if ( empty( $files['name'][$i] ) ) continue;
-                
-                // Limit to max gallery size
-                if ( count( $gallery_ids ) >= C::MAX_GALLERY ) {
-                    self::log_error( "Gallery limit reached (" . C::MAX_GALLERY . " images)" );
-                    break;
-                }
-                
-                // Prepare individual file array for media_handle_upload
+        $files = $_FILES[$file_key];
+
+        if ( is_array($files['name']) ) {
+            for ( $i = 0; $i < count($files['name']); $i++ ) {
+                if ( empty($files['name'][$i]) ) continue;
+                if ( count($gallery_ids) >= $max_files ) break;
+
                 $_FILES['gallery_file'] = [
                     'name'     => $files['name'][$i],
                     'type'     => $files['type'][$i],
@@ -256,146 +225,106 @@ class AFCGlide_Ajax_Handler {
                     'error'    => $files['error'][$i],
                     'size'     => $files['size'][$i],
                 ];
-                
-                // Upload the file
-                $attachment_id = media_handle_upload( 'gallery_file', $post_id );
-                
-                if ( is_wp_error( $attachment_id ) ) {
-                    self::log_error( 'Gallery image upload failed: ' . $attachment_id->get_error_message() );
+
+                $attach_id = media_handle_upload('gallery_file', $post_id);
+                if ( is_wp_error($attach_id) ) {
+                    self::log_error('Gallery upload failed: ' . $attach_id->get_error_message());
                     continue;
                 }
-                
-                // Validate dimensions
-                $image_data = wp_get_attachment_metadata( $attachment_id );
-                
-                if ( isset( $image_data['width'] ) && $image_data['width'] < C::MIN_IMAGE_WIDTH ) {
-                    wp_delete_attachment( $attachment_id, true );
+
+                $meta = wp_get_attachment_metadata($attach_id);
+                if ( isset($meta['width']) && $meta['width'] < C::MIN_IMAGE_WIDTH ) {
+                    wp_delete_attachment($attach_id,true);
                     continue;
                 }
-                
-                $gallery_ids[] = $attachment_id;
+
+                $gallery_ids[] = $attach_id;
             }
-            
-            // Save gallery IDs
-            if ( ! empty( $gallery_ids ) ) {
-                C::update_meta( $post_id, C::META_GALLERY_IDS, $gallery_ids );
+
+            if ( $gallery_ids ) {
+                C::update_meta( $post_id, $meta_key, $gallery_ids );
             }
         }
+
+        return $gallery_ids;
     }
-    
+
     /**
-     * Handle Lockdown Toggle (Admin Only)
+     * Handle Lockdown Toggle
      */
     public static function handle_lockdown_toggle() {
-        
         check_ajax_referer( C::NONCE_AJAX, 'security' );
-        
+
         if ( ! current_user_can( C::CAP_MANAGE ) ) {
-            wp_send_json_error( 'Unauthorized' );
+            self::send_error('Unauthorized');
         }
-        
+
         $type   = sanitize_text_field( $_POST['type'] ?? '' );
         $status = sanitize_text_field( $_POST['status'] ?? '' );
-        
-        // Validate type
-        $allowed_types = ['global_lockdown', 'identity_shield'];
-        
-        if ( ! in_array( $type, $allowed_types ) ) {
-            wp_send_json_error( 'Invalid type' );
+
+        if ( ! in_array($type,['global_lockdown','identity_shield']) ) {
+            self::send_error('Invalid type');
         }
-        
-        // Update option
-        $option_key = 'afc_' . $type;
-        update_option( $option_key, $status );
-        
-        wp_send_json_success( 'Settings Updated' );
+
+        update_option( 'afc_' . $type, $status === '1' ? '1' : '0' );
+        self::send_success('Settings Updated');
     }
-    
+
     /**
-     * Handle Listings Filter (Public Grid)
+     * Handle Listings Filter
      */
     public static function handle_listings_filter() {
-        
         check_ajax_referer( C::NONCE_AJAX, 'nonce' );
-        
-        $page = isset( $_POST['page'] ) ? intval( $_POST['page'] ) : 1;
-        $filters = isset( $_POST['filters'] ) ? $_POST['filters'] : [];
-        
-        // Build query args
+
+        $page    = intval( $_POST['page'] ?? 1 );
+        $filters = $_POST['filters'] ?? [];
+
         $args = [
             'post_type'      => C::POST_TYPE,
             'post_status'    => 'publish',
             'posts_per_page' => 9,
             'paged'          => $page,
         ];
-        
-        // Apply filters if provided
-        if ( ! empty( $filters['min_price'] ) ) {
-            $args['meta_query'][] = [
-                'key'     => C::META_PRICE,
-                'value'   => floatval( $filters['min_price'] ),
-                'compare' => '>=',
-                'type'    => 'NUMERIC'
-            ];
-        }
-        
-        if ( ! empty( $filters['max_price'] ) ) {
-            $args['meta_query'][] = [
-                'key'     => C::META_PRICE,
-                'value'   => floatval( $filters['max_price'] ),
-                'compare' => '<=',
-                'type'    => 'NUMERIC'
-            ];
-        }
-        
-        if ( ! empty( $filters['beds'] ) ) {
-            $args['meta_query'][] = [
-                'key'     => C::META_BEDS,
-                'value'   => intval( $filters['beds'] ),
-                'compare' => '>=',
-                'type'    => 'NUMERIC'
-            ];
-        }
-        
-        $query = new \WP_Query( $args );
-        
+
+        // Apply numeric filters
+        $meta_query = [];
+        if ( ! empty($filters['min_price']) ) $meta_query[] = [
+            'key' => C::META_PRICE,
+            'value' => floatval($filters['min_price']),
+            'compare' => '>=',
+            'type' => 'NUMERIC',
+        ];
+        if ( ! empty($filters['max_price']) ) $meta_query[] = [
+            'key' => C::META_PRICE,
+            'value' => floatval($filters['max_price']),
+            'compare' => '<=',
+            'type' => 'NUMERIC',
+        ];
+        if ( ! empty($filters['beds']) ) $meta_query[] = [
+            'key' => C::META_BEDS,
+            'value' => intval($filters['beds']),
+            'compare' => '>=',
+            'type' => 'NUMERIC',
+        ];
+        if ( $meta_query ) $args['meta_query'] = $meta_query;
+
+        $query = new \WP_Query($args);
+
         ob_start();
-        
         if ( $query->have_posts() ) {
             while ( $query->have_posts() ) {
                 $query->the_post();
-                
-                // Load listing card template
                 $template_path = AFCG_PATH . 'templates/listing-card.php';
-                if ( file_exists( $template_path ) ) {
-                    include $template_path;
-                }
+                if ( file_exists($template_path) ) include $template_path;
             }
             wp_reset_postdata();
         }
-        
         $html = ob_get_clean();
-        
-        wp_send_json_success([
-            'html'      => $html,
+
+        self::send_success('Listings Loaded', [
+            'html' => $html,
             'max_pages' => $query->max_num_pages,
-            'found'     => $query->found_posts
+            'found' => $query->found_posts,
         ]);
-    }
-    
-    /**
-     * Send error response and exit
-     */
-    private static function send_error( $message ) {
-        wp_send_json_error([ 'message' => $message ]);
-    }
-    
-    /**
-     * Log error to WordPress error log
-     */
-    private static function log_error( $message ) {
-        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-            error_log( 'AFCGlide Error: ' . $message );
-        }
     }
 }

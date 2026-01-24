@@ -25,6 +25,11 @@ jQuery(document).ready(function ($) {
         return;
     }
 
+    // Accessibility: make feedback region an aria-live status
+    if ($feedback.length) {
+        $feedback.attr({ 'role': 'status', 'aria-live': 'polite' });
+    }
+
     /**
      * 1. HERO QUALITY GATEKEEPER
      * Single-image validation ONLY
@@ -143,8 +148,10 @@ jQuery(document).ready(function ($) {
                     $feedback.empty().append($('<p>').css('color', '#10b981').text(afc_vars.strings.verifying || 'Redirecting...'));
 
                     setTimeout(() => {
-                        if (response.data && response.data.url) {
-                            window.location.href = response.data.url;
+                        // Support different response shapes: data.url or data.data.url
+                        const url = response.data && (response.data.url || (response.data.data && response.data.data.url));
+                        if (url) {
+                            window.location.href = url;
                         } else {
                             // If no URL provided, re-enable button to allow retry
                             $submitBtn.prop('disabled', false).css('opacity', '1').text(originalSubmitText || (afc_vars.strings.success || 'Done'));
