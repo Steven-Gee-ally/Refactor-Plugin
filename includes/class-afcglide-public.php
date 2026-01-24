@@ -94,19 +94,18 @@ class AFCGlide_Public {
     }
 
     public static function render_agent_login_link() {
-        $is_logged = is_user_logged_in();
-        // If logged in, point to agent dashboard (if present) or WP admin; otherwise show login link
-        if ( $is_logged ) {
-            $url = admin_url( 'admin.php?page=' . \AFCGlide\Core\Constants::MENU_DASHBOARD );
-            // Fallback to profile if dashboard not accessible
-            if ( ! current_user_can( 'read' ) ) {
-                $url = admin_url();
-            }
-            $label = __( 'Agent Portal', 'afcglide' );
-        } else {
-            $url = wp_login_url();
-            $label = __( '🚀 Agent Access', 'afcglide' );
+        // Only show Agent Portal link to authenticated agents (or admins).
+        if ( ! is_user_logged_in() ) {
+            return;
         }
+
+        // Require either the agent capability or admin manage capability
+        if ( ! ( current_user_can( 'create_afc_listings' ) || current_user_can( \AFCGlide\Core\Constants::CAP_MANAGE ) ) ) {
+            return;
+        }
+
+        $url = admin_url( 'admin.php?page=' . \AFCGlide\Core\Constants::MENU_DASHBOARD );
+        $label = __( 'Agent Portal', 'afcglide' );
         ?>
         <div style="position: fixed; bottom: 15px; left: 20px; z-index: 9999;">
             <a href="<?php echo esc_url( $url ); ?>" style="color: rgba(0,0,0,0.3); font-size: 10px; font-weight: 800; text-decoration: none; text-transform: uppercase; letter-spacing: 1.5px; transition: 0.3s;" onmouseover="this.style.color='rgba(0,0,0,0.8)'" onmouseout="this.style.color='rgba(0,0,0,0.3)';"><?php echo esc_html( $label ); ?></a>
