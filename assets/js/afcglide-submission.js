@@ -3,95 +3,130 @@
  * Vision: Zero-Error Asset Broadcasting
  */
 jQuery(document).ready(function ($) {
+
     const $form = $('#afcglide-front-submission');
     const $submitBtn = $('#afc-submit-btn');
     const $feedback = $('#afc-feedback');
 
+    // store original button text so we can restore it on error
+    const originalSubmitText = $submitBtn.length ? $submitBtn.text() : '';
+
+    // Single source of truth
+    const maxGallery = 16;
+
+    // Basic guards: ensure variables/elements we rely on exist
+    if (typeof afc_vars === 'undefined') {
+        console.warn('afc_vars is not defined — submission script disabled.');
+        return;
+    }
+
+    if (!$form.length) {
+        console.warn('#afcglide-front-submission not found — submission script disabled.');
+        return;
+    }
+
     /**
      * 1. HERO QUALITY GATEKEEPER
-     * Prevents low-res assets from damaging the site's luxury brand.
+     * Single-image validation ONLY
      */
     $(document).on('change', '#hero_file', function (e) {
-        const file = e.target.files[0];
+        const file = e.target.files && e.target.files[0];
         const $previewBox = $('.hero-preview-box');
 
-        if (file) {
-            // Check file type first
-            if (!file.type.match('image.*')) {
-                alert('🚫 INVALID FILE: Please upload a JPG or PNG.');
+        if (!file) return;
+
+        // File type check with fallback to filename extension
+        const mimeOk = file.type && file.type.match('image.*');
+        const extOk = /\.(jpe?g|png|gif|webp)$/i.test(file.name || '');
+        if (!mimeOk && !extOk) {
+            alert(afc_vars.strings.invalid || '🚫 INVALID FILE: Please upload a JPG or PNG.');
+            $(e.target).val('');
+            return;
+        }
+
+        // Use object URL for faster preview and better performance
+        const objectUrl = URL.createObjectURL(file);
+        const img = new Image();
+
+        img.onload = function () {
+            // Luxury minimum width
+            if (this.width < 1200) {
+                alert((afc_vars.strings.too_small || '⚠️ QUALITY REJECTED') + '\nDetected width: ' + this.width + 'px');
+                $(e.target).val('');
+                $previewBox.html('<p style="color:#ef4444;font-size:12px;">Image too small.</p>');
+                URL.revokeObjectURL(objectUrl);
                 return;
             }
 
-            const reader = new FileReader();
-            reader.onload = function (event) {
-                const img = new Image();
-                img.onload = function () {
-                    // World-Class Standard: 1200px width minimum
-                    if (this.width < 1200) {
-                        alert('⚠️ QUALITY REJECTED: Luxury listings require 1200px width minimum.\nCurrently detected: ' + this.width + 'px');
-                        e.target.value = '';
-                        $previewBox.html('<p style="color:#ef4444; font-size:12px;">Image too small.</p>');
-                        return;
-                    }
+            // Preview
+            $previewBox
+                .css('background', 'none')
+                .html(`<img src="${objectUrl}" alt="Hero image preview" style="width:100%;height:100%;object-fit:cover;border-radius:12px;border:2px solid #10b981;">`);
 
-                    // Smooth Transition to Preview
-                    $previewBox.css('background', 'none').html(
-                        `<img src="${event.target.result}" id="hero-preview" style="width:100%; height:100%; object-fit:cover; border-radius:12px; border: 2px solid #10b981;">`
-                    );
-                };
-                img.src = event.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
+            // Revoke when safe — after the image is loaded
+            URL.revokeObjectURL(objectUrl);
+        };
+
+        img.onerror = function () {
+            $(e.target).val('');
+            $previewBox.html('<p style="color:#ef4444;font-size:12px;">Unable to preview image.</p>');
+            URL.revokeObjectURL(objectUrl);
+        };
+
+        img.src = objectUrl;
     });
 
     /**
      * 2. GALLERY IMAGE PREVIEW
-     * Handles multiple file preview for the slider
+     * Enforces 16-photo limit
      */
     $(document).on('change', '#gallery_files', function (e) {
         const files = e.target.files;
-        if (files.length === 0) return;
+        if (!files || files.length === 0) return;
+
+        if (files.length > maxGallery) {
+            alert(`🚫 Maximum ${maxGallery} images allowed.\nYou selected ${files.length}.`);
+            $(e.target).val('');
+            $('#new-gallery-preview').hide();
+            return;
+        }
 
         $('#new-gallery-preview').show();
         const $grid = $('#new-gallery-grid');
         $grid.empty();
 
-        // Max images allowed (hardcoded to match PHP constant, ideally passed via vars)
-        const maxGallery = 12;
-
-        for (let i = 0; i < files.length && i < maxGallery; i++) {
+        for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            const reader = new FileReader();
-
-            reader.onload = function (e) {
-                const $thumb = $('<div class="new-gallery-thumb"><img src="' + e.target.result + '"></div>');
-                $grid.append($thumb);
-            }
-
-            reader.readAsDataURL(file);
-        }
-
-        if (files.length > maxGallery) {
-            alert('Maximum ' + maxGallery + ' images allowed. Only the first ' + maxGallery + ' will be uploaded.');
+            const objectUrl = URL.createObjectURL(file);
+            const $thumb = $(`<div class="new-gallery-thumb"><img src="${objectUrl}" alt="Gallery image ${i + 1}"></div>`);
+            // Revoke after the image loads to avoid memory leaks
+            $thumb.find('img').on('load error', function () {
+                URL.revokeObjectURL(objectUrl);
+            });
+            $grid.append($thumb);
         }
     });
 
     /**
-     * 3. AJAX BROADCAST (The Emerald Protocol)
+     * 3. AJAX BROADCAST
      */
     $form.on('submit', function (e) {
         e.preventDefault();
 
-        // UI Lockdown: Prevent double-click ghost listings
-        $submitBtn.prop('disabled', true).css('opacity', '0.6').text('🚀 SYNCING ASSET...');
-        $feedback.fadeIn().html('<p style="color: #6366f1;">Initializing secure handshake with server...</p>');
+        $submitBtn
+            .prop('disabled', true)
+            .css('opacity', '0.6')
+            .text(afc_vars.strings.loading || '🚀 SYNCING ASSET...');
+
+        $feedback.fadeIn().html(
+            `<p style="color:#6366f1;">
+                ${afc_vars.strings.handshake || 'Initializing...'}
+             </p>`
+        );
 
         const formData = new FormData(this);
-
-        // Ensure the action matches class-afcglide-ajax-handler.php
         formData.append('action', 'afcglide_submit_listing');
-        formData.append('security', afc_vars.nonce); // Added Nonce for security
+        formData.append('security', afc_vars.nonce);
 
         $.ajax({
             url: afc_vars.ajax_url,
@@ -99,23 +134,35 @@ jQuery(document).ready(function ($) {
             data: formData,
             contentType: false,
             processData: false,
-            success: function (response) {
-                if (response.success) {
-                    $submitBtn.css({ 'background': '#10b981', 'opacity': '1' }).text('✨ ASSET DEPLOYED');
-                    $feedback.html('<p style="color: #10b981;">Listing Verified. Redirecting...</p>');
+            success(response) {
+                if (response && response.success) {
+                    $submitBtn
+                        .css({ background: '#10b981', opacity: '1' })
+                        .text(afc_vars.strings.success || '✨ ASSET DEPLOYED');
+
+                    $feedback.empty().append($('<p>').css('color', '#10b981').text(afc_vars.strings.verifying || 'Redirecting...'));
 
                     setTimeout(() => {
-                        window.location.href = response.data.url;
+                        if (response.data && response.data.url) {
+                            window.location.href = response.data.url;
+                        } else {
+                            // If no URL provided, re-enable button to allow retry
+                            $submitBtn.prop('disabled', false).css('opacity', '1').text(originalSubmitText || (afc_vars.strings.success || 'Done'));
+                        }
                     }, 1200);
                 } else {
-                    $feedback.html('<p style="color: #ef4444;">❌ ERROR: ' + response.data.message + '</p>');
-                    $submitBtn.prop('disabled', false).css('opacity', '1').text('PUBLISH GLOBAL LISTING');
+                    const msg = (response && response.data && response.data.message) ? response.data.message : (afc_vars.strings.error || 'Unknown error');
+                    $feedback.empty().append($('<p>').css('color', '#ef4444').text((afc_vars.strings.error || '❌ ERROR:') + ' ' + msg));
+                    $submitBtn.prop('disabled', false).css('opacity', '1').text(originalSubmitText || 'PUBLISH GLOBAL LISTING');
                 }
             },
-            error: function () {
-                $feedback.html('<p style="color: #ef4444;">⚠️ Critical Connection Failure. Check file sizes.</p>');
-                $submitBtn.prop('disabled', false).css('opacity', '1').text('RETRY SUBMISSION');
+
+            error(jqXHR, textStatus, errorThrown) {
+                console.error('AFCGlide AJAX error:', textStatus, errorThrown, jqXHR);
+                $feedback.empty().append($('<p>').css('color', '#ef4444').text('⚠️ Connection failure. Try again.'));
+                $submitBtn.prop('disabled', false).css('opacity', '1').text(originalSubmitText || (afc_vars.strings.retry || 'RETRY SUBMISSION'));
             }
         });
     });
+
 });
