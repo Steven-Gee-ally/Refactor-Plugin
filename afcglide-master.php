@@ -170,6 +170,19 @@ function afcglide_frontend_assets() {
         wp_localize_script( 'afc-submission-js', 'afc_vars', [
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce'    => wp_create_nonce( \AFCGlide\Core\Constants::NONCE_AJAX ),
+            'autosave_interval' => 30000,
+            'strings' => [
+                'invalid'   => __( '🚫 INVALID FILE: Please upload a JPG or PNG.', 'afcglide' ),
+                'too_small' => __( '⚠️ QUALITY REJECTED', 'afcglide' ),
+                'loading'   => __( '🚀 SYNCING ASSET...', 'afcglide' ),
+                'handshake' => __( 'Initializing...', 'afcglide' ),
+                'success'   => __( '✨ ASSET DEPLOYED', 'afcglide' ),
+                'verifying' => __( 'Redirecting...', 'afcglide' ),
+                'error'     => __( '❌ ERROR:', 'afcglide' ),
+                'retry'     => __( 'RETRY SUBMISSION', 'afcglide' ),
+                'draft_saved' => __( 'Draft saved', 'afcglide' ),
+                'draft_saving' => __( 'Saving draft...', 'afcglide' ),
+            ],
         ]);
     }
 }

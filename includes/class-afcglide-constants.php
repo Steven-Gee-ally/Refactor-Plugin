@@ -98,6 +98,7 @@ final class Constants {
      */
     const AJAX_SUBMIT      = 'afcglide_submit_listing';
     const AJAX_FILTER      = 'afcglide_filter_listings';
+    const AJAX_SAVE_DRAFT  = 'afcglide_save_draft';
     const AJAX_LOCKDOWN    = 'afc_toggle_lockdown_ajax';
     
     /**

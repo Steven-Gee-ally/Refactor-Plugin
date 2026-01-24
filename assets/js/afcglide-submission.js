@@ -172,4 +172,62 @@ jQuery(document).ready(function ($) {
         });
     });
 
+    // Autosave / Draft support
+    (function enableAutosave() {
+        const interval = (afc_vars && afc_vars.autosave_interval) ? parseInt(afc_vars.autosave_interval, 10) : 0;
+        if (!interval || interval <= 0) return;
+
+        let autosaveTimer = null;
+
+        function doAutosave() {
+            // Indicate saving
+            if ($feedback.length) $feedback.text(afc_vars.strings.draft_saving || 'Saving draft...').css('color', '#6366f1');
+
+            const formData = new FormData($form[0]);
+            formData.append('action', 'afcglide_save_draft');
+            formData.append('security', afc_vars.nonce);
+
+            $.ajax({
+                url: afc_vars.ajax_url,
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                success(resp) {
+                    // wp_send_json_success returns { success: true, data: { ... } }
+                    if (resp && resp.success && resp.data && resp.data.data && resp.data.data.post_id) {
+                        const savedId = resp.data.data.post_id;
+                        // Ensure there's a hidden input for post_id so future saves update
+                        if ($form.find('input[name="post_id"]').length) {
+                            $form.find('input[name="post_id"]').val(savedId);
+                        } else {
+                            $form.append(`<input type="hidden" name="post_id" value="${savedId}">`);
+                        }
+                        if ($feedback.length) $feedback.text(afc_vars.strings.draft_saved || 'Draft saved').css('color', '#10b981');
+                    } else if (resp && resp.success && resp.data && resp.data.post_id) {
+                        // older response shape
+                        const savedId = resp.data.post_id;
+                        if ($form.find('input[name="post_id"]').length) {
+                            $form.find('input[name="post_id"]').val(savedId);
+                        } else {
+                            $form.append(`<input type="hidden" name="post_id" value="${savedId}">`);
+                        }
+                        if ($feedback.length) $feedback.text(afc_vars.strings.draft_saved || 'Draft saved').css('color', '#10b981');
+                    } else {
+                        if ($feedback.length) $feedback.text(afc_vars.strings.error || 'Save failed').css('color', '#ef4444');
+                    }
+                },
+                error(jqXHR, textStatus, errorThrown) {
+                    console.error('Autosave error:', textStatus, errorThrown, jqXHR);
+                    if ($feedback.length) $feedback.text('Autosave failed').css('color', '#ef4444');
+                }
+            });
+        }
+
+        // Trigger first autosave after a short delay
+        autosaveTimer = setInterval(doAutosave, interval);
+        // Optionally run one immediately
+        setTimeout(doAutosave, 2500);
+    })();
+
 });

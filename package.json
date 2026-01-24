@@ -1,0 +1,11 @@
+{
+  "name": "afcglide",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "lint": "eslint assets/js --ext .js || true"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0"
+  }
+}

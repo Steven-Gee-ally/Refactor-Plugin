@@ -21,6 +21,8 @@ class AFCGlide_Ajax_Handler {
     public static function init() {
         // Frontend submission
         add_action( 'wp_ajax_' . C::AJAX_SUBMIT, [ __CLASS__, 'handle_front_submission' ] );
+        // Frontend save draft (autosave)
+        add_action( 'wp_ajax_' . C::AJAX_SAVE_DRAFT, [ __CLASS__, 'handle_save_draft' ] );
 
         // Lockdown toggle (admin only)
         add_action( 'wp_ajax_' . C::AJAX_LOCKDOWN, [ __CLASS__, 'handle_lockdown_toggle' ] );
@@ -134,6 +136,54 @@ class AFCGlide_Ajax_Handler {
             'hero_saved' => $hero_saved,
             'gallery_saved_count' => count($gallery_saved),
         ]);
+    }
+
+    /**
+     * Handle Save Draft (autosave) from frontend
+     */
+    public static function handle_save_draft() {
+        check_ajax_referer( C::NONCE_AJAX, 'security' );
+
+        $user_id = get_current_user_id();
+        if ( ! $user_id ) {
+            self::send_error( __( 'Session expired. Please log in again.', 'afcglide' ) );
+        }
+
+        $post_id = intval( $_POST['post_id'] ?? 0 );
+        $title = sanitize_text_field( $_POST['listing_title'] ?? '' );
+
+        $post_data = [
+            'post_title'   => $title ?: __( 'Untitled Listing', 'afcglide' ),
+            'post_content' => wp_kses_post( $_POST['listing_description'] ?? '' ),
+            'post_status'  => 'draft',
+            'post_type'    => C::POST_TYPE,
+            'post_author'  => $user_id,
+        ];
+
+        if ( $post_id > 0 ) {
+            $existing = get_post( $post_id );
+            if ( ! $existing ) self::send_error( __( 'Listing not found.', 'afcglide' ) );
+            if ( $existing->post_author != $user_id && ! current_user_can( C::CAP_MANAGE ) ) {
+                self::send_error( __( 'Access Denied: You do not own this asset.', 'afcglide' ) );
+            }
+            $post_data['ID'] = $post_id;
+            $final_id = wp_update_post( $post_data, true );
+            $message = __( 'Draft updated', 'afcglide' );
+        } else {
+            $final_id = wp_insert_post( $post_data, true );
+            $message = __( 'Draft saved', 'afcglide' );
+        }
+
+        if ( is_wp_error( $final_id ) ) {
+            self::log_error( 'Draft save failed: ' . $final_id->get_error_message() );
+            self::send_error( __( 'Unable to save draft. Please try again.', 'afcglide' ) );
+        }
+
+        // Save meta but avoid processing uploads during autosave
+        self::save_standard_meta( $final_id );
+        self::save_amenities( $final_id );
+
+        self::send_success( $message, [ 'post_id' => $final_id ] );
     }
 
     /**
