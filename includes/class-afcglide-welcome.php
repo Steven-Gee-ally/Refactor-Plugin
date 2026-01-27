@@ -14,36 +14,33 @@ class AFCGlide_Welcome {
         add_action( 'wp_ajax_afc_dismiss_welcome', [ __CLASS__, 'dismiss_welcome' ] );
     }
 
+    /**
+     * Display welcome banner for new agents
+     */
     public static function show_welcome_banner() {
         $user = wp_get_current_user();
-        
-        // Only show for agents (not brokers)
-        if ( ! in_array( 'listing_agent', $user->roles ) || current_user_can('manage_options') ) {
+        if ( ! $user || ! in_array( 'listing_agent', (array) $user->roles ) || current_user_can('manage_options') ) {
             return;
         }
 
-        // Check if already dismissed
+        // Only show if not already dismissed
         if ( get_user_meta( $user->ID, 'afc_welcome_dismissed', true ) ) {
             return;
         }
 
-        // Only show on the dashboard
         $screen = get_current_screen();
-        if ( $screen->id !== 'toplevel_page_afcglide-dashboard' ) {
+        if ( ! $screen || $screen->id !== 'toplevel_page_afcglide-dashboard' ) {
             return;
         }
 
-        // Check if profile is complete
+        // Skip if user has started listings
         $has_listings = get_posts([
-            'post_type' => 'afcglide_listing',
-            'author' => $user->ID,
+            'post_type'      => 'afcglide_listing',
+            'author'         => $user->ID,
             'posts_per_page' => 1,
-            'post_status' => 'any'
+            'post_status'    => 'any'
         ]);
-
-        if ( !empty($has_listings) ) {
-            return; // They've already started
-        }
+        if ( ! empty( $has_listings ) ) return;
 
         ?>
         <div class="notice notice-info afc-welcome-banner" style="position: relative; padding: 0; border: none; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-left: 5px solid #0ea5e9; border-radius: 12px; margin: 20px 0;">
@@ -73,7 +70,7 @@ class AFCGlide_Welcome {
                             </div>
                         </div>
 
-                        <a href="<?php echo admin_url('profile.php'); ?>" style="display: inline-block; background: #0ea5e9; color: white; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);">
+                        <a href="<?php echo esc_url(admin_url('profile.php')); ?>" style="display: inline-block; background: #0ea5e9; color: white; padding: 14px 28px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 15px; box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);">
                             Get Started →
                         </a>
                     </div>
@@ -86,16 +83,30 @@ class AFCGlide_Welcome {
             jQuery.post(ajaxurl, {
                 action: 'afc_dismiss_welcome',
                 nonce: '<?php echo wp_create_nonce('afc_welcome_nonce'); ?>'
+            }).done(function(response){
+                if(response.success){
+                    jQuery('.afc-welcome-banner').fadeOut();
+                } else {
+                    console.warn('Failed to dismiss welcome banner.');
+                }
             });
-            jQuery('.afc-welcome-banner').fadeOut();
         }
         </script>
         <?php
     }
 
+    /**
+     * Ajax handler to dismiss welcome banner
+     */
     public static function dismiss_welcome() {
         check_ajax_referer('afc_welcome_nonce', 'nonce');
-        update_user_meta( get_current_user_id(), 'afc_welcome_dismissed', true );
+
+        $user_id = get_current_user_id();
+        if ( ! $user_id ) {
+            wp_send_json_error([ 'message' => 'Unauthorized' ]);
+        }
+
+        update_user_meta( $user_id, 'afc_welcome_dismissed', true );
         wp_send_json_success();
     }
 }

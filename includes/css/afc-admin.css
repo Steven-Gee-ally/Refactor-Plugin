@@ -1,0 +1,200 @@
+/* AFCGlide Admin Styling v4.0 */
+
+/* General Metabox Container */
+.afc-metabox-content {
+    padding: 20px;
+    background: #fff;
+}
+
+/* LOCKDOWN: Hide Metabox Toggles (Arrows) & Force Open Appearance */
+.post-type-afcglide_listing .postbox .handlediv,
+.post-type-afcglide_listing .postbox .handle-actions,
+.post-type-afcglide_listing .postbox .toggle-indicator,
+.post-type-afcglide_listing .postbox button.handlediv,
+.post-type-afcglide_listing .postbox button.handle-order-higher,
+.post-type-afcglide_listing .postbox button.handle-order-lower {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    max-width: 0 !important;
+}
+
+.post-type-afcglide_listing .postbox .postbox-header {
+    pointer-events: none !important;
+    /* Disable clicking entirely */
+    cursor: default !important;
+}
+
+.post-type-afcglide_listing .postbox .postbox-header .hndle {
+    cursor: default !important;
+}
+
+/* Force content to be visible even if JS tried to close it */
+.post-type-afcglide_listing .postbox.closed .inside {
+    display: block !important;
+}
+
+/* Fields */
+.afc-field {
+    margin-bottom: 20px;
+}
+
+.afc-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 700;
+    color: #475569;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.afc-input,
+.afc-input-large,
+.afc-select,
+.afc-select-full {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1e293b;
+    transition: all 0.2s ease;
+}
+
+.afc-input:focus,
+.afc-select:focus {
+    border-color: #3b82f6;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.afc-help-text {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 6px;
+    font-style: italic;
+}
+
+/* 4. Visual Command Center (Hero) & 5. Gallery */
+.afc-upload-zone {
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.afc-upload-zone:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+}
+
+.afc-zone-title {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    color: #475569;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.afc-preview-grid,
+.afc-gallery-preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.afc-preview-item,
+.afc-thumb {
+    position: relative;
+    aspect-ratio: 1/1;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    border: 3px solid #fff;
+}
+
+.afc-preview-item img,
+.afc-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.afc-remove-img,
+.afc-remove-media {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.afc-preview-item:hover .afc-remove-img,
+.afc-thumb:hover .afc-remove-media {
+    opacity: 1;
+}
+
+/* Upload Buttons */
+.button.afc-upload-btn,
+.button.afc-pdf-upload-btn {
+    background: #fff;
+    border: 2px solid #e2e8f0;
+    color: #475569;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.button.afc-upload-btn:hover,
+.button.afc-pdf-upload-btn:hover {
+    border-color: #94a3b8;
+    color: #1e293b;
+    background: #f8fafc;
+}
+
+/* Amenity Chips */
+.afc-amenities-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.afc-amenity-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #f1f5f9;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.afc-amenity-item:hover {
+    background: #e2e8f0;
+}
+
+.afc-amenity-item input:checked+span {
+    color: #2563eb;
+    font-weight: 700;
+}

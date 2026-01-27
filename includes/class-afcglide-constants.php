@@ -2,9 +2,8 @@
 /**
  * AFCGlide Constants
  * Central definition of all meta keys, options, and system constants
- * 
- * @package AFCGlide
- * @version 4.0.0
+ * * @package AFCGlide
+ * @version 4.1.0 (Aligned with Settings v4.7.2)
  */
 
 namespace AFCGlide\Core;
@@ -16,7 +15,7 @@ final class Constants {
     /**
      * Plugin Version
      */
-    const VERSION = '4.0.0';
+    const VERSION = '4.1.0';
     
     /**
      * Meta Keys - Listing Data
@@ -66,19 +65,20 @@ final class Constants {
     const USER_PHOTO       = 'agent_photo';
     
     /**
-     * Options Keys
+     * Options Keys (Surgical Alignment with Settings UI)
      */
-    const OPT_AGENT_NAME      = 'afc_agent_name';
-    const OPT_AGENT_PHONE     = 'afc_agent_phone_display';
+    const OPT_SYSTEM_LABEL    = 'afc_system_label';
     const OPT_PRIMARY_COLOR   = 'afc_primary_color';
     const OPT_WA_COLOR        = 'afc_whatsapp_color';
+    const OPT_LOCKDOWN = 'afc_admin_lockdown'; // Alias for Identity Shield
     const OPT_BROKERAGE_ADDR  = 'afc_brokerage_address';
     const OPT_LICENSE_NUM     = 'afc_license_number';
     const OPT_QUALITY_GATE    = 'afc_quality_gatekeeper';
-    const OPT_ADMIN_LOCKDOWN  = 'afc_admin_lockdown';
-    const OPT_WA_GLOBAL       = 'afc_whatsapp_global';
-    const OPT_GLOBAL_LOCKDOWN = 'afc_global_lockdown';
+    const OPT_MIN_WIDTH       = 'afc_min_image_width';
+    const OPT_GLOBAL_LOCKDOWN = 'afc_admin_lockdown'; // MATCHES SETTINGS UI CHECKBOX
     const OPT_IDENTITY_SHIELD = 'afc_identity_shield';
+    const OPT_WA_GLOBAL       = 'afc_whatsapp_global';
+    const OPT_LOAD_STYLES     = 'afc_load_global_styles';
     
     /**
      * Post Type
@@ -94,9 +94,9 @@ final class Constants {
     const TAX_AMENITY      = 'property_amenity';
     
     /**
-     * AJAX Actions
+     * AJAX Actions (Aligned with class-afcglide-ajax-handler.php)
      */
-    const AJAX_SUBMIT      = 'afcglide_submit_listing';
+    const AJAX_SUBMIT      = 'afc_handle_submission'; 
     const AJAX_FILTER      = 'afcglide_filter_listings';
     const AJAX_SAVE_DRAFT  = 'afcglide_save_draft';
     const AJAX_LOCKDOWN    = 'afc_toggle_lockdown_ajax';
@@ -104,7 +104,7 @@ final class Constants {
     /**
      * Nonces
      */
-    const NONCE_AJAX       = 'afc_nonce';
+    const NONCE_AJAX       = 'afc_listing_submit'; // MATCHES THE FORM NONCE
     const NONCE_META       = 'afcglide_meta_nonce';
     const NONCE_PROTOCOLS  = 'afc_protocols';
     
@@ -133,6 +133,24 @@ final class Constants {
     public static function get_option( $key, $default = '' ) {
         return get_option( $key, $default );
     }
+
+    // Inside class-afcglide-identity-shield.php
+
+    public static function enforce_lockdown() {
+    if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) return;
+
+    // USE THE CONSTANT - This ensures if we change the key in one place, the shield stays strong.
+    $is_locked = get_option( \AFCGlide\Core\Constants::OPT_GLOBAL_LOCKDOWN, 0 );
+    
+    if ( ! $is_locked ) return;
+
+    if ( current_user_can( 'manage_options' ) || current_user_can( \AFCGlide\Core\Constants::CAP_MANAGE ) ) {
+        return;
+    }
+
+    wp_safe_redirect( add_query_arg( 'afc_status', 'lockdown', home_url() ) );
+    exit;
+}
     
     /**
      * Helper: Update option

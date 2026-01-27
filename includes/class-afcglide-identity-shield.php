@@ -1,105 +1,41 @@
 <?php
 namespace AFCGlide\Admin;
 
+use AFCGlide\Core\Constants;
+
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
- * AFCGlide Identity Shield v5.0
- * World-Class Security Hardening
- * 
- * - Scrub REST API User Endpoints
- * - Block Author Enumeration
- * - Disable XML-RPC
- * - Remove oEmbed Discovery
+ * AFCGlide Identity Shield
+ * Dedicated Security & Lockdown Controller
  */
 class AFCGlide_Identity_Shield {
 
     public static function init() {
-        // Enforce Global Lockdown at the highest level
-        add_action( 'template_redirect', [ __CLASS__, 'enforce_global_lockdown' ], 1 );
-
-        // Only run if Identity Shield is ACTIVE
-        if ( get_option('afc_identity_shield', '0') !== '1' ) {
-            return;
-        }
-
-        // 1. REST API Scrubber
-        add_filter( 'rest_endpoints', [ __CLASS__, 'scrub_rest_api' ] );
-
-        // 2. Author Enumeration Blocker
-        add_action( 'template_redirect', [ __CLASS__, 'block_author_enumeration' ] );
-
-        // 3. XML-RPC Disabler
-        add_filter( 'xmlrpc_enabled', '__return_false' );
-        add_filter( 'xmlrpc_methods', [ __CLASS__, 'disable_xmlrpc_methods' ] );
-
-        // 4. oEmbed Hardening (Prevent user info leaks via embed)
-        remove_action( 'wp_head', 'rest_output_link_wp_head', 10 );
-        remove_action( 'wp_head', 'wp_oembed_add_discovery_links', 10 );
+        // Enforce the Master Switch Lockdown
+        add_action( 'admin_init', [ __CLASS__, 'enforce_lockdown' ] );
     }
 
     /**
-     * Remove /wp/v2/users endpoints to prevent JSON scraping
+     * Enforce Global Network Lockdown
+     * Uses the Brain (Constants) to check the Master Switch.
      */
-    public static function scrub_rest_api( $endpoints ) {
-        if ( isset( $endpoints['/wp/v2/users'] ) ) {
-            unset( $endpoints['/wp/v2/users'] );
-        }
-        if ( isset( $endpoints['/wp/v2/users/(?P<id>[\d]+)'] ) ) {
-            unset( $endpoints['/wp/v2/users/(?P<id>[\d]+)'] );
-        }
-        return $endpoints;
-    }
+    public static function enforce_lockdown() {
+        // Don't interrupt AJAX or background processes
+        if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) return;
 
-    /**
-     * Block /?author=N scans
-     */
-    public static function block_author_enumeration() {
-        if ( is_author() && isset( $_GET['author'] ) ) {
-            // Log the attempt (Optional: could add to a security log CPT later)
-            // error_log( 'AFCGlide Security: Blocked author enumeration attempt from ' . $_SERVER['REMOTE_ADDR'] );
-            
-            wp_redirect( home_url() );
-            exit;
-        }
-    }
-
-    /**
-     * Aggressively unset XML-RPC methods
-     */
-    public static function disable_xmlrpc_methods( $methods ) {
-        unset( $methods['pingback.ping'] );
-        return $methods;
-    }
-
-    /**
-     * 🚨 GLOBAL LOCKDOWN ENFORCEMENT
-     * Rejects access to critical pages before they render
-     */
-    public static function enforce_global_lockdown() {
-        // 1. Check if Lockdown is ON
-        if ( get_option('afc_global_lockdown', '0') !== '1' ) {
-            return;
-        }
-
-        // 2. Allow Managing Brokers & Admins to pass
-        if ( current_user_can('manage_options') ) {
-            return;
-        }
-
-        // 3. Detect Targeted Pages (Submission Page)
-        // We check for the 'afc_upload_key' which triggers the submission logic
-        // OR if it's the specific submission page (permalink structure dependent, but typically targeted via ID or template match)
-        // Ideally, we check if the current query relates to 'afcglide_listing' submission.
+        // Pull the Master Switch status from the database
+        $is_locked = get_option( Constants::OPT_GLOBAL_LOCKDOWN, 0 );
         
-        global $post;
-        $is_submission_page = ( is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'afcglide_submission_form' ) );
-        
-        // Also block the "Add New" page if someone tries to brute force the URL
-        $is_admin_submission = is_admin() && isset($_GET['post_type']) && $_GET['post_type'] === 'afcglide_listing';
+        if ( ! $is_locked ) return;
 
-        if ( $is_submission_page || $is_admin_submission ) {
-            wp_die( '<h1>🚫 SYSTEM LOCKDOWN ACTIVE</h1><p>The Global Infrastructure is currently in lockdown mode. All submissions are paused.</p>', 'System Lockdown', [ 'response' => 403 ] );
+        // If they are an Admin or Managing Broker, grant access
+        if ( current_user_can( 'manage_options' ) || current_user_can( Constants::CAP_MANAGE ) ) {
+            return;
         }
+
+        // Everyone else gets redirected to the home page with a lockdown status
+        wp_safe_redirect( add_query_arg( 'afc_status', 'lockdown', home_url() ) );
+        exit;
     }
 }

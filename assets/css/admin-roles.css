@@ -1,0 +1,134 @@
+/*
+AFCGlide Admin Role-Based Styles
+Version 4.0
+Handles role-specific portal themes, UI tweaks, and visibility
+*/
+
+/* ==========================================
+1. ROLE-BASED THEME SEPARATION
+========================================== */
+
+/* Agent Portal Theme (Sky Blue) */
+.afc-agent-portal #adminmenu,
+.afc-agent-portal #adminmenu .wp-submenu {
+    background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
+}
+
+.afc-agent-portal #adminmenu li.current a,
+.afc-agent-portal #adminmenu li.wp-has-current-submenu a.wp-has-current-submenu {
+    background: #0ea5e9 !important;
+    color: white !important;
+}
+
+.afc-agent-portal #adminmenu li a:hover {
+    background: #bae6fd;
+    color: #0c4a6e;
+}
+
+.afc-agent-portal .afc-top-bar {
+    background: linear-gradient(90deg, #e0f2fe 0%, #bae6fd 100%) !important;
+    border-bottom: 2px solid #0ea5e9 !important;
+}
+
+.afc-agent-portal .afc-stat-node {
+    border-left-color: #0ea5e9 !important;
+}
+
+/* Agent-specific UI enhancements */
+.afc-agent-portal .afc-hero {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%) !important;
+    border-left: 5px solid #0ea5e9 !important;
+}
+
+.afc-agent-portal .afc-execute-btn {
+    background: #0ea5e9 !important;
+    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3) !important;
+}
+
+.afc-agent-portal .afc-execute-btn:hover {
+    background: #0284c7 !important;
+}
+
+/* Broker Command Center Theme (Emerald) */
+.afc-broker-command #adminmenu li.current a,
+.afc-broker-command #adminmenu li.wp-has-current-submenu a.wp-has-current-submenu {
+    background: #059669 !important;
+}
+
+.afc-broker-command .afc-top-bar {
+    background: linear-gradient(90deg, #f0fdf4 0%, #dcfce7 100%) !important;
+    border-bottom: 2px solid #10b981 !important;
+}
+
+.afc-broker-command .afc-stat-node {
+    border-left-color: #059669 !important;
+}
+
+/* ==========================================
+2. SUCCESS NOTIFICATIONS (Floating Banners)
+========================================== */
+
+.afc-success-portal {
+    border-left: 6px solid #10b981 !important;
+    background: #ecfdf5 !important;
+    border-radius: 12px !important;
+}
+
+/* ==========================================
+3. ROLE-SPECIFIC USER PROFILE ENHANCEMENTS
+========================================== */
+
+.afc-profile-section {
+    background: white !important;
+    border: 1px solid #e2e8f0 !important;
+    border-left: 10px solid #8b5cf6 !important;
+    border-radius: 20px !important;
+    padding: 40px !important;
+    margin: 40px 0 !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03) !important;
+}
+
+.afc-profile-section h2 {
+    margin: 0 0 20px 0 !important;
+    font-size: 18px !important;
+    font-weight: 800 !important;
+    color: #5b21b6 !important;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.afc-profile-section input[type="text"],
+.afc-profile-section textarea {
+    width: 100% !important;
+    max-width: 500px !important;
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    padding: 12px 18px !important;
+    font-size: 14px !important;
+    background: #fcfdff !important;
+    transition: all 0.2s !important;
+}
+
+.afc-profile-section input[type="text"]:focus,
+.afc-profile-section textarea:focus {
+    border-color: #a78bfa !important;
+    background: white !important;
+    box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.1) !important;
+}
+
+/* ==========================================
+4. FINAL ROLE-BASED CLEANUPS / ADMINBAR STYLING
+========================================== */
+
+.afc-agent-portal #wpadminbar,
+.afc-broker-command #wpadminbar {
+    background: #0f172a !important;
+}
+
+.afc-agent-portal #adminmenu li a,
+.afc-broker-command #adminmenu li a {
+    transition: all 0.2s;
+}

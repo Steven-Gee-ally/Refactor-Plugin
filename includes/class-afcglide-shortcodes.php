@@ -6,7 +6,8 @@ use AFCGlide\Core\Constants as C;
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
- * AFCGlide Shortcodes v4.1 - THE REAL ESTATE MACHINE
+ * AFCGlide Shortcodes v4.2 - THE REAL ESTATE MACHINE
+ * Refined for Vogue Green 2026 UI | MacBook Pro Precision
  */
 final class AFCGlide_Shortcodes {
 
@@ -19,17 +20,22 @@ final class AFCGlide_Shortcodes {
         global $post;
         if ( ! is_a( $post, 'WP_Post' ) ) return;
         
-        if ( has_shortcode( $post->post_content, 'afcglide_submit_listing' ) ) {
-            wp_enqueue_script( 'jquery' );
-            wp_enqueue_style( 'afc-submission-form', AFCG_URL . 'assets/css/admin-submission.css', [], '4.0' );
-            wp_localize_script( 'jquery', 'afc_submission_vars', [
-                'ajax_url' => admin_url('admin-ajax.php'),
-                'nonce'    => wp_create_nonce('afc_nonce'),
-            ]);
+        // 1. Check for any AFC shortcode
+        $has_grid   = has_shortcode( $post->post_content, 'afcglide_listings_grid' );
+        $has_slider = has_shortcode( $post->post_content, 'afcglide_listings_slider' );
+        $has_submit = has_shortcode( $post->post_content, 'afcglide_submit_listing' );
+
+        if ( $has_grid || $has_slider ) {
+            // Load Shortcode Styles with Global Styles as dependency
+            wp_enqueue_style( 'afc-shortcode-styles', AFCG_URL . 'assets/css/afcglide-shortcodes.css', ['afc-global-styles'], AFCG_VERSION );
+            
+            // Reference our master public JS for grid logic/filtering
+            wp_enqueue_script( 'afc-public-js', AFCG_URL . 'assets/js/afcglide-public.js', ['jquery'], AFCG_VERSION, true );
         }
         
-        if ( has_shortcode( $post->post_content, 'afcglide_listings_grid' ) ) {
-            wp_enqueue_style( 'afc-grid-styles', AFCG_URL . 'assets/css/afcglide-shortcodes.css', [], '4.0' );
+        if ( $has_submit ) {
+            wp_enqueue_style( 'afc-submission-form', AFCG_URL . 'assets/css/admin-submission.css', ['afc-global-styles'], AFCG_VERSION );
+            // JS is handled by the main file's Section 6
         }
     }
 
@@ -37,26 +43,38 @@ final class AFCGlide_Shortcodes {
         add_shortcode( 'afcglide_login', [ __CLASS__, 'render_login_form' ] );
         add_shortcode( 'afcglide_submit_listing', [ __CLASS__, 'render_submission_form' ] );
         add_shortcode( 'afcglide_listings_grid', [ __CLASS__, 'render_listing_grid' ] );
-        
-        if ( class_exists('\AFCGlide\Reporting\AFCGlide_Scoreboard') ) {
-            add_shortcode( 'afc_scoreboard', [ '\AFCGlide\Reporting\AFCGlide_Scoreboard', 'render_scoreboard' ] );
-        }
+        add_shortcode( 'afcglide_listings_slider', [ __CLASS__, 'render_listing_slider' ] );
     }
 
-    public static function render_submission_form() {
-        if ( ! is_user_logged_in() ) {
-            return '<div class="afc-auth-notice" style="padding:40px; text-align:center; background:#f8fafc; border-radius:12px; border:2px dashed #cbd5e1;">
-                        <div style="font-size:48px; margin-bottom:15px;">🔒</div>
-                        <h3 style="margin:0 0 10px 0; color:#1e293b; font-weight:800;">Access Denied</h3>
-                        <p style="color:#64748b; margin:0;">Please log in to the Command Center to submit listings.</p>
-                    </div>';
-        }
+    /**
+     * 1. FEATURED LISTINGS SLIDER
+     */
+    public static function render_listing_slider( $atts ) {
+        $atts = shortcode_atts( [
+            'count' => 6,
+        ], $atts );
+
+        $query = new \WP_Query([
+            'post_type'      => C::POST_TYPE,
+            'posts_per_page' => (int) $atts['count'],
+            'post_status'    => 'publish',
+        ]);
+
+        if ( ! $query->have_posts() ) return '';
 
         ob_start();
-        $template_path = AFCG_PATH . 'templates/template-submit-listing.php';
-        if ( file_exists( $template_path ) ) {
-            include $template_path;
-        }
+        ?>
+        <div class="afc-vogue-slider-outer" data-slides="<?php echo esc_attr($atts['count']); ?>">
+            <div class="afc-slider-track">
+                <?php while ( $query->have_posts() ) : $query->the_post(); ?>
+                    <div class="afc-slider-slide">
+                        <?php self::render_listing_card(); ?>
+                    </div>
+                <?php endwhile; ?>
+            </div>
+        </div>
+        <?php
+        wp_reset_postdata();
         return ob_get_clean();
     }
 
@@ -66,14 +84,13 @@ final class AFCGlide_Shortcodes {
     public static function render_listing_grid( $atts ) {
         $atts = shortcode_atts( [
             'posts_per_page' => 12, 
-            'columns' => 3,
-            'status' => 'publish',
-            'show_search' => 'yes'
+            'columns'        => 3,
+            'status'         => 'publish',
+            'show_search'    => 'yes'
         ], $atts );
 
         $paged = ( get_query_var( 'paged' ) ) ? get_query_var( 'paged' ) : 1;
         
-        // Handle Search Queries
         $search_term = isset($_GET['afc_query']) ? sanitize_text_field($_GET['afc_query']) : '';
         $max_price   = isset($_GET['afc_max_price']) ? intval($_GET['afc_max_price']) : 0;
 
@@ -81,39 +98,33 @@ final class AFCGlide_Shortcodes {
             'post_type'      => C::POST_TYPE, 
             'posts_per_page' => (int) $atts['posts_per_page'], 
             'post_status'    => sanitize_text_field( $atts['status'] ),
-            'orderby'        => 'date',
-            'order'          => 'DESC',
             'paged'          => $paged,
             's'              => $search_term
         ];
 
-        // Meta Query for Price
         if ( $max_price > 0 ) {
-            $args['meta_query'] = [
-                [
-                    'key'     => C::META_PRICE,
-                    'value'   => $max_price,
-                    'type'    => 'NUMERIC',
-                    'compare' => '<='
-                ]
-            ];
+            $args['meta_query'] = [[
+                'key'     => C::META_PRICE, 
+                'value'   => $max_price, 
+                'type'    => 'NUMERIC', 
+                'compare' => '<='
+            ]];
         }
 
         $query = new \WP_Query( $args );
-
         ob_start();
+        
+        echo '<div class="afc-grid-wrapper">';
         
         if ( $atts['show_search'] === 'yes' ) {
             self::render_search_bar($search_term, $max_price);
         }
 
         if ( ! $query->have_posts() ) {
-            echo '<div class="afc-no-results" style="padding:60px 20px; text-align:center; background:#f8fafc; border-radius:12px;">
-                    <div style="font-size:64px; margin-bottom:20px; opacity:0.3;">🏠</div>
-                    <p style="color:#64748b; font-size:16px; margin:0;">No assets found matching your criteria.</p>
-                  </div>';
+            echo '<div class="afc-no-results">🚫 NO ASSETS MATCHING CRITERIA</div>';
         } else {
-            echo '<div class="afcglide-grid-container">';
+            // Precise column handling
+            echo '<div class="afcglide-grid-container afc-cols-' . esc_attr($atts['columns']) . '">';
             while ( $query->have_posts() ) { 
                 $query->the_post(); 
                 self::render_listing_card(); 
@@ -121,64 +132,73 @@ final class AFCGlide_Shortcodes {
             echo '</div>';
 
             if ( $query->max_num_pages > 1 ) {
-                echo '<div class="afc-pagination" style="margin-top:40px; text-align:center;">';
-                echo paginate_links([
-                    'total' => $query->max_num_pages,
-                    'prev_text' => '← Previous',
-                    'next_text' => 'Next →',
-                    'current' => $paged
-                ]);
-                echo '</div>';
+                self::render_pagination($query, $paged);
             }
         }
+        echo '</div>';
         
         wp_reset_postdata();
         return ob_get_clean();
     }
 
-    /**
-     * SEARCH BAR COMPONENT (The Pazaaz Window)
-     */
     private static function render_search_bar($search_term, $max_price) {
         ?>
         <div class="afc-search-terminal">
             <form method="get" action="" class="afc-search-grid">
                 <div class="afc-search-input-wrapper">
-                    <span class="afc-search-icon">🔍</span>
-                    <input type="text" name="afc_query" value="<?php echo esc_attr($search_term); ?>" class="afc-search-input" placeholder="Search by property title, address, or keyword...">
+                    <input type="text" name="afc_query" value="<?php echo esc_attr($search_term); ?>" class="afc-search-input" placeholder="City, Zip, or Asset ID...">
                 </div>
                 
-                <div style="min-width: 180px;">
-                    <select name="afc_max_price" class="afc-search-input" style="padding-left: 20px !important;">
-                        <option value="">Max Price (Any)</option>
-                        <option value="500000" <?php selected($max_price, 500000); ?>>Under $500k</option>
-                        <option value="1000000" <?php selected($max_price, 1000000); ?>>Under $1M</option>
-                        <option value="3000000" <?php selected($max_price, 3000000); ?>>Under $3M</option>
-                        <option value="5000000" <?php selected($max_price, 5000000); ?>>Under $5M</option>
-                        <option value="10000000" <?php selected($max_price, 10000000); ?>>Under $10M</option>
+                <div class="afc-price-select-wrapper">
+                    <select name="afc_max_price" class="afc-search-select">
+                        <option value="">MAX PRICE (UNLIMITED)</option>
+                        <?php 
+                        $prices = [500000, 1000000, 2500000, 5000000, 10000000];
+                        foreach($prices as $p) {
+                            echo '<option value="'.$p.'" '.selected($max_price, $p, false).'>UNDER $'.number_format($p/1000000, 1).'M</option>';
+                        }
+                        ?>
                     </select>
                 </div>
-
-                <button type="submit" class="afc-search-btn">Find Assets</button>
+                <button type="submit" class="afc-vogue-btn">FILTER ASSETS</button>
             </form>
         </div>
         <?php
     }
 
+    private static function render_pagination($query, $paged) {
+        echo '<div class="afc-pagination-wrapper">';
+        echo paginate_links([
+            'total'     => $query->max_num_pages,
+            'prev_text' => 'PREV',
+            'next_text' => 'NEXT',
+            'current'   => $paged,
+            'type'      => 'list'
+        ]);
+        echo '</div>';
+    }
+
     public static function render_listing_card() {
-        $template_path = AFCG_PATH . 'templates/listing-card.php';
-        if ( file_exists( $template_path ) ) {
-            include $template_path;
+        // Enforce a isolated scope for the template include
+        $template = AFCG_PATH . 'templates/listing-card.php';
+        if ( file_exists( $template ) ) {
+            include $template;
         }
+    }
+
+    public static function render_submission_form() {
+        $template = AFCG_PATH . 'templates/template_submit_listing.php';
+        if ( file_exists( $template ) ) {
+            ob_start();
+            include $template;
+            return ob_get_clean();
+        }
+        return 'Submission template missing.';
     }
 
     public static function render_login_form() {
         if ( is_user_logged_in() ) {
-            $user = wp_get_current_user();
-            return '<div class="afc-success-box" style="padding:40px; background:#ecfdf5; border-radius:16px; text-align:center;">
-                        <h3 style="margin:0; color:#065f46;">Welcome, ' . esc_html($user->display_name) . '</h3>
-                        <p style="margin:10px 0 0; color:#059669;">Command Center Authenticated.</p>
-                    </div>';
+            return '<div class="afc-logged-in-box">ACCESS GRANTED. <a href="'.wp_logout_url().'">SECURE LOGOUT</a></div>';
         }
         return wp_login_form( ['echo' => false] );
     }

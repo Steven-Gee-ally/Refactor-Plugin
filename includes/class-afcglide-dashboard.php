@@ -9,7 +9,6 @@ class AFCGlide_Dashboard {
         add_action( 'admin_menu', [ __CLASS__, 'register_welcome_page' ] );
         add_action( 'admin_init', [ __CLASS__, 'handle_protocol_execution' ] );
         add_action( 'admin_init', [ __CLASS__, 'handle_agent_creation' ] );
-        add_action( 'admin_init', [ __CLASS__, 'handle_agent_password_reset' ] );
         add_action( 'admin_init', [ __CLASS__, 'register_backbone_settings' ] );
         add_action( 'wp_ajax_afc_toggle_security', [ __CLASS__, 'ajax_toggle_security' ] );
         add_action( 'admin_notices', [ __CLASS__, 'check_homepage_configuration' ] );
@@ -30,29 +29,28 @@ class AFCGlide_Dashboard {
     public static function register_welcome_page() {
         $is_broker = current_user_can('manage_options');
         $system_label = get_option('afc_system_label', 'AFCGlide');
-        $capability = 'create_afc_listings';
-
-        // Main AFCGlide Menu (Agents + Brokers)
-        add_menu_page( $system_label . ' Hub', $system_label, $capability, 'afcglide-dashboard', [ __CLASS__, 'render_welcome_screen' ], 'dashicons-dashboard', 5.9 );
-
-        // Hub Overview
-        add_submenu_page( 'afcglide-dashboard', 'Hub Overview', '📊 Hub Overview', $capability, 'afcglide-dashboard', [ __CLASS__, 'render_welcome_screen' ] );
-
+        
+        // Main AFCGlide Menu (Everyone sees this)
+        add_menu_page($system_label . ' Hub', $system_label, 'read', 'afcglide-dashboard', [ __CLASS__, 'render_welcome_screen' ], 'dashicons-dashboard', 5.9);
+        
+        // Hub Overview (Everyone)
+        add_submenu_page('afcglide-dashboard', 'Hub Overview', '📊 Hub Overview', 'read', 'afcglide-dashboard', [ __CLASS__, 'render_welcome_screen' ]);
+        
         // My Portfolio (Agents) / Global Inventory (Brokers)
-        if ( $is_broker ) {
-            add_submenu_page( 'afcglide-dashboard', 'Global Inventory', '💼 Global Inventory', $capability, 'afcglide-inventory', '' );
+        if ($is_broker) {
+            add_submenu_page('afcglide-dashboard', 'Global Inventory', '💼 Global Inventory', 'read', 'afcglide-inventory', '');
         } else {
-            add_submenu_page( 'afcglide-dashboard', 'My Portfolio', '💼 My Portfolio', $capability, 'afcglide-inventory', '' );
+            add_submenu_page('afcglide-dashboard', 'My Portfolio', '💼 My Portfolio', 'read', 'afcglide-inventory', '');
         }
+        
+        // Add New Asset (Everyone)
+        add_submenu_page('afcglide-dashboard', 'Add New Asset', '🛸 Add New Asset', 'read', 'post-new.php?post_type=afcglide_listing');
+        
+        // My Profile (Everyone)
+        add_submenu_page('afcglide-dashboard', 'My Profile', '👤 My Profile', 'read', 'profile.php');
 
-        // Add New Asset
-        add_submenu_page( 'afcglide-dashboard', 'Add New Asset', '🛸 Add New Asset', $capability, 'post-new.php?post_type=afcglide_listing' );
-
-        // My Profile
-        add_submenu_page( 'afcglide-dashboard', 'My Profile', '👤 My Profile', $capability, 'profile.php' );
-
-        // System Manual
-        add_submenu_page( 'afcglide-dashboard', 'System Manual', '📘 System Manual', $capability, 'afcglide-manual', [ __CLASS__, 'render_manual_page' ] );
+        // System Manual (Everyone)
+        add_submenu_page('afcglide-dashboard', 'System Manual', '📘 System Manual', 'read', 'afcglide-manual', [ __CLASS__, 'render_manual_page' ]);
     }
 
     public static function handle_protocol_execution() {
@@ -94,51 +92,7 @@ class AFCGlide_Dashboard {
         }
     }
 
-    /**
-     * Handle Agent Password Reset (broker action)
-     */
-    public static function handle_agent_password_reset() {
-        if ( isset( $_POST['afc_reset_agent_password'] ) && check_admin_referer( 'afc_reset_agent_password', 'afc_reset_agent_nonce' ) ) {
-            if ( ! current_user_can( \AFCGlide\Core\Constants::CAP_MANAGE ) ) {
-                wp_die( __( 'Unauthorized', 'afcglide' ), 403 );
-            }
-
-            $user_id = intval( $_POST['reset_user_id'] ?? 0 );
-            if ( ! $user_id || ! $user = get_user_by( 'id', $user_id ) ) {
-                wp_redirect( admin_url( 'admin.php?page=afcglide-dashboard&agent_reset=0' ) );
-                exit;
-            }
-
-            // Generate a secure password and set it
-            $new_pass = wp_generate_password( 12, false );
-            wp_set_password( $new_pass, $user_id );
-
-            // Store transient briefly for broker to copy (5 minutes)
-            set_transient( 'afc_last_reset_agent', [
-                'user'  => $user->user_login,
-                'pass'  => $new_pass,
-                'email' => $user->user_email,
-                'url'   => wp_login_url(),
-            ], 300 );
-
-            // Log
-            error_log( sprintf( 'AFCGlide: Password reset for user %d by %d', $user_id, get_current_user_id() ) );
-
-            wp_redirect( admin_url( 'admin.php?page=afcglide-dashboard&agent_reset=1' ) );
-            exit;
-        }
-    }
-
     public static function render_welcome_screen() {
-        // Protect this screen: only users with the agent capability (or admins) may access
-        if ( ! current_user_can( 'create_afc_listings' ) ) {
-            if ( ! is_user_logged_in() ) {
-                wp_redirect( wp_login_url() );
-                exit;
-            }
-            wp_die( __( 'Unauthorized access', 'afcglide' ), 403 );
-        }
-
         $current_user = wp_get_current_user();
         $is_broker = current_user_can('manage_options');
         $display_name = strtoupper($current_user->first_name ?: $current_user->display_name);
@@ -301,16 +255,6 @@ Password: <?php echo esc_html($guide['pass']); ?></textarea>
                     </div>
                 <?php endif; ?>
 
-                <?php if ( isset($_GET['agent_reset']) && $guide = get_transient('afc_last_reset_agent') ) : ?>
-                    <div style="background:#fff7ed; border:2px dashed #fb923c; padding:30px; border-radius:15px; margin-bottom:35px;">
-                        <h3 style="color:#92400e; margin-top:0; font-size:16px;">🔑 AGENT PASSWORD RESET</h3>
-                        <p style="font-size:13px; color:#92400e; font-weight:700;">Copy and share this temporary password with the agent (expires in 5 minutes):</p>
-                        <textarea readonly style="width:100%; height:100px; padding:15px; border-radius:10px; background:white; border:1px solid #fb923c; font-family:monospace; font-size:12px;">Agent Portal: <?php echo esc_url($guide['url']); ?>
-Username: <?php echo esc_html($guide['user']); ?>
-Temporary Password: <?php echo esc_html($guide['pass']); ?></textarea>
-                    </div>
-                <?php endif; ?>
-
                 <form method="post" action="">
                     <?php wp_nonce_field('afc_rapid_agent', 'afc_rapid_agent_nonce'); ?>
                     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; align-items: end;">
@@ -400,17 +344,11 @@ Temporary Password: <?php echo esc_html($guide['pass']); ?></textarea>
     public static function render_team_roster() {
         $agents = get_users(['role__in'=>['listing_agent','managing_broker','administrator']]);
         echo '<table style="width:100%; border-collapse:collapse; font-size:14px; border-radius:0 0 24px 24px; overflow:hidden;">';
-        echo '<thead style="background:#f1f5f9; text-align:left;"><tr><th style="padding:20px; color:#64748b; font-size:11px; letter-spacing:1.5px; font-weight:800;">AGENT OPERATOR</th><th style="padding:20px; color:#64748b; font-size:11px; letter-spacing:1.5px; font-weight:800;">ACTIVE UNITS</th><th style="padding:20px; color:#64748b; font-size:11px; letter-spacing:1.5px; font-weight:800;">ACCUMULATED VOLUME</th><th style="padding:20px; color:#64748b; font-size:11px; letter-spacing:1.5px; font-weight:800;">STATUS</th><th style="padding:20px; color:#64748b; font-size:11px; letter-spacing:1.5px; font-weight:800;">ACTIONS</th></tr></thead><tbody>';
+        echo '<thead style="background:#f1f5f9; text-align:left;"><tr><th style="padding:20px; color:#64748b; font-size:11px; letter-spacing:1.5px; font-weight:800;">AGENT OPERATOR</th><th style="padding:20px; color:#64748b; font-size:11px; letter-spacing:1.5px; font-weight:800;">ACTIVE UNITS</th><th style="padding:20px; color:#64748b; font-size:11px; letter-spacing:1.5px; font-weight:800;">ACCUMULATED VOLUME</th><th style="padding:20px; color:#64748b; font-size:11px; letter-spacing:1.5px; font-weight:800;">STATUS</th></tr></thead><tbody>';
         foreach ($agents as $user) {
             $count = count(get_posts(['post_type'=>'afcglide_listing','post_status'=>'publish','author'=>$user->ID,'fields'=>'ids','posts_per_page'=>-1]));
             $vol = self::calculate_portfolio_volume($user->ID);
-            // Prepare reset button for brokers/admins
-            $actions = '';
-            if ( current_user_can( \AFCGlide\Core\Constants::CAP_MANAGE ) ) {
-                $actions = '<form method="post" style="display:inline;">' . wp_nonce_field( 'afc_reset_agent_password', 'afc_reset_agent_nonce', true, false ) . '<input type="hidden" name="reset_user_id" value="' . esc_attr( $user->ID ) . '"><button type="submit" name="afc_reset_agent_password" style="background:#ef4444;color:white;border:none;padding:8px 10px;border-radius:8px;cursor:pointer;font-weight:800;">Reset Password</button></form>';
-            }
-
-            echo '<tr><td style="padding:20px; border-bottom:1px solid #f1f5f9; font-weight:800; color:#0f172a;">'.esc_html($user->display_name).'</td><td style="padding:20px; border-bottom:1px solid #f1f5f9;">'.$count.'</td><td style="padding:20px; border-bottom:1px solid #f1f5f9; color:#059669; font-weight:900;">$'.number_format($vol).'</td><td style="padding:20px; border-bottom:1px solid #f1f5f9;"><span style="font-size:10px; background:#ecfdf5; color:#065f46; padding:5px 12px; border-radius:20px; font-weight:900; letter-spacing:1px;">ACTIVE</span></td><td style="padding:20px; border-bottom:1px solid #f1f5f9;">' . $actions . '</td></tr>';
+            echo '<tr><td style="padding:20px; border-bottom:1px solid #f1f5f9; font-weight:800; color:#0f172a;">'.esc_html($user->display_name).'</td><td style="padding:20px; border-bottom:1px solid #f1f5f9;">'.$count.'</td><td style="padding:20px; border-bottom:1px solid #f1f5f9; color:#059669; font-weight:900;">$'.number_format($vol).'</td><td style="padding:20px; border-bottom:1px solid #f1f5f9;"><span style="font-size:10px; background:#ecfdf5; color:#065f46; padding:5px 12px; border-radius:20px; font-weight:900; letter-spacing:1px;">ACTIVE</span></td></tr>';
         }
         echo '</tbody></table>';
     }

@@ -4,8 +4,8 @@ namespace AFCGlide\Admin;
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
- * AFCGlide Command Center v3.6 - The Functional Visionary Build
- * 🖥️ Optimized for MacBook Pro 19" | 🛠️ Fully Hooked Logic
+ * AFCGlide Command Center v4.3 - Synergy Terminal Build
+ * 🖥️ Optimized for MacBook Pro 19" | 🚀 No-Compromise Redirects
  */
 class AFCGlide_Admin_Menu {
 
@@ -29,27 +29,43 @@ class AFCGlide_Admin_Menu {
     }
 
     public static function register_menus() {
-        // 1. The Main Sidebar Parent (Visible to you and agents)
+        // 1. The Main Sidebar Parent
         add_menu_page('AFCGlide', '🚀 AFCGlide', 'read', 'afcglide-home', [ __CLASS__, 'render_ui' ], 'dashicons-dashboard', 1);
         
-        // 2. The Conditional Agent Link
-        // Checks your "Lockdown" setting before showing the "Add Listing" link in the sidebar
+        // 2. The WORLD-CLASS REDIRECT: Add New Asset
+        // We replace post-new.php with our custom terminal slug
         $lockdown = get_option('afc_lockdown_master', 'no');
         
         if ( $lockdown !== 'yes' ) {
             add_submenu_page(
-                'afcglide-home',                // Parent Slug
-                'Add New Listing',             // Page Title
-                '➕ Add Listing',               // Sidebar Menu Title
-                'edit_posts',                   // Capability for Agents
-                'post-new.php?post_type=afcglide_listing' 
+                'afcglide-home',
+                'Launch New Asset',
+                '➕ Launch Asset',
+                'edit_posts',
+                'afcglide-launch', // This is our clean room slug
+                [ __CLASS__, 'render_submission_terminal' ]
             );
         }
 
-        // 3. Hidden Settings page (Only for you, the Owner/Admin)
+        // 3. Hidden Settings page
         add_submenu_page('afcglide-home', 'Settings', 'Settings', 'manage_options', 'afcglide-settings', [ __CLASS__, 'render_settings_page' ]);
     }
 
+    /**
+     * THE CLEAN ROOM LOADER
+     * This pulls in your template-submit-listing.php without Astra clutter
+     */
+    public static function render_submission_terminal() {
+        // 🚀 ACTIVATE ANTI-GRAVITY STYLES FOR THIS PAGE
+        self::inject_visionary_styles(); 
+
+        $template_path = plugin_dir_path( __FILE__ ) . '../../templates/template-submit-listing.php';
+        if ( file_exists( $template_path ) ) {
+            include_once $template_path;
+        } else {
+            echo '<div class="notice notice-error"><p>Synergy Error: Submission Template not found.</p></div>';
+        }
+    }
     public static function render_ui() {
         $user = wp_get_current_user();
         
@@ -76,9 +92,9 @@ class AFCGlide_Admin_Menu {
             </div>
 
             <div class="afc-tier-grid afc-tier-2">
-                <a href="<?php echo admin_url('post-new.php?post_type=afcglide_listing'); ?>" class="afc-action-card">
+                <a href="<?php echo admin_url('admin.php?page=afcglide-launch'); ?>" class="afc-action-card">
                     <div class="card-icon">➕</div>
-                    <div class="card-text"><h3>Add Listing</h3><p>Initialize New Asset</p></div>
+                    <div class="card-text"><h3>Launch Asset</h3><p>Synergy Submission</p></div>
                 </a>
                 <a href="<?php echo admin_url('edit.php?post_type=afcglide_listing'); ?>" class="afc-action-card">
                     <div class="card-icon">📋</div>
@@ -160,12 +176,39 @@ class AFCGlide_Admin_Menu {
         echo '<div class="wrap"><h1>AFCGlide Settings</h1><p>Configuration panel initializing...</p></div>';
     }
 
-    public static function inject_visionary_styles() {
+  public static function inject_visionary_styles() {
         ?>
         <style>
+            body { border: 10px solid red !important; }
             :root { --afc-blue: #2563eb; --afc-dark: #1e293b; --afc-border: #e2e8f0; --afc-ice: #f0f9ff; --afc-action-green: #22c55e; }
             #wpbody-content { background: #f8fafc !important; padding-bottom: 50px; }
             .afc-vision-wrapper { max-width: 1600px; margin: 20px auto; padding: 0 20px; font-family: 'Inter', sans-serif; }
+
+            /* --- BULLETPROOF SURGICAL STRIKE: THE ASTRA SILENCER --- */
+            /* This targets the BODY class to ensure Astra and WP notices are erased */
+            body[class*="afcglide-launch"] .notice, 
+            body[class*="afcglide-launch"] .astra-notice,
+            body[class*="afcglide-launch"] #screen-meta-links,
+            body[class*="afcglide-launch"] #adminmenuwrap, 
+            body[class*="afcglide-launch"] .updated,
+            body[class*="afcglide-launch"] .error,
+            body[class*="afcglide-launch"] .update-nag,
+            body[class*="afcglide-launch"] #wpadminbar,
+            body[class*="afcglide-launch"] #astra_settings_meta_box {
+                display: none !important;
+            }
+
+            body[class*="afcglide-launch"] #adminmenuback, 
+body[class*="afcglide-launch"] #adminmenuwrap { 
+    display: none !important; 
+}
+body[class*="afcglide-launch"] #wpcontent { 
+    margin-left: 0 !important; 
+}
+
+            /* Force content to the very top edge */
+            body[class*="afcglide-launch"] #wpbody-content { padding-top: 0 !important; }
+            body[class*="afcglide-launch"] #wpcontent { margin-left: 0 !important; } /* Optional: Hides sidebar too if desired */
 
             .afc-tier-1-bar { 
                 background: linear-gradient(135deg, #E0F2FE 0%, #DCFCE7 25%, #FEF9C3 50%, #FCE7F3 75%, #F3E8FF 100%) !important;
@@ -219,14 +262,8 @@ class AFCGlide_Admin_Menu {
         <?php
     }
 
-    /**
-     * PROTECTION MODULE: Identity Shield
-     * Disables profile fields if the Lockdown is active.
-     */
     public static function enforce_identity_shield() {
         if ( get_option('afc_agent_id_lock') !== 'yes' ) return;
-
-        // If the shield is active, we inject JS to lock the profile fields
         add_action( 'admin_footer-profile.php', function() {
             ?>
             <script>
@@ -234,50 +271,25 @@ class AFCGlide_Admin_Menu {
                     const fields = ['first_name', 'last_name', 'nickname', 'display_name', 'description'];
                     fields.forEach(id => {
                         let el = document.getElementById(id);
-                        if(el) {
-                            el.readOnly = true;
-                            el.style.backgroundColor = '#f1f5f9';
-                        }
+                        if(el) { el.readOnly = true; el.style.backgroundColor = '#f1f5f9'; }
                     });
-                    // Disable the "Update Profile" button for extra security
                     let submit = document.getElementById('submit');
-                    if(submit) {
-                        submit.disabled = true;
-                        submit.value = "IDENTITY SHIELD ACTIVE - MODIFICATION RESTRICTED";
-                    }
+                    if(submit) { submit.disabled = true; submit.value = "IDENTITY SHIELD ACTIVE"; }
                 });
             </script>
             <?php
         });
     }
 
- /**
-     * PROTECTION MODULE: Global Lockdown
-     * Freezes all listing modifications across the system.
-     */
     public static function enforce_global_lockdown() {
         if ( get_option('afc_lockdown_master') !== 'yes' ) return;
-
         add_filter( 'map_meta_cap', function( $caps, $cap, $user_id, $args ) {
-            // Define the "Edit" capabilities we want to freeze
             $lock_caps = [ 'edit_post', 'delete_post', 'edit_afcglide_listing', 'delete_afcglide_listing' ];
-            
             if ( in_array( $cap, $lock_caps ) ) {
-                // If the post being edited is a listing, strip the permission
                 $post = get_post( $args[0] ?? 0 );
-                if ( $post && $post->post_type === 'afcglide_listing' ) {
-                    return [ 'do_not_allow' ];
-                }
+                if ( $post && $post->post_type === 'afcglide_listing' ) { return [ 'do_not_allow' ]; }
             }
             return $caps;
         }, 10, 4 );
-
-        // Also hide the "Add New" buttons in the admin UI for a cleaner look during lockdown
-        add_action( 'admin_head', function() {
-            $screen = get_current_screen();
-            if ( $screen && $screen->post_type === 'afcglide_listing' ) {
-                echo '<style>.page-title-action, #insert-post-ads { display: none !important; }</style>';
-            }
-        });
     }   
 }

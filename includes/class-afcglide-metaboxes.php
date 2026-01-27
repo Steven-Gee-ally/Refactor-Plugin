@@ -18,6 +18,20 @@ class AFCGlide_Metaboxes {
         add_action( 'add_meta_boxes', [ __CLASS__, 'add_metaboxes' ] );
         add_action( 'save_post', [ __CLASS__, 'save_metaboxes' ], 10, 2 );
         add_action( 'admin_notices', [ __CLASS__, 'render_admin_notices' ] );
+        add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_admin_assets' ] );
+    }
+
+    /**
+     * Enqueue Admin Assets
+     */
+    public static function enqueue_admin_assets( $hook ) {
+        global $post;
+        if ( $hook !== 'post-new.php' && $hook !== 'post.php' ) return;
+        if ( get_post_type( $post ) !== C::POST_TYPE ) return;
+
+        wp_enqueue_media();
+        wp_enqueue_style( 'afc-admin-ui', plugin_dir_url(__FILE__) . 'css/afc-admin.css', [], '4.1.0-fix' );
+        wp_enqueue_script( 'afc-metaboxes-js', plugin_dir_url(__FILE__) . 'js/afc-metaboxes.js', ['jquery', 'jquery-ui-sortable'], '4.1.0-fix', true );
     }
 
     /**
@@ -62,11 +76,11 @@ class AFCGlide_Metaboxes {
             // 8. Agent Branding
             add_meta_box( 'afc_agent', '👤 8. Agent Branding', [ __CLASS__, 'render_agent_metabox' ], $screen, 'normal', 'high' );
             
-            // 10. Intelligence & Files
-            add_meta_box( 'afc_intelligence', '📊 10. Asset Intelligence & Files', [ __CLASS__, 'render_intelligence_metabox' ], $screen, 'normal', 'high' );
+            // 9. Intelligence & Files (Renumbered from 10)
+            add_meta_box( 'afc_intelligence', '📊 9. Asset Intelligence & Files', [ __CLASS__, 'render_intelligence_metabox' ], $screen, 'normal', 'high' );
 
-            // 9. Publish Listing
-            add_meta_box( 'afc_publish_box', '🚀 11. Publish Listing Control', [ __CLASS__, 'render_publish_metabox' ], $screen, 'normal', 'high' );
+            // 10. Global Broadcast Control (Renumbered from 11)
+            add_meta_box( 'afc_publish_box', '🚀 10. Global Broadcast Control', [ __CLASS__, 'render_publish_metabox' ], $screen, 'side', 'high' );
         }
     }
 
@@ -342,37 +356,39 @@ class AFCGlide_Metaboxes {
         $pdf_name = $pdf_id ? basename( get_attached_file( $pdf_id ) ) : 'No document attached';
         ?>
         <div class="afc-metabox-content">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
-                <!-- Column 1: Document Upload -->
-                <div class="afc-field">
-                    <label class="afc-label">📄 Property Fact Sheet (PDF)</label>
-                    <div style="display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
-                        <input type="hidden" name="_listing_pdf_id" id="afc_pdf_id" value="<?php echo esc_attr( $pdf_id ); ?>">
-                        <div style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: #64748b;">
-                            <strong id="pdf-filename"><?php echo esc_html( $pdf_name ); ?></strong>
-                        </div>
-                        <button type="button" class="button afc-pdf-upload-btn">Upload / Change</button>
+            
+            <!-- Document Upload -->
+            <div class="afc-field">
+                <label class="afc-label">📄 Asset Brochure / Floorplan (PDF)</label>
+                <div style="display: flex; align-items: center; gap: 15px; background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <!-- Fixed ID to match JS -->
+                    <input type="hidden" name="_listing_pdf_id" id="_listing_pdf_id" value="<?php echo esc_attr( $pdf_id ); ?>">
+                    <div style="flex: 1;">
+                        <span id="pdf-filename" style="font-weight:700; color:#1e293b; display:block; margin-bottom:4px;"><?php echo esc_html( $pdf_name ); ?></span>
+                        <span id="pdf-status" style="font-size:11px; color:#64748b;"><?php echo $pdf_id ? "ID: $pdf_id" : "Ready to upload"; ?></span>
                     </div>
-                    <p class="afc-help-text">Attach a floorplan or luxury brochure for buyers.</p>
-                </div>
-
-                <!-- Column 2: Showing Schedule -->
-                <div class="afc-field">
-                    <label class="afc-label">🗓️ Showing / Open House Schedule</label>
-                    <input type="text" name="_listing_showing_schedule" value="<?php echo esc_attr( $showing ); ?>" class="afc-input" placeholder="e.g. Sunday 2 PM - 4 PM">
-                    <p class="afc-help-text">Subtle note for buyers (City or Country friendly).</p>
+                    <button type="button" class="button afc-pdf-upload-btn">Select PDF</button>
                 </div>
             </div>
 
-            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between;">
+            <!-- Showing Schedule -->
+            <div class="afc-field">
+                <label class="afc-label">🗓️ Private Showing / Open House Schedule</label>
+                <textarea name="_listing_showing_schedule" class="afc-input" rows="3" placeholder="e.g. Sunday 2 PM - 4 PM"><?php echo esc_textarea( $showing ); ?></textarea>
+                <p class="afc-help-text">Visible to agents and logged-in users only.</p>
+            </div>
+
+            <!-- Stats -->
+            <div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #f1f5f9;">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <span style="font-size: 20px;">📈</span>
+                    <span style="font-size: 18px;">📈</span>
                     <div>
-                        <span style="display: block; font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Real-Time Interest Pulse</span>
-                        <strong style="font-size: 14px; color: #1e293b;"><?php echo number_format($stats); ?> Unique Network Hits</strong>
+                        <span style="font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Asset Views</span>
+                        <strong style="font-size: 16px; color: #10b981; display:block;"><?php echo number_format($stats); ?></strong>
                     </div>
                 </div>
             </div>
+
         </div>
         <?php
     }
@@ -401,7 +417,7 @@ class AFCGlide_Metaboxes {
             </div>
 
             <div class="afc-publish-section" style="border-top: 1px solid #eee; padding-top: 25px;">
-                <button type="submit" name="publish" id="publish" class="button button-primary button-large afc-publish-btn" style="height: 60px !important; font-size: 16px !important; width: 100%;">
+                <button type="submit" name="publish" id="publish" class="button button-primary button-large afc-publish-btn" style="height: 60px !important; font-size: 16px !important; width: 100%; background: #bad6bd !important; color: #000000 !important; border: 1px solid #4ade80 !important; font-weight: 800;">
                     🚀 BROADCAST GLOBAL UPDATES
                 </button>
                 <p style="text-align: center; font-size: 11px; color: #94a3b8; margin-top: 15px; font-weight: 700;">

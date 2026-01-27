@@ -1,194 +1,176 @@
 <?php
 /**
- * AFCGlide Listings v3 - High-End Asset Template (Option 2)
- * Full Integration: Hero Display, Specs Bar, Amenities Grid, and Sticky Sidebar.
+ * AFCGlide Single Listing - Premium Bilingual Edition
+ * Version 5.2 - "The Costa Rica Master"
+ * Design by USA / Logic by AFCGlide
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
+use AFCGlide\Core\Constants as C;
+
 get_header();
 
-// 1. DATA HARVESTING (Updated to match Metabox v4.4.2)
-$post_id  = get_the_ID();
-$price    = get_post_meta($post_id, '_listing_price', true);
-$address  = get_post_meta($post_id, '_listing_address', true);
-$hero_id  = get_post_meta($post_id, '_hero_image_id', true);
-$wa_brand_color = get_option('afc_whatsapp_color', '#25D366'); // Pulls from your new Settings page
+// 1. DATA HARVESTING
+$post_id = get_the_ID();
+$price   = C::get_meta($post_id, C::META_PRICE);
+$address = C::get_meta($post_id, C::META_ADDRESS);
+$beds    = C::get_meta($post_id, C::META_BEDS);
+$baths   = C::get_meta($post_id, C::META_BATHS);
+$sqft    = C::get_meta($post_id, C::META_SQFT);
+$hero_id = C::get_meta($post_id, C::META_HERO_ID);
+$gallery_ids = C::get_meta($post_id, C::META_GALLERY_IDS) ?: [];
 
-// MATCHING YOUR METABOX KEYS EXACTLY:
-$beds     = get_post_meta($post_id, '_listing_beds', true); 
-$baths    = get_post_meta($post_id, '_listing_baths', true); 
-$sqft     = get_post_meta($post_id, '_listing_sqft', true);
+// Agent & UI Config
+$agent_name  = C::get_meta($post_id, C::META_AGENT_NAME);
+$agent_phone = C::get_meta($post_id, C::META_AGENT_PHONE);
+$agent_photo = C::get_meta($post_id, C::META_AGENT_PHOTO);
+$agent_img   = $agent_photo ? wp_get_attachment_image_url($agent_photo, 'thumbnail') : AFCG_URL . 'assets/images/placeholder-agent.png';
+$wa_color    = get_option('afc_whatsapp_color', '#25D366');
+$clean_phone = preg_replace('/[^0-9]/', '', $agent_phone);
 
-// GALLERY (Using your "Shutter-Bug" Slider data)
-$gallery  = get_post_meta($post_id, '_listing_gallery_ids', true) ?: [];
+// 2. BILINGUAL CONTENT SYNC
+$intro     = C::get_meta($post_id, C::META_INTRO);
+$narrative = C::get_meta($post_id, C::META_NARRATIVE);
 
-// AMENITIES (Matches your Section 6)
-$amenities = get_post_meta($post_id, '_listing_amenities', true);
+// Check if TranslatePress or similar is asking for Spanish
+if ( function_exists('afcglide_get_current_lang') && afcglide_get_current_lang() === 'es' ) {
+    $intro_es = C::get_meta($post_id, C::META_INTRO_ES);
+    $narrative_es = C::get_meta($post_id, C::META_NARRATIVE_ES);
+    
+    if (!empty($intro_es)) $intro = $intro_es;
+    if (!empty($narrative_es)) $narrative = $narrative_es;
+}
 
-// INTELLIGENCE & FILES
-$showing   = get_post_meta($post_id, '_listing_showing_schedule', true);
-$pdf_id    = get_post_meta($post_id, '_listing_pdf_id', true);
-$pdf_url   = $pdf_id ? wp_get_attachment_url($pdf_id) : '';
+// 3. MAP / GPS LOGIC
+$lat = C::get_meta($post_id, C::META_GPS_LAT);
+$lng = C::get_meta($post_id, C::META_GPS_LNG);
 
-// AGENT DATA (Matches your Section 1)
-$a_name   = get_post_meta($post_id, '_agent_name_display', true);
-$a_phone  = get_post_meta($post_id, '_agent_phone_display', true);
-$a_photo  = get_post_meta($post_id, '_agent_photo_id', true);
-$a_img    = $a_photo ? wp_get_attachment_url($a_photo) : AFCG_URL . 'assets/images/placeholder-agent.png';
-
-// CLEAN PHONE FOR LINKS (Strips () - and spaces)
-$clean_phone = preg_replace('/[^0-9]/', '', $a_phone);
+// Build Gallery
+$all_images = [];
+if ($hero_id) {
+    $all_images[] = [
+        'url'   => wp_get_attachment_image_url($hero_id, 'full'),
+        'thumb' => wp_get_attachment_image_url($hero_id, 'medium')
+    ];
+}
+foreach ($gallery_ids as $img_id) {
+    $all_images[] = [
+        'url'   => wp_get_attachment_image_url($img_id, 'full'),
+        'thumb' => wp_get_attachment_image_url($img_id, 'medium')
+    ];
+}
 ?>
 
-<div class="afcglide-listing-container">
+<div class="afcglide-wrapper">
     
-    <section class="afc-hero-gallery-section">
-        <div class="afc-hero-main-display">
-            <div class="afc-main-image-container">
-                <?php if($hero_id): 
-                    echo wp_get_attachment_image($hero_id, 'full', false, ['class' => 'afc-hero-image']); 
-                else: ?>
-                    <div class="afc-hero-placeholder"><span class="afc-placeholder-icon">🏙️</span></div>
-                <?php endif; ?>
-                
-                <div class="afc-price-badge-overlay">
-                    <span class="afc-price-amount"><?php echo $price ? '$' . number_format($price) : 'Contact for Price'; ?></span>
-                </div>
-
-                <div class="afc-photo-counter">
-                    <span class="afc-camera-icon">📷</span> <?php echo count($gallery) + 1; ?> Photos
-                </div>
-            </div>
-        </div>
-
-        <div class="afc-thumbnail-grid">
-            <?php 
-            $thumbs = array_slice($gallery, 0, 4);
-            foreach($thumbs as $index => $id): 
-                $is_last = ($index === 3 && count($gallery) > 4);
-            ?>
-                <div class="afc-thumb-item">
-                    <?php echo wp_get_attachment_image($id, 'medium_large', false, ['class' => 'afc-thumb-image']); ?>
-                    <?php if($is_last): ?>
-                        <div class="afc-view-all-overlay">+<?php echo count($gallery) - 3; ?></div>
-                    <?php endif; ?>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    </section>
-
-    <div class="afc-content-wrapper">
-        <main class="afc-main-content">
-            <div class="afc-title-section">
-                <h1 class="afc-property-title"><?php the_title(); ?></h1>
-                <p class="afc-property-address">📍 <?php echo esc_html($address); ?></p>
-            </div>
-
-            <div class="afc-specs-bar-modern">
-                <div class="afc-spec-item">
-                    <span class="afc-spec-icon">🛏️</span>
-                    <div class="afc-spec-text">
-                        <strong><?php echo esc_html($beds); ?></strong>
-                        <small>Beds</small>
-                    </div>
-                </div>
-                <div class="afc-spec-item">
-                    <span class="afc-spec-icon">🛁</span>
-                    <div class="afc-spec-text">
-                        <strong><?php echo esc_html($baths); ?></strong>
-                        <small>Baths</small>
-                    </div>
-                </div>
-                <div class="afc-spec-item">
-                    <span class="afc-spec-icon">📐</span>
-                    <div class="afc-spec-text">
-                        <strong><?php echo number_format($sqft); ?></strong>
-                        <small>Sq Ft</small>
-                    </div>
-                </div>
-            </div>
-
-            <?php if ( ! empty( $showing ) ) : ?>
-            <div class="afc-showing-alert" style="background: #fff8e1; border-left: 5px solid #ffc107; padding: 15px 20px; border-radius: 12px; margin-bottom: 30px; display: flex; align-items: center; gap: 15px;">
-                <span style="font-size: 24px;">🗓️</span>
-                <div>
-                    <strong style="display: block; font-size: 11px; text-transform: uppercase; color: #b58500; letter-spacing: 1px;">Upcoming Showing Schedule</strong>
-                    <span style="font-size: 15px; font-weight: 700; color: #000;"><?php echo esc_html( $showing ); ?></span>
-                </div>
+    <!-- CINEMATIC HERO STAGE -->
+    <div class="afc-cinematic-stage">
+        <div class="afcglide-hero-main">
+            <img id="afc-main-view" src="<?php echo esc_url($all_images[0]['url'] ?? ''); ?>" alt="<?php the_title_attribute(); ?>">
+            
+            <?php if ( $price ): ?>
+            <div class="afcglide-price-badge">
+                $<?php echo number_format($price); ?>
             </div>
             <?php endif; ?>
+        </div>
 
-            <div class="afc-description-section">
-                <h2 class="afc-section-heading">Property Narrative</h2>
-                <div class="afc-description-content">
-                    <?php the_content(); ?>
+        <!-- 4-UP FILMSTRIP -->
+        <div class="afc-filmstrip-wrapper">
+            <div class="afc-filmstrip-container" id="afc-filmstrip">
+                <?php foreach ($all_images as $idx => $img): ?>
+                    <div class="afc-filmstrip-item" onclick="afcUpdateMainView(this, '<?php echo esc_url($img['url']); ?>')">
+                        <img src="<?php echo esc_url($img['thumb']); ?>" alt="Gallery image <?php echo $idx + 1; ?>">
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN GRID LAYOUT -->
+    <div class="afc-listing-grid">
+        
+        <!-- LEFT COLUMN: SPECS & CONTENT -->
+        <main class="afc-main-content">
+            
+            <h1 class="entry-title" style="font-size: 42px; font-weight: 900; margin-bottom: 10px;"><?php the_title(); ?></h1>
+            <p style="color: var(--afc-gray); font-size: 18px; margin-bottom: 30px;"><?php echo esc_html($address); ?></p>
+
+            <div class="afcglide-specs-bar">
+                <div class="afcglide-spec-item">
+                    <label>BEDROOMS</label>
+                    <strong><?php echo esc_html($beds); ?></strong>
+                </div>
+                <div class="afcglide-spec-item">
+                    <label>BATHROOMS</label>
+                    <strong><?php echo esc_html($baths); ?></strong>
+                </div>
+                <div class="afcglide-spec-item">
+                    <label>SQUARE FEET</label>
+                    <strong><?php echo number_format((float)$sqft); ?></strong>
                 </div>
             </div>
 
-            <?php if ( ! empty( $amenities ) && is_array( $amenities ) ) : ?>
-            <div class="afc-amenities-section">
-                <h2 class="afc-section-heading">Premium Amenities</h2>
-                <div class="afc-amenities-grid-modern">
-                    <?php 
-                    $amenity_icons = [
-                        'Gourmet Kitchen' => '🍳', 'Infinity Pool' => '🌊', 'Ocean View' => '🌅', 'Wine Cellar' => '🍷',
-                        'Private Gym' => '🏋️', 'Smart Home Tech' => '📱', 'Outdoor Cinema' => '🎬', 'Helipad Access' => '🚁',
-                        'Gated Community' => '🏰', 'Guest House' => '🏠', 'Solar Power' => '☀️', 'Beach Front' => '🏖️',
-                        'Spa / Sauna' => '🧖', '3+ Car Garage' => '🚗', 'Luxury Fire Pit' => '🔥', 'Concierge Service' => '🛎️',
-                        'Walk-in Closet' => '👗', 'High Ceilings' => '⤴️', 'Staff Quarters' => '👨‍💼', 'Backup Generator' => '⚡'
-                    ];
-                    foreach ( $amenities as $amenity ) : 
-                        $display_icon = isset($amenity_icons[$amenity]) ? $amenity_icons[$amenity] : '💎';
-                    ?>
-                        <div class="afc-amenity-item">
-                            <span class="afc-amenity-icon"><?php echo $display_icon; ?></span>
-                            <?php echo esc_html( $amenity ); ?>
-                        </div>
-                    <?php endforeach; ?>
+            <div class="afc-description">
+                <h3 style="font-size: 24px; font-weight: 800; margin-bottom: 20px;">Property Narrative</h3>
+                <div class="afc-narrative-content">
+                    <p style="font-size: 18px; color: #475569; margin-bottom: 30px; line-height: 1.8;"><?php echo esc_html($intro); ?></p>
+                    <?php echo wpautop(wp_kses_post($narrative)); ?>
                 </div>
+            </div>
+
+            <?php if($lat && $lng): ?>
+            <div class="afc-map-block" style="margin-top: 60px;">
+                <h3 style="font-size: 24px; font-weight: 800; margin-bottom: 20px;">Asset Location</h3>
+                <iframe 
+                    frameborder="0" 
+                    src="https://maps.google.com/maps?q=<?php echo esc_attr($lat); ?>,<?php echo esc_attr($lng); ?>&z=15&output=embed"
+                    style="width: 100%; height: 450px; border-radius: var(--afc-radius); filter: grayscale(0.1); border: 1px solid var(--afc-border);">
+                </iframe>
             </div>
             <?php endif; ?>
 
         </main>
 
-        <aside class="afc-sidebar-modern">
-            <div class="afc-agent-card-luxury">
-                <div class="afc-agent-header">
-                    <div class="afc-agent-avatar"><img src="<?php echo $a_img; ?>" class="afc-agent-photo"></div>
-                    <div class="afc-agent-info">
-                        <h4 class="afc-agent-name"><?php echo esc_html($a_name); ?></h4>
-                        <p class="afc-agent-title">Listing Specialist</p>
-                    </div>
+        <!-- RIGHT COLUMN: STICKY AGENT CARD -->
+        <aside>
+            <div class="afcglide-agent-card">
+                <div class="afc-agent-photo-wrap">
+                    <img src="<?php echo esc_url($agent_img); ?>" alt="<?php echo esc_attr($agent_name); ?>">
                 </div>
-                <div class="afc-agent-actions">
-                    <a href="tel:<?php echo $clean_phone; ?>" class="afc-btn-email">📞 Call Agent</a>
-                    <a href="https://wa.me/<?php echo $clean_phone; ?>" class="afc-btn-whatsapp">💬 WhatsApp</a>
-                </div>
-            </div>
-
-            <?php if ( $pdf_url ) : ?>
-            <div class="afc-asset-files" style="margin-top: 20px;">
-                <a href="<?php echo esc_url( $pdf_url ); ?>" target="_blank" class="afc-btn-download" style="display: flex; align-items: center; justify-content: center; gap: 10px; background: #0f172a; color: white; padding: 18px; border-radius: 12px; text-decoration: none; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; width: 100%; box-sizing: border-box;">
-                    <span>📄 Download Property Fact Sheet</span>
+                
+                <h3 style="margin: 0 0 5px 0; font-size: 22px; font-weight: 800;"><?php echo esc_html($agent_name); ?></h3>
+                <p style="margin: 0 0 25px 0; color: var(--afc-gray); font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700;">Listing Agent</p>
+                
+                <a href="https://wa.me/<?php echo esc_attr($clean_phone); ?>" class="afc-btn-primary" style="background-color: <?php echo esc_attr($wa_color); ?>;">
+                    WhatsApp Enquiry
+                </a>
+                
+                <a href="tel:<?php echo esc_attr($clean_phone); ?>" style="display: block; text-align: center; color: var(--afc-gray); margin-top: 20px; text-decoration: none; font-weight: 600; font-size: 14px;">
+                   Direct: <?php echo esc_html($agent_phone); ?>
                 </a>
             </div>
-            <?php endif; ?>
         </aside>
+
     </div>
 </div>
 
-<?php 
-$show_wa = get_post_meta(get_the_ID(), '_show_floating_whatsapp', true);
-
-if ( $show_wa === '1' && !empty($clean_phone) ) : 
-?>
-
-
-<a href="https://wa.me/<?php echo $clean_phone; ?>" class="afc-whatsapp-float" target="_blank" rel="nofollow">
-    <svg viewBox="0 0 32 32" class="afc-wa-icon"><path d="M16 0c-8.837 0-16 7.163-16 16 0 2.825.737 5.588 2.137 8.137l-2.137 7.863 8.1-.2.1.2c2.487 1.463 5.112 2.112 7.9 2.112 8.837 0 16-7.163 16-16s-7.163-16-16-16zm8.287 21.825c-.337.95-1.712 1.838-2.737 2.05-.688.138-1.588.25-4.6-1.013-3.862-1.612-6.362-5.538-6.55-5.8-.188-.262-1.525-2.025-1.525-3.862 0-1.838.963-2.738 1.3-3.113.337-.375.75-.463 1-.463s.5 0 .712.013c.225.013.525-.088.825.638.3.713 1.013 2.475 1.1 2.663.088.188.15.413.025.663-.125.263-.188.425-.375.65-.188.225-.412.513-.587.688-.2.2-.412.412-.175.812.238.4.1.863 2.087 2.625 1.637 1.45 3.012 1.9 3.437 2.113.425.213.675.175.925-.113.25-.288 1.075-1.25 1.362-1.688.3-.425.588-.363.988-.212.4.15 2.525 1.188 2.962 1.4.438.213.738.313.838.488.1.175.1.988-.237 1.938z" fill="currentColor"/></svg>
-    <span class="afc-wa-tooltip">Chat with Agent</span>
-</a>
-<?php endif; ?>
+<script>
+(function() {
+    window.afcUpdateMainView = function(el, url) {
+        var mainImg = document.getElementById('afc-main-view');
+        mainImg.style.opacity = '0';
+        setTimeout(function() {
+            mainImg.src = url;
+            mainImg.style.opacity = '1';
+        }, 300);
+        
+        // Update active class on thumbnails if needed (though not strictly required with current CSS)
+        // document.querySelectorAll('.afc-filmstrip-item').forEach(t => t.classList.remove('active'));
+        // el.classList.add('active'); 
+    };
+})();
+</script>
 
 <?php get_footer(); ?>

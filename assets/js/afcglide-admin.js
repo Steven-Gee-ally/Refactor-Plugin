@@ -65,12 +65,11 @@ jQuery(document).ready(function ($) {
         frame.open();
     });
 
-    // ==========================================
-    // 2.2 PDF UPLOAD (Asset Intelligence)
+   // ==========================================
+    // 2.2 PDF UPLOAD (Asset Intelligence - Fixed IDs)
     // ==========================================
     $(document).on('click', '.afc-pdf-upload-btn', function (e) {
         e.preventDefault();
-
         const frame = wp.media({
             title: 'Select Property Fact Sheet (PDF)',
             multiple: false,
@@ -79,152 +78,84 @@ jQuery(document).ready(function ($) {
 
         frame.on('select', function () {
             const attachment = frame.state().get('selection').first().toJSON();
-            if (attachment.mime !== 'application/pdf') {
-                alert('⚠️ INVALID FILE TYPE\nPlease upload a PDF document.');
-                return;
-            }
-            $('#afc_pdf_id').val(attachment.id);
-            $('#pdf-filename').text(attachment.filename);
+            // Sync with PHP field name: _listing_pdf_id
+            $('input[name="_listing_pdf_id"]').val(attachment.id); 
+            $('#pdf-filename').text('Attached: ' + attachment.filename).css('color', '#10b981');
             formChanged = true;
         });
-
         frame.open();
     });
 
     // ==========================================
-    // 3. HERO IMAGE UPLOAD (Single Select)
+    // 3 & 4. UNIFIED COMMAND CENTER UPLOAD
     // ==========================================
-    $(document).on('click', '.afc-upload-zone[data-type="hero"] .afc-upload-btn', function (e) {
+    $(document).on('click', '.afc-upload-btn', function (e) {
         e.preventDefault();
-
-        const $zone = $(this).closest('.afc-upload-zone');
+        const $btn = $(this);
+        const $zone = $btn.closest('.afc-upload-zone');
+        const type = $zone.data('type'); // 'hero', 'gallery', or 'stack'
         const $input = $zone.find('input[type="hidden"]');
         const $preview = $zone.find('.afc-preview-grid');
 
         const frame = wp.media({
-            title: 'Select Hero Image',
-            multiple: false,
-            library: { type: 'image' }
-        });
-
-        frame.on('select', function () {
-            const attachment = frame.state().get('selection').first().toJSON();
-
-            // Validate dimensions
-            if (attachment.width < 1200) {
-                alert('⚠️ IMAGE TOO SMALL\n\nLuxury listings require 1200px width minimum.\n\nCurrently detected: ' + attachment.width + 'px');
-                return;
-            }
-
-            // Update hidden field
-            $input.val(attachment.id);
-
-            // Update preview
-            $preview.html(
-                '<div class="afc-preview-item" data-id="' + attachment.id + '">' +
-                '<img src="' + attachment.url + '" alt="">' +
-                '<span class="afc-remove-img">×</span>' +
-                '</div>'
-            );
-
-            formChanged = true;
-        });
-
-        frame.open();
-    });
-
-    // ==========================================
-    // 4. STACK & GALLERY UPLOAD (Multi-Select)
-    // ==========================================
-    $(document).on('click', '.afc-upload-zone[data-type="stack"] .afc-upload-btn, .afc-upload-zone[data-type="gallery"] .afc-upload-btn', function (e) {
-        e.preventDefault();
-
-        const $zone = $(this).closest('.afc-upload-zone');
-        const type = $zone.data('type');
-        const limit = parseInt($zone.data('limit'));
-        const $input = $zone.find('input[type="hidden"]');
-        const $preview = $zone.find('.afc-preview-grid');
-
-        // Get current IDs
-        let currentIds = $input.val() ? $input.val().split(',').filter(Boolean) : [];
-
-        const frame = wp.media({
-            title: type === 'stack' ? 'Select Stack Images (Max ' + limit + ')' : 'Select Gallery Images (Max ' + limit + ')',
-            multiple: true,
+            title: 'Select Asset Media',
+            multiple: (type !== 'hero'),
             library: { type: 'image' }
         });
 
         frame.on('select', function () {
             const selection = frame.state().get('selection');
+            let currentIds = $input.val() ? $input.val().split(',').filter(Boolean) : [];
 
-            selection.each(function (attachment) {
-                attachment = attachment.toJSON();
-
-                // Check limit
-                if (currentIds.length >= limit) {
-                    console.log('Limit reached for ' + type);
-                    return false;
-                }
-
-                // Check if already added
-                if (currentIds.includes(attachment.id.toString())) {
-                    return; // Skip duplicates
-                }
-
-                // Validate dimensions
-                if (attachment.width < 1200) {
-                    console.log('Skipped small image: ' + attachment.filename + ' (' + attachment.width + 'px)');
-                    return;
-                }
-
-                // Add to array
-                currentIds.push(attachment.id);
-
-                // Add to preview
-                $preview.append(
-                    '<div class="afc-preview-item" data-id="' + attachment.id + '">' +
-                    '<img src="' + attachment.url + '" alt="">' +
-                    '<span class="afc-remove-img">×</span>' +
-                    '</div>'
-                );
-            });
-
-            // Update hidden field
-            $input.val(currentIds.join(','));
-
-            // Reinitialize sortable for new items
+            if (type === 'hero') {
+                const attachment = selection.first().toJSON();
+                $input.val(attachment.id);
+                $preview.html(`
+                    <div class="afc-preview-item" data-id="${attachment.id}">
+                        <img src="${attachment.url}">
+                        <span class="afc-remove-img">×</span>
+                    </div>
+                `);
+            } else {
+                // Batch Gallery Logic
+                selection.map(function(attachment) {
+                    attachment = attachment.toJSON();
+                    if (!currentIds.includes(attachment.id.toString())) {
+                        currentIds.push(attachment.id);
+                        $preview.append(`
+                            <div class="afc-preview-item" data-id="${attachment.id}">
+                                <img src="${attachment.url}">
+                                <span class="afc-remove-img">×</span>
+                            </div>
+                        `);
+                    }
+                });
+                $input.val(currentIds.join(','));
+            }
             initSortable();
-
             formChanged = true;
         });
-
         frame.open();
     });
 
     // ==========================================
-    // 5. REMOVE IMAGE
+    // 5. REMOVE IMAGE (Unified Logic)
     // ==========================================
     $(document).on('click', '.afc-remove-img', function (e) {
-        e.preventDefault();
-
         const $item = $(this).closest('.afc-preview-item');
         const $zone = $item.closest('.afc-upload-zone');
         const $input = $zone.find('input[type="hidden"]');
-        const imageId = $item.data('id').toString();
-
-        // Remove from hidden field
-        let ids = $input.val().split(',').filter(Boolean);
-        ids = ids.filter(id => id !== imageId);
-        $input.val(ids.join(','));
-
-        // Remove from DOM
-        $item.fadeOut(300, function () {
+        
+        $item.fadeOut(200, function() {
             $(this).remove();
+            // Recalculate remaining IDs
+            const remainingIds = $zone.find('.afc-preview-item').map(function() {
+                return $(this).data('id');
+            }).get();
+            $input.val(remainingIds.join(','));
         });
-
         formChanged = true;
     });
-
     // ==========================================
     // 6. AGENT AUTO-FILL
     // ==========================================

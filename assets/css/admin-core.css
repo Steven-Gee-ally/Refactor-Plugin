@@ -1,0 +1,377 @@
+/*
+AFCGlide Admin Styles
+Version 4.0 - Production Ready
+Clean, professional admin interface
+*/
+
+
+
+/* ==========================================
+
+1. HIDE WORDPRESS DEFAULT CLUTTER (FIXED)
+
+========================================== */
+
+
+
+/* Hide standard editor and clutter */
+
+.post-type-afcglide_listing #postdivrich,
+
+.post-type-afcglide_listing #postdiv,
+
+.post-type-afcglide_listing #wp-content-media-buttons,
+
+.post-type-afcglide_listing #authordiv,
+
+.post-type-afcglide_listing #postimagediv,
+
+.post-type-afcglide_listing #slugdiv,
+
+.post-type-afcglide_listing #titlewrap {
+
+display: none !important;
+
+}
+
+
+
+/* Hide ALL sidebar boxes EXCEPT our custom AFC Publish Box */
+
+.post-type-afcglide_listing #side-sortables .postbox:not(#afc_publish_box) {
+
+display: none !important;
+
+}
+
+
+
+/* Ensure the sidebar container is visible ONLY for our custom box */
+
+.post-type-afcglide_listing #post-body.columns-2 #postbox-container-1 {
+
+display: block !important;
+
+width: 300px !important;
+
+float: right;
+
+}
+
+
+
+.post-type-afcglide_listing #post-body.columns-2 #postbox-container-2 {
+
+width: calc(100% - 320px) !important;
+
+margin-right: 0 !important;
+
+float: left;
+
+}
+
+
+
+/* ==========================================
+
+2. TITLE AREA STYLING
+
+========================================== */
+
+
+
+/* Hide default WordPress title field completely */
+
+.post-type-afcglide_listing #titlewrap {
+
+display: none !important;
+
+}
+
+
+
+.post-type-afcglide_listing #titlediv {
+
+display: none !important;
+
+}
+
+
+
+/* Custom Title Banner (Yellow/Gold) */
+
+.afc-title-banner {
+
+background: linear-gradient(90deg, #fef3c7 0%, #fde68a 50%, #fbbf24 100%);
+
+padding: 15px 25px;
+
+border-radius: 12px;
+
+margin: 0 0 10px 0;
+
+display: flex;
+
+align-items: center;
+
+gap: 15px;
+
+box-shadow: 0 2px 8px rgba(251, 191, 36, 0.2);
+
+border: 1px solid rgba(255, 255, 255, 0.8);
+
+}
+
+
+
+.afc-title-banner .afc-banner-icon {
+
+font-size: 28px;
+
+line-height: 1;
+
+}
+
+
+
+.afc-title-banner .afc-banner-content h3 {
+
+margin: 0 0 3px 0;
+
+font-size: 15px;
+
+font-weight: 800;
+
+color: #78350f;
+
+letter-spacing: 0.3px;
+
+}
+
+
+
+.afc-title-banner .afc-banner-content p {
+
+margin: 0;
+
+font-size: 12px;
+
+color: #92400e;
+
+line-height: 1.4;
+
+}
+
+
+
+/* Custom Title Input Wrapper */
+
+.afc-title-input-wrapper {
+
+margin-bottom: 20px;
+
+}
+
+
+
+.afc-title-input {
+
+width: 100% !important;
+
+font-size: 20px !important;
+
+font-weight: 700 !important;
+
+padding: 14px 18px !important;
+
+border: 2px solid #e2e8f0 !important;
+
+border-radius: 10px !important;
+
+background: white !important;
+
+transition: all 0.2s;
+
+box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+
+}
+
+
+
+.afc-title-input:focus {
+
+background: white !important;
+
+border-color: #fbbf24 !important;
+
+box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1) !important;
+
+outline: none !important;
+
+}
+
+
+
+/* ==========================================
+
+3. DESCRIPTION BANNER (Rainbow)
+
+========================================== */
+
+
+
+.afc-description-banner {
+
+background: linear-gradient(90deg, #ff9a9e 0%, #fad0c4 25%, #a1c4fd 50%, #c2e9fb 75%, #d4fc79 100%);
+
+padding: 20px 30px;
+
+border-radius: 12px;
+
+margin: 20px 0;
+
+display: flex;
+
+align-items: center;
+
+gap: 20px;
+
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+border: 1px solid rgba(255, 255, 255, 0.8);
+
+}
+
+
+
+/* Unified Section Number Circle */
+
+.afc-section-number {
+
+width: 36px;
+
+height: 36px;
+
+background: transparent;
+
+color: #1e293b;
+
+border: 2px solid #1e293b;
+
+border-radius: 50%;
+
+display: flex;
+
+align-items: center;
+
+justify-content: center;
+
+font-size: 18px;
+
+font-weight: 900;
+
+flex-shrink: 0;
+
+box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+
+}
+
+
+
+.afc-banner-icon {
+
+font-size: 36px;
+
+line-height: 1;
+
+}
+
+
+
+.afc-banner-content {
+
+flex: 1;
+
+}
+
+
+
+.afc-banner-content h3 {
+
+margin: 0 0 5px 0;
+
+font-size: 18px;
+
+font-weight: 800;
+
+color: #1e293b;
+
+letter-spacing: 0.3px;
+
+}
+
+
+
+.afc-banner-content p {
+
+margin: 0;
+
+font-size: 13px;
+
+color: #475569;
+
+line-height: 1.5;
+
+}
+
+
+
+/* ==========================================
+
+4. DESCRIPTION WRAPPER
+
+========================================== */
+
+
+
+.afc-description-wrapper {
+    background: white;
+    padding: 25px;
+    border: 2px solid #e2e8f0 !important;
+    border-radius: 12px; /* keep the larger radius */
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+    overflow: hidden;
+}
+
+
+
+
+.afc-description-wrapper .wp-editor-area {
+
+padding: 15px !important;
+
+font-size: 14px !important;
+
+line-height: 1.6 !important;
+
+}
+
+/* VOGUE GREEN FOCUS LOGIC */
+.afc-description-wrapper {
+    transition: all 0.3s var(--afc-ease);
+}
+
+/* When the wrapper is focused or contains a focused editor */
+.afc-description-wrapper:focus-within {
+    border-color: #10b981 !important; /* Vogue Green */
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1); /* Soft Mint Glow */
+    transform: translateY(-2px); /* Subtle lift */
+}
+
+/* Sync the Section Number with the Green */
+.afc-description-banner:hover .afc-section-number {
+    background: #10b981;
+    color: white;
+    border-color: #10b981;
+}

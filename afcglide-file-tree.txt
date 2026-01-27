@@ -1,0 +1,59 @@
+.
+├── README.md
+├── afcglide-Refactor
+├── afcglide-file-tree.txt
+├── afcglide-master.php
+├── assets
+│   ├── css
+│   │   ├── admin-submission.css
+│   │   ├── afcglide-admin.css
+│   │   ├── afcglide-dashboard.css
+│   │   ├── afcglide-frontend-submission.css
+│   │   ├── afcglide-login.css
+│   │   ├── afcglide-shortcodes.css
+│   │   ├── afcglide-single-listing.css
+│   │   └── afcglide-styles.css
+│   ├── images
+│   │   ├── banner-772x250.png
+│   │   └── placeholder-listings.svg
+│   └── js
+│       ├── afcglide-admin.js
+│       ├── afcglide-public.js
+│       └── afcglide-submission.js
+├── docs
+│   └── AFCGlide_Manual.html
+├── includes
+│   ├── class-afcglide-admin-menu.php
+│   ├── class-afcglide-admin-ui.php
+│   ├── class-afcglide-agent-protection.php
+│   ├── class-afcglide-ajax-handler.php
+│   ├── class-afcglide-block-manager.php
+│   ├── class-afcglide-checker.php
+│   ├── class-afcglide-constants.php
+│   ├── class-afcglide-dashboard.php
+│   ├── class-afcglide-identity-shield.php
+│   ├── class-afcglide-inventory.php
+│   ├── class-afcglide-metaboxes.php
+│   ├── class-afcglide-public.php
+│   ├── class-afcglide-scoreboard.php
+│   ├── class-afcglide-settings.php
+│   ├── class-afcglide-shortcodes.php
+│   ├── class-afcglide-table.php
+│   ├── class-afcglide-templates.php
+│   ├── class-afcglide-user-profile.php
+│   ├── class-afcglide-welcome.php
+│   ├── class-cpt-tax.php
+│   ├── helpers
+│   │   ├── class-message-helper.php
+│   │   ├── class-sanitizer.php
+│   │   ├── class-upload-helper.php
+│   │   ├── class-validator.php
+│   │   └── helpers.php
+│   └── uninstall.php
+└── templates
+    ├── listing-card.php
+    ├── listing-grid-templates.php
+    ├── single-afcglide_listing.php
+    └── template-submit-listing.php
+
+9 directories, 48 files

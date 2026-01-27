@@ -1,0 +1,113 @@
+/* ==========================================
+AFCGlide Admin Media Styles
+Version 4.0 - Media & Command Center
+========================================== */
+
+/* 1. MEDIA UPLOAD ZONES & COMMAND CENTER */
+.afc-media-matrix {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    padding: 20px;
+}
+
+.afc-upload-zone {
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 12px;
+    border: 2px dashed #cbd5e1;
+    transition: all 0.3s;
+}
+
+.afc-upload-zone:hover {
+    border-color: #6366f1;
+    background: #f0f4ff;
+}
+
+.afc-zone-title {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+/* --- THE BRIDGE: COMMAND CENTER THUMBNAILS --- */
+.afc-preview-grid, .afc-grid-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+    margin-bottom: 15px;
+    min-height: 110px;
+}
+
+/* Unified Item Style for Gallery and Hero */
+.afc-thumb, .afc-preview-item {
+    position: relative;
+    aspect-ratio: 1/1;
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    overflow: hidden;
+    background: #fff;
+    cursor: grab;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.afc-thumb:active { cursor: grabbing; }
+
+.afc-thumb:hover {
+    border-color: #6366f1;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.afc-thumb img, .afc-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Professional Remove Button (The Red 'X') */
+.afc-remove-media, .afc-remove-img {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    opacity: 0; /* Hidden until hover */
+    transition: opacity 0.2s, background 0.2s;
+    z-index: 10;
+}
+
+.afc-thumb:hover .afc-remove-media,
+.afc-preview-item:hover .afc-remove-img {
+    opacity: 1;
+}
+
+.afc-remove-media:hover {
+    background: #dc2626;
+}
+
+/* Sortable Placeholder (The 'Ghost' box when dragging) */
+.afc-sortable-placeholder {
+    background: #f1f5f9;
+    border: 2px dashed #6366f1;
+    border-radius: 12px;
+    visibility: visible !important;
+}
+
+/* RESPONSIVE MEDIA GRID */
+@media (max-width: 1280px) {
+    .afc-media-matrix {
+        grid-template-columns: 1fr;
+    }
+}
