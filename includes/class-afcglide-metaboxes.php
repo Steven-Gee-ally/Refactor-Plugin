@@ -30,7 +30,7 @@ class AFCGlide_Metaboxes {
         if ( get_post_type( $post ) !== C::POST_TYPE ) return;
 
         wp_enqueue_media();
-        wp_enqueue_style( 'afc-admin-ui', plugin_dir_url(__FILE__) . 'css/afc-admin.css', [], '4.1.0-fix' );
+        wp_enqueue_style( 'afc-admin-ui', plugin_dir_url(__FILE__) . 'css/admin-submission.css', [], '4.5.0-final-sync' );
         wp_enqueue_script( 'afc-metaboxes-js', plugin_dir_url(__FILE__) . 'js/afc-metaboxes.js', ['jquery', 'jquery-ui-sortable'], '4.1.0-fix', true );
     }
 
@@ -314,8 +314,8 @@ class AFCGlide_Metaboxes {
         <?php
     }
 
-    /**
-     * Section 6: Property Features
+   /**
+     * Section 6: Property Features - Centered Grid Master
      */
     public static function render_amenities_metabox( $post ) {
         $selected = C::get_meta( $post->ID, C::META_AMENITIES );
@@ -330,13 +330,13 @@ class AFCGlide_Metaboxes {
         ];
         ?>
         <div class="afc-metabox-content">
-            <div class="afc-amenities-grid">
+            <div class="amenities-container"> 
                 <?php foreach ( $amenity_options as $amenity => $icon ) : 
                     $checked = in_array( $amenity, $selected ) ? 'checked' : '';
                 ?>
-                    <label class="afc-amenity-item">
+                    <label class="afc-checkbox-item">
                         <input type="checkbox" name="_listing_amenities[]" value="<?php echo esc_attr( $amenity ); ?>" <?php echo $checked; ?>>
-                        <span class="amenity-icon"><?php echo $icon; ?></span>
+                        <span style="margin-right: 8px;"><?php echo $icon; ?></span>
                         <span><?php echo esc_html( $amenity ); ?></span>
                     </label>
                 <?php endforeach; ?>
