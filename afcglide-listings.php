@@ -126,6 +126,8 @@ function afcglide_frontend_assets() {
         wp_localize_script( 'afc-submission-js', 'afc_vars', [
             'ajax_url'          => admin_url('admin-ajax.php'),
             'nonce'             => wp_create_nonce( \AFCGlide\Core\Constants::NONCE_AJAX ),
+            'action'            => \AFCGlide\Core\Constants::AJAX_SUBMIT, // 'afc_handle_submission'
+            'max_gallery'       => \AFCGlide\Core\Constants::MAX_GALLERY, // 16
             'autosave_interval' => 30000,
             'strings' => [
                 'invalid'      => __( '🚫 INVALID FILE: Please upload a JPG or PNG.', 'afcglide' ),

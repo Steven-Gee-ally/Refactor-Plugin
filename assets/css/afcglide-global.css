@@ -1,0 +1,177 @@
+/**
+ * AFCGlide Global Styles v4.0
+ * Base styles shared across all shortcodes and public-facing components
+ */
+
+/* Typography & Base */
+.afc-font-primary {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Color Variables */
+:root {
+    --afc-primary: #3b82f6;
+    --afc-success: #10b981;
+    --afc-warning: #f59e0b;
+    --afc-danger: #ef4444;
+    --afc-dark: #0f172a;
+    --afc-slate: #64748b;
+    --afc-light: #f8fafc;
+    --afc-border: #e2e8f0;
+}
+
+/* Luxury Card Base */
+.afc-luxury-card {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.afc-luxury-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* Price Tag */
+.afc-price-tag {
+    font-weight: 900;
+    color: var(--afc-success);
+    font-size: 1.25rem;
+}
+
+/* Status Badges */
+.afc-status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.afc-status-active {
+    background: #ecfdf5;
+    color: #065f46;
+}
+
+.afc-status-pending {
+    background: #fffbeb;
+    color: #92400e;
+}
+
+.afc-status-sold {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+/* Buttons */
+.afc-vogue-btn {
+    display: inline-block;
+    background: var(--afc-dark);
+    color: #fff;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.afc-vogue-btn:hover {
+    background: #1e293b;
+    transform: translateY(-2px);
+}
+
+/* Grid System */
+.afcglide-grid-container {
+    display: grid;
+    gap: 25px;
+}
+
+.afc-cols-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.afc-cols-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.afc-cols-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 1024px) {
+    .afc-cols-4 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+
+    .afc-cols-3,
+    .afc-cols-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+
+    .afc-cols-2,
+    .afc-cols-3,
+    .afc-cols-4 {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* No Results */
+.afc-no-results {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--afc-slate);
+    font-weight: 700;
+    font-size: 18px;
+}
+
+/* Pagination */
+.afc-pagination-wrapper {
+    margin-top: 40px;
+    text-align: center;
+}
+
+.afc-pagination-wrapper ul {
+    display: inline-flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: 8px;
+}
+
+.afc-pagination-wrapper li a,
+.afc-pagination-wrapper li span {
+    display: block;
+    padding: 10px 16px;
+    background: #fff;
+    border: 2px solid var(--afc-border);
+    border-radius: 8px;
+    font-weight: 700;
+    color: var(--afc-dark);
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.afc-pagination-wrapper li a:hover {
+    border-color: var(--afc-primary);
+    color: var(--afc-primary);
+}
+
+.afc-pagination-wrapper li span.current {
+    background: var(--afc-primary);
+    border-color: var(--afc-primary);
+    color: #fff;
+}

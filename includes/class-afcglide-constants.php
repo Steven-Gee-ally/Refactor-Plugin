@@ -34,6 +34,12 @@ final class Constants {
     const META_OPEN_HOUSE  = '_listing_showing_schedule';
     
     /**
+     * Meta Keys - Spanish Translations
+     */
+    const META_INTRO_ES     = '_listing_intro_text_es';
+    const META_NARRATIVE_ES = '_listing_narrative_es';
+    
+    /**
      * Meta Keys - Location
      */
     const META_GPS_LAT     = '_gps_lat';

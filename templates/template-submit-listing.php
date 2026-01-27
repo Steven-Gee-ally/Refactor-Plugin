@@ -20,7 +20,8 @@ $post_id = isset($_GET['post']) ? intval($_GET['post']) : 0;
 $defaults = [
     'title' => '', 'price' => '', 'beds' => '', 'baths' => '', 
     'sqft' => '', 'address' => '', 'status' => 'active', 'description' => '',
-    'gps_lat' => '', 'gps_lng' => ''
+    'gps_lat' => '', 'gps_lng' => '',
+    'intro_es' => '', 'narrative_es' => ''
 ];
 
 if ( $post_id > 0 ) {
@@ -36,6 +37,8 @@ if ( $post_id > 0 ) {
         $defaults['status']      = C::get_meta($post_id, C::META_STATUS) ?: 'active';
         $defaults['gps_lat']     = C::get_meta($post_id, C::META_GPS_LAT);
         $defaults['gps_lng']     = C::get_meta($post_id, C::META_GPS_LNG);
+        $defaults['intro_es']      = C::get_meta($post_id, C::META_INTRO_ES);
+        $defaults['narrative_es']  = C::get_meta($post_id, C::META_NARRATIVE_ES);
     }
 }
 
@@ -93,18 +96,34 @@ $existing_amenities = $post_id ? (array) C::get_meta($post_id, C::META_AMENITIES
         
             <section class="afc-form-section">
                 <h3><span style="color: #3b82f6;">1</span> Property Narrative</h3>
-                <div class="afc-field">
-                    <label>Marketing Story</label>
-                    <textarea name="listing_description" rows="6" placeholder="Describe the lifestyle and luxury of this asset..." style="width: 100%; border: 2px solid #e2e8f0; border-radius: 8px; padding: 15px; font-size: 15px;"><?php echo esc_textarea($defaults['description']); ?></textarea>
+                
+                <div class="afc-field" style="margin-bottom: 25px;">
+                    <label>🇺🇸 Asset Title (English)</label>
+                    <input type="text" name="listing_title" value="<?php echo esc_attr($defaults['title']); ?>" placeholder="e.g. The Sapphire Estate" required style="width: 100%; border: 2px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 16px;">
+                </div>
+
+                <div style="background: #f8fafc; padding: 20px; border-radius: 10px; border-left: 4px solid #10b981; margin-bottom: 25px;">
+                    <div class="afc-field">
+                        <label>🇨🇷 Título del Activo (Español)</label>
+                        <input type="text" name="listing_intro_es" value="<?php echo esc_attr($defaults['intro_es']); ?>" placeholder="ej. La Finca Zafiro" style="width: 100%; border: 2px solid #cbd5e1; border-radius: 8px; padding: 12px; font-size: 16px;">
+                    </div>
+                </div>
+                
+                <div class="afc-field" style="margin-bottom: 25px;">
+                    <label>🇺🇸 Marketing Story (English)</label>
+                    <textarea name="listing_description" rows="5" placeholder="Describe the lifestyle in English..." style="width: 100%; border: 2px solid #e2e8f0; border-radius: 8px; padding: 15px; font-size: 15px;"><?php echo esc_textarea($defaults['description']); ?></textarea>
+                </div>
+
+                <div style="background: #f8fafc; padding: 20px; border-radius: 10px; border-left: 4px solid #3b82f6;">
+                    <div class="afc-field">
+                        <label>🇨🇷 Descripción de la Propiedad (Español)</label>
+                        <textarea name="listing_narrative_es" rows="5" placeholder="Describa el estilo de vida en español..." style="width: 100%; border: 2px solid #cbd5e1; border-radius: 8px; padding: 15px; font-size: 15px;"><?php echo esc_textarea($defaults['narrative_es']); ?></textarea>
+                    </div>
                 </div>
             </section>
 
             <section class="afc-form-section">
                 <h3><span style="color: #3b82f6;">2</span> Core Metrics</h3>
-                <div class="afc-field" style="margin-bottom: 25px;">
-                    <label>Asset Title</label>
-                    <input type="text" name="listing_title" value="<?php echo esc_attr($defaults['title']); ?>" placeholder="e.g. The Sapphire Estate" required style="width: 100%; border: 2px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 16px;">
-                </div>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
                     <div class="afc-field">

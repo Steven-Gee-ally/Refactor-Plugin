@@ -164,25 +164,36 @@ class AFCGlide_Ajax_Handler {
     /**
      * 🗺️ SYNC CORE META & GEOSPATIAL DATA
      */
-    private static function save_standard_meta( $post_id ) {
-        $meta_map = [
-            'listing_price'   => C::META_PRICE,
-            'listing_address' => C::META_ADDRESS,
-            'listing_beds'    => C::META_BEDS,
-            'listing_baths'   => C::META_BATHS,
-            'listing_sqft'    => C::META_SQFT,
-            'listing_status'  => C::META_STATUS,
-            'gps_lat'         => C::META_GPS_LAT,
-            'gps_lng'         => C::META_GPS_LNG
-        ];
+     private static function save_standard_meta( $post_id ) {
+    $meta_map = [
+        'listing_price'        => C::META_PRICE,
+        'listing_address'      => C::META_ADDRESS,
+        'listing_beds'         => C::META_BEDS,
+        'listing_baths'        => C::META_BATHS,
+        'listing_sqft'         => C::META_SQFT,
+        'listing_status'       => C::META_STATUS,
+        'gps_lat'              => C::META_GPS_LAT,
+        'gps_lng'              => C::META_GPS_LNG,
+        'listing_intro_es'     => C::META_INTRO_ES,
+        'listing_narrative_es' => C::META_NARRATIVE_ES,
+    ];
 
-        foreach ( $meta_map as $form_field => $meta_key ) {
-            if ( isset( $_POST[$form_field] ) ) {
+    foreach ( $meta_map as $form_field => $meta_key ) {
+        if ( isset( $_POST[$form_field] ) ) {
+            
+            // WORLD-CLASS CLEANER: Specifically for GPS
+            if ( $form_field === 'gps_lat' || $form_field === 'gps_lng' ) {
+                // Strips everything except numbers, dots, and minus signs
+                $value = preg_replace( '/[^0-9.-]/', '', $_POST[$form_field] );
+            } else {
+                // Standard cleaning for everything else
                 $value = is_numeric($_POST[$form_field]) ? floatval($_POST[$form_field]) : sanitize_text_field($_POST[$form_field]);
-                C::update_meta( $post_id, $meta_key, $value );
             }
+            
+            C::update_meta( $post_id, $meta_key, $value );
         }
     }
+}
 
     /**
      * 🏡 SYNC AMENITIES ARRAY

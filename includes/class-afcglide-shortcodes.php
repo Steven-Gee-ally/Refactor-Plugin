@@ -20,40 +20,45 @@ final class AFCGlide_Shortcodes {
         global $post;
         if ( ! is_a( $post, 'WP_Post' ) ) return;
         
-        // 1. Check for any AFC shortcode
-        $has_grid   = has_shortcode( $post->post_content, 'afcglide_listings_grid' );
-        $has_slider = has_shortcode( $post->post_content, 'afcglide_listings_slider' );
-        $has_submit = has_shortcode( $post->post_content, 'afcglide_submit_listing' );
+        // World-Class Standards: Check content AND Elementor data for shortcodes
+        $content = $post->post_content;
+        if ( class_exists( '\Elementor\Plugin' ) ) {
+            $elementor_data = get_post_meta( $post->ID, '_elementor_data', true );
+            if ( is_string( $elementor_data ) ) { $content .= $elementor_data; }
+        }
+
+        $has_grid   = has_shortcode( $content, 'afcglide_listings_grid' );
+        $has_slider = has_shortcode( $content, 'afcglide_listings_slider' );
+        $has_submit = has_shortcode( $content, 'afcglide_submit_listing' ) 
+                   || has_shortcode( $content, 'afcglide_submission_form' );
+
+        if ( $has_grid || $has_slider || $has_submit ) {
+            wp_enqueue_style( 'afc-global-styles', AFCG_URL . 'assets/css/afcglide-global.css', [], AFCG_VERSION );
+        }
 
         if ( $has_grid || $has_slider ) {
-            // Load Shortcode Styles with Global Styles as dependency
             wp_enqueue_style( 'afc-shortcode-styles', AFCG_URL . 'assets/css/afcglide-shortcodes.css', ['afc-global-styles'], AFCG_VERSION );
-            
-            // Reference our master public JS for grid logic/filtering
             wp_enqueue_script( 'afc-public-js', AFCG_URL . 'assets/js/afcglide-public.js', ['jquery'], AFCG_VERSION, true );
         }
         
         if ( $has_submit ) {
             wp_enqueue_style( 'afc-submission-form', AFCG_URL . 'assets/css/admin-submission.css', ['afc-global-styles'], AFCG_VERSION );
-            // JS is handled by the main file's Section 6
         }
     }
 
     public static function register_shortcodes() {
         add_shortcode( 'afcglide_login', [ __CLASS__, 'render_login_form' ] );
         add_shortcode( 'afcglide_submit_listing', [ __CLASS__, 'render_submission_form' ] );
+        add_shortcode( 'afcglide_submission_form', [ __CLASS__, 'render_submission_form' ] ); // Alias for compatibility
         add_shortcode( 'afcglide_listings_grid', [ __CLASS__, 'render_listing_grid' ] );
         add_shortcode( 'afcglide_listings_slider', [ __CLASS__, 'render_listing_slider' ] );
     }
 
     /**
-     * 1. FEATURED LISTINGS SLIDER
+     * 1. FEATURED LISTINGS SLIDER (Multi-Instance Safe)
      */
     public static function render_listing_slider( $atts ) {
-        $atts = shortcode_atts( [
-            'count' => 6,
-        ], $atts );
-
+        $atts = shortcode_atts( [ 'count' => 6 ], $atts );
         $query = new \WP_Query([
             'post_type'      => C::POST_TYPE,
             'posts_per_page' => (int) $atts['count'],
@@ -62,17 +67,57 @@ final class AFCGlide_Shortcodes {
 
         if ( ! $query->have_posts() ) return '';
 
+        $slider_id = 'afc-slider-' . wp_generate_password(4, false); // Unique ID for multiple sliders
         ob_start();
         ?>
-        <div class="afc-vogue-slider-outer" data-slides="<?php echo esc_attr($atts['count']); ?>">
+        <div id="<?php echo $slider_id; ?>" class="afc-vogue-slider-outer">
+            <button class="afc-slider-nav afc-slider-prev">‹</button>
             <div class="afc-slider-track">
                 <?php while ( $query->have_posts() ) : $query->the_post(); ?>
-                    <div class="afc-slider-slide">
-                        <?php self::render_listing_card(); ?>
-                    </div>
+                    <div class="afc-slider-slide"><?php self::render_listing_card(); ?></div>
                 <?php endwhile; ?>
             </div>
+            <button class="afc-slider-nav afc-slider-next">›</button>
+            <div class="afc-slider-dots"></div>
         </div>
+        
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.getElementById('<?php echo $slider_id; ?>');
+            const track = container.querySelector('.afc-slider-track');
+            const slides = container.querySelectorAll('.afc-slider-slide');
+            const dotsContainer = container.querySelector('.afc-slider-dots');
+            let current = 0;
+            const getPerView = () => window.innerWidth <= 768 ? 1 : 3;
+            
+            const updateSlider = () => {
+                const perView = getPerView();
+                const maxIndex = Math.max(0, slides.length - perView);
+                if(current > maxIndex) current = maxIndex;
+                track.style.transform = `translateX(-${current * (100 / perView)}%)`;
+                
+                // Sync Dots
+                dotsContainer.innerHTML = '';
+                for (let i = 0; i <= maxIndex; i++) {
+                    const dot = document.createElement('span');
+                    dot.className = 'afc-slider-dot' + (i === current ? ' active' : '');
+                    dot.onclick = () => { current = i; updateSlider(); };
+                    dotsContainer.appendChild(dot);
+                }
+            };
+
+            container.querySelector('.afc-slider-next').onclick = () => {
+                const max = slides.length - getPerView();
+                if(current < max) { current++; updateSlider(); }
+            };
+            container.querySelector('.afc-slider-prev').onclick = () => {
+                if(current > 0) { current--; updateSlider(); }
+            };
+            
+            updateSlider();
+            window.addEventListener('resize', updateSlider);
+        });
+        </script>
         <?php
         wp_reset_postdata();
         return ob_get_clean();
@@ -187,7 +232,7 @@ final class AFCGlide_Shortcodes {
     }
 
     public static function render_submission_form() {
-        $template = AFCG_PATH . 'templates/template_submit_listing.php';
+        $template = AFCG_PATH . 'templates/template-submit-listing.php';
         if ( file_exists( $template ) ) {
             ob_start();
             include $template;
