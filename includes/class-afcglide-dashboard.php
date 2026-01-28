@@ -1,6 +1,9 @@
 <?php
 namespace AFCGlide\Admin; 
 
+use AFCGlide\Core\Constants as C;
+use AFCGlide\Core\AFCGlide_Synergy_Engine as Engine;
+
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 class AFCGlide_Dashboard {
@@ -22,7 +25,7 @@ class AFCGlide_Dashboard {
         register_setting( 'afcglide_settings_group', 'afc_brokerage_address' );
         register_setting( 'afcglide_settings_group', 'afc_license_number' );
         register_setting( 'afcglide_settings_group', 'afc_quality_gatekeeper' );
-        register_setting( 'afcglide_settings_group', 'afc_admin_lockdown' );
+        register_setting( 'afc_global_lockdown', 'afc_global_lockdown' );
         register_setting( 'afcglide_settings_group', 'afc_whatsapp_global' );
     }
 
@@ -39,7 +42,7 @@ class AFCGlide_Dashboard {
             add_submenu_page('afcglide-dashboard', 'My Portfolio', '💼 My Portfolio', 'read', 'afcglide-inventory', '');
         }
         
-        add_submenu_page('afcglide-dashboard', 'Add New Asset', '🛸 Add New Asset', 'read', 'post-new.php?post_type=afcglide_listing');
+        add_submenu_page('afcglide-dashboard', 'Add New Asset', '🛸 Add New Asset', 'read', 'post-new.php?post_type=' . C::POST_TYPE);
         add_submenu_page('afcglide-dashboard', 'My Profile', '👤 My Profile', 'read', 'profile.php');
         add_submenu_page('afcglide-dashboard', 'System Manual', '📘 System Manual', 'read', 'afcglide-manual', [ __CLASS__, 'render_manual_page' ]);
     }
@@ -47,7 +50,6 @@ class AFCGlide_Dashboard {
     public static function handle_protocol_execution() {
         if ( isset($_POST['afc_execute_protocols']) && check_admin_referer('afc_protocols', 'afc_protocols_nonce') ) {
             update_option('afc_global_lockdown', isset($_POST['global_lockdown']) ? '1' : '0');
-            update_option('afc_identity_shield', isset($_POST['identity_shield']) ? '1' : '0');
             wp_redirect( admin_url('admin.php?page=afcglide-dashboard&protocols=executed') );
             exit;
         }
@@ -87,7 +89,8 @@ class AFCGlide_Dashboard {
         $is_broker = current_user_can('manage_options');
         $display_name = strtoupper($current_user->first_name ?: $current_user->display_name);
         
-        $total_value = self::calculate_portfolio_volume($is_broker ? null : $current_user->ID);
+        // WORLD-CLASS: Fetch stats via Synergy Engine for high performance
+        $stats = Engine::get_synergy_stats();
         ?>
 
         <div class="afc-control-center">
@@ -103,7 +106,7 @@ class AFCGlide_Dashboard {
                     <h1 style="margin:0; font-size:36px; font-weight:900; letter-spacing:-1.5px;">PROPERTY PRODUCTION: HQ</h1>
                     <p style="margin:10px 0 0; opacity:0.9; font-size:18px; font-weight:600;">Welcome back. Initialize your next global asset with one click.</p>
                 </div>
-                <a href="<?php echo admin_url('post-new.php?post_type=afcglide_listing'); ?>" class="afc-hero-btn">
+                <a href="<?php echo admin_url('post-new.php?post_type='.C::POST_TYPE); ?>" class="afc-hero-btn">
                     <span>🚀 FAST SUBMIT ASSET</span>
                 </a>
             </div>
@@ -112,14 +115,9 @@ class AFCGlide_Dashboard {
             <?php echo \AFCGlide\Reporting\AFCGlide_Scoreboard::render_scoreboard( $is_broker ? null : $current_user->ID ); ?>
 
             <?php if (!$is_broker) : 
-                $drafts = get_posts(['post_type' => 'afcglide_listing', 'post_status' => 'draft', 'author' => $current_user->ID, 'posts_per_page' => -1]);
-                $recent_listings = get_posts(['post_type' => 'afcglide_listing', 'post_status' => 'publish', 'author' => $current_user->ID, 'posts_per_page' => 5, 'orderby' => 'date', 'order' => 'DESC']);
-                $pending_listings = count(get_posts(['post_type' => 'afcglide_listing', 'post_status' => 'pending', 'author' => $current_user->ID, 'posts_per_page' => -1, 'fields' => 'ids']));
+                $drafts = get_posts(['post_type' => C::POST_TYPE, 'post_status' => 'draft', 'author' => $current_user->ID, 'posts_per_page' => -1]);
+                $pending_listings = count(get_posts(['post_type' => C::POST_TYPE, 'post_status' => 'pending', 'author' => $current_user->ID, 'posts_per_page' => -1, 'fields' => 'ids']));
                 $has_profile_photo = get_user_meta($current_user->ID, '_agent_photo_id', true);
-                $total_views = 0;
-                foreach ($recent_listings as $listing) {
-                    $total_views += intval(get_post_meta($listing->ID, '_listing_views_count', true));
-                }
             ?>
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; margin-bottom: 35px;">
@@ -130,7 +128,7 @@ class AFCGlide_Dashboard {
                         <?php if (!$has_profile_photo) : ?>
                         <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;"><span style="color: #f59e0b;">⚠️</span> <a href="<?php echo admin_url('profile.php'); ?>" style="color: #1e40af; text-decoration: none; font-weight: 600;">Complete Your Profile</a></li>
                         <?php endif; ?>
-                        <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;"><span style="color: #059669;">✓</span> <a href="<?php echo admin_url('post-new.php?post_type=afcglide_listing'); ?>" style="color: #1e40af; text-decoration: none; font-weight: 600;">Upload New Listing</a></li>
+                        <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;"><span style="color: #059669;">✓</span> <a href="<?php echo admin_url('post-new.php?post_type='.C::POST_TYPE); ?>" style="color: #1e40af; text-decoration: none; font-weight: 600;">Upload New Listing</a></li>
                     </ul>
                 </div>
 
@@ -138,8 +136,8 @@ class AFCGlide_Dashboard {
                     <div style="font-size: 24px; margin-bottom: 12px;">📈</div>
                     <h3 style="margin: 0 0 15px 0; font-size: 16px; font-weight: 800; color: #166534;">Your Performance</h3>
                     <div style="font-size: 14px; color: #1e293b; line-height: 1.8;">
-                        <div style="margin-bottom: 12px;"><span style="font-weight: 700; color: #059669;"><?php echo count($recent_listings); ?></span> Active Listings</div>
-                        <div style="margin-bottom: 12px;"><span style="font-weight: 700; color: #059669;"><?php echo number_format($total_views); ?></span> Total Views</div>
+                        <div style="margin-bottom: 12px;"><span style="font-weight: 700; color: #059669;"><?php echo $stats['count']; ?></span> Active Listings</div>
+                        <div style="margin-bottom: 12px;"><span style="font-weight: 700; color: #059669;"><?php echo number_format($stats['views']); ?></span> Total Views</div>
                         <div><span style="font-weight: 700; color: #f59e0b;"><?php echo $pending_listings; ?></span> Pending Sale<?php echo $pending_listings != 1 ? 's' : ''; ?></div>
                     </div>
                 </div>
@@ -159,10 +157,10 @@ class AFCGlide_Dashboard {
 
             <?php if ($is_broker) : ?>
             <div class="afc-quick-actions">
-                <a href="<?php echo admin_url('post-new.php?post_type=afcglide_listing'); ?>" class="afc-action-card action-add"><span>➕</span><h3>Add Asset</h3></a>
+                <a href="<?php echo admin_url('post-new.php?post_type='.C::POST_TYPE); ?>" class="afc-action-card action-add"><span>➕</span><h3>Add Asset</h3></a>
                 <a href="<?php echo admin_url('admin.php?page=afcglide-inventory'); ?>" class="afc-action-card action-inventory"><span>💼</span><h3>Inventory</h3></a>
                 <a href="<?php echo admin_url('profile.php'); ?>" class="afc-action-card action-identity"><span>👤</span><h3>Profile</h3></a>
-                <a href="#backbone-settings" class="afc-action-card action-config"><span>⚙️</span><h3>Backbone</h3></a>
+                <a href="<?php echo admin_url('admin.php?page=afcglide-settings'); ?>" class="afc-action-card action-config"><span>⚙️</span><h3>Backbone</h3></a>
             </div>
 
             <div class="afc-section" style="background:#fef2f2 !important; border-color:#fecaca !important;">
@@ -197,34 +195,6 @@ Password: <?php echo esc_html($guide['pass']); ?></textarea>
                         <div><label style="display:block; font-size:10px; font-weight:800; color:#64748b; margin-bottom:8px; text-transform:uppercase;">Set Password</label><input type="text" name="agent_pass" required style="width:100%; padding:12px; border-radius:10px; border:1px solid #cbd5e1;"></div>
                         <button type="submit" name="afc_rapid_add_agent" class="afc-execute-btn" style="background:#8b5cf6 !important; width:100%;">CREATE & GENERATE GUIDE</button>
                     </div>
-                </form>
-            </div>
-
-            <div id="backbone-settings" class="afc-section" style="background:#fefce8 !important; border-color:#fef08a !important;">
-                <div class="afc-section-header"><h2 style="color:#854d0e !important;">🛰️ INFRASTRUCTURE & BACKBONE SETTINGS</h2></div>
-                <form method="post" action="options.php">
-                    <?php settings_fields( 'afcglide_settings_group' ); ?>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 35px; margin-bottom: 35px;">
-                        <div style="background: #f1f5f9; padding: 30px; border-radius: 20px;">
-                            <h3 style="margin-top:0; font-size:13px; color:#2563eb;">👤 GLOBAL BRAND IDENTITY</h3>
-                            <label style="display:block; font-size:10px; font-weight:800; color:#64748b; margin-bottom:8px;">OFFICE NAME</label>
-                            <input type="text" name="afc_agent_name" value="<?php echo esc_attr(get_option('afc_agent_name')); ?>" style="width:100%; padding:12px; border-radius:10px; border:1px solid #cbd5e1; margin-bottom:20px;">
-                            <label style="display:block; font-size:10px; font-weight:800; color:#64748b; margin-bottom:8px;">CONTACT PHONE</label>
-                            <input type="text" name="afc_agent_phone_display" value="<?php echo esc_attr(get_option('afc_agent_phone_display')); ?>" style="width:100%; padding:12px; border-radius:10px; border:1px solid #cbd5e1;">
-                        </div>
-                        <div style="background: #ecfdf5; padding: 30px; border-radius: 20px;">
-                            <h3 style="margin-top:0; font-size:13px; color:#059669;">🛡️ CORE SYSTEM SAFEGUARDS</h3>
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                                <span style="font-size:13px; font-weight:800; color:#064e3b;">High-Res Photo Gatekeeper</span>
-                                <label class="afc-switch"><input type="checkbox" name="afc_quality_gatekeeper" value="1" <?php checked(1, get_option('afc_quality_gatekeeper', 1)); ?>><span class="switch-slider"></span></label>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <span style="font-size:13px; font-weight:800; color:#064e3b;">Global Floating WhatsApp</span>
-                                <label class="afc-switch"><input type="checkbox" name="afc_whatsapp_global" value="1" <?php checked(1, get_option('afc_whatsapp_global', 0)); ?>><span class="switch-slider"></span></label>
-                            </div>
-                        </div>
-                    </div>
-                    <div style="text-align:right;"><button type="submit" class="afc-execute-btn" style="background:#bbf7d0 !important; color:#166534 !important;">COMMIT GLOBAL CONFIG</button></div>
                 </form>
             </div>
             <?php endif; ?>
@@ -296,7 +266,7 @@ Password: <?php echo esc_html($guide['pass']); ?></textarea>
     }
 
     public static function render_activity_stream() {
-        $recent = get_posts(['post_type'=>'afcglide_listing','post_status'=>['publish','pending','sold','draft'],'posts_per_page'=>8, 'orderby'=>'modified']);
+        $recent = get_posts(['post_type'=>C::POST_TYPE,'post_status'=>['publish','pending','sold','draft'],'posts_per_page'=>8, 'orderby'=>'modified']);
         if (empty($recent)) { echo '<p style="padding:20px; font-style:italic; color:#64748b;">No recent activity.</p>'; return; }
         foreach ($recent as $post) {
             $author = get_the_author_meta('display_name', $post->post_author);
@@ -313,7 +283,7 @@ Password: <?php echo esc_html($guide['pass']); ?></textarea>
         echo '<table style="width:100%; border-collapse:collapse; font-size:14px;">';
         echo '<thead style="background:#f1f5f9;"><tr><th style="padding:15px; text-align:left;">AGENT</th><th style="padding:15px;">UNITS</th><th style="padding:15px;">VOLUME</th></tr></thead><tbody>';
         foreach ($agents as $user) {
-            $count = count(get_posts(['post_type'=>'afcglide_listing','post_status'=>'publish','author'=>$user->ID,'fields'=>'ids','posts_per_page'=>-1]));
+            $count = count(get_posts(['post_type'=>C::POST_TYPE,'post_status'=>'publish','author'=>$user->ID,'fields'=>'ids','posts_per_page'=>-1]));
             $vol = self::calculate_portfolio_volume($user->ID);
             echo "<tr><td style='padding:15px; border-bottom:1px solid #f1f5f9; font-weight:700;'>{$user->display_name}</td><td style='padding:15px; border-bottom:1px solid #f1f5f9; text-align:center;'>$count</td><td style='padding:15px; border-bottom:1px solid #f1f5f9; text-align:center; color:#059669; font-weight:900;'>$".number_format($vol)."</td></tr>";
         }

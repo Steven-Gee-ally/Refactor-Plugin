@@ -1,29 +1,33 @@
 /**
- * AFCGlide Login Styles
- * Extracted from class-afcglide-admin-ui.php
+ * AFCGlide Login Styles - THE MASTER SPEC v5.0
+ * MacBook Pro 19 Precision | Vogue Green & Rainbow Synergy
+ * NO COMPROMISE - FULL PROPERTY RESTORATION
  */
 
+/* 1. PRIMARY TERMINAL WRAPPER */
 body.login {
-    background: #f8fafc !important;
+    background: #0f172a !important; /* Deep Slate Terminal Background */
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    min-height: 100vh;
 }
 
 #login {
-    width: 450px !important;
+    width: 450px !important; /* Premium wide portal width */
     padding: 0 !important;
+    margin: auto !important;
 }
 
-/* 🌈 THE PAZAAZ LOGIN HEADER */
+/* 2. 🌈 THE PAZAAZ LOGIN HEADER (RAINBOW ENGINE) */
 #login h1 a {
     background: linear-gradient(90deg, #ff9a9e 0%, #fad0c4 25%, #a1c4fd 50%, #c2e9fb 75%, #d4fc79 100%) !important;
     width: 100% !important;
-    height: 80px !important;
+    height: 80px !important; /* Precision height restored */
     background-size: cover !important;
-    border-radius: 15px 15px 0 0 !important;
+    border-radius: 15px 15px 0 0 !important; /* Top-only rounding */
     margin: 0 auto !important;
     display: flex !important;
     align-items: center !important;
@@ -33,61 +37,141 @@ body.login {
     font-weight: 900 !important;
     text-indent: 0 !important;
     text-decoration: none !important;
-    padding-top: 25px;
+    padding-top: 25px !important;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15) !important;
+    transition: all 0.4s ease;
 }
 
 #login h1 a::after {
-    content: 'AFCG-PRO PORTAL v5.0';
+    content: 'AFCG-PRO PORTAL v5.0'; /* Original exact branding */
     letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
+/* 3. THE COMMAND CENTER (AUTHENTICATION BOX) */
 .login form {
-    background: white !important;
-    border: 1px solid #e2e8f0 !important;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1) !important;
-    padding: 45px !important;
-    border-radius: 0 0 15px 15px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important; /* Original subtle portal border */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important; /* High-end depth */
+    padding: 45px !important; /* Luxury spacing restored */
+    border-radius: 0 0 15px 15px !important; /* Bottom-only rounding */
     margin-top: 0 !important;
 }
 
+/* 4. INDUSTRIAL LABELING & INPUTS */
 .login label {
-    font-weight: 800 !important;
-    color: #64748b !important;
+    font-weight: 800 !important; /* Industrial weight restored */
+    color: #64748b !important; /* Slate Blue */
     text-transform: uppercase;
     font-size: 11px !important;
     letter-spacing: 1.5px;
+    margin-bottom: 8px !important;
+    display: block;
 }
 
 .login input[type="text"],
 .login input[type="password"] {
-    border-radius: 8px !important;
+    background: #f8fafc !important;
     border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
     padding: 12px !important;
     font-size: 16px !important;
+    margin-top: 5px !important;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.05) !important;
+    transition: all 0.3s ease !important;
+    width: 100%;
 }
 
+.login input[type="text"]:focus,
+.login input[type="password"]:focus {
+    border-color: #10b981 !important;
+    background: #ffffff !important;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1) !important;
+    outline: none !important;
+}
+
+/* 5. THE EXECUTE BUTTON (VOGUE GREEN) */
 .wp-core-ui .button-primary {
-    background: #10b981 !important;
+    background: #10b981 !important; /* Success Green */
     border: none !important;
     border-radius: 8px !important;
     padding: 10px 30px !important;
-    font-weight: 900 !important;
+    font-weight: 900 !important; /* Ultra-heavy weight */
     text-transform: uppercase;
     letter-spacing: 1px !important;
     height: auto !important;
-    line-height: 2 !important;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+    line-height: 2 !important; /* Precision button height */
     width: 100% !important;
-    margin-top: 20px !important;
+    margin-top: 25px !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+    text-shadow: none !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    cursor: pointer;
 }
 
+.wp-core-ui .button-primary:hover {
+    background: #059669 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4) !important;
+}
+
+.wp-core-ui .button-primary:active {
+    transform: translateY(0);
+}
+
+/* 6. REMEMBER ME & MISC */
+.login .forgetmenot {
+    margin-bottom: 15px !important;
+}
+
+.login .forgetmenot label {
+    font-weight: 600 !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+    color: #94a3b8 !important;
+    display: inline-flex !important;
+    align-items: center;
+}
+
+/* 7. FOOTER NAVIGATION (STEALTH NAVIGATION) */
 .login #nav,
 .login #backtoblog {
     text-align: center !important;
     font-weight: 700 !important;
+    padding: 15px 0 0 0 !important;
+    margin: 10px 0 0 0 !important;
 }
 
 .login #nav a,
 .login #backtoblog a {
-    color: #64748b !important;
+    color: #94a3b8 !important;
+    text-decoration: none !important;
+    font-size: 13px !important;
+    transition: color 0.3s ease;
+}
+
+.login #nav a:hover,
+.login #backtoblog a:hover {
+    color: #10b981 !important;
+}
+
+/* 8. ERROR HANDLING (HIGH VISIBILITY) */
+.login #login_error {
+    background: #fff !important;
+    border-left: 4px solid #ef4444 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+    color: #1e293b !important;
+    padding: 15px !important;
+    margin-bottom: 20px !important;
+}
+
+/* 9. BRANDING CLEANUP */
+.login h1 a::before {
+    display: none !important; /* Kill the default WP Logo */
+}
+
+/* Ensure Logo doesn't display background image */
+.login h1 a {
+    background-image: none !important;
 }

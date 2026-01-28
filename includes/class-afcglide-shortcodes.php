@@ -6,56 +6,104 @@ use AFCGlide\Core\Constants as C;
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
- * AFCGlide Shortcodes v4.2 - THE REAL ESTATE MACHINE
- * Refined for Vogue Green 2026 UI | MacBook Pro Precision
+ * AFCGlide Shortcodes v5.0 - THE SYNERGY TERMINAL MASTER
+ * World-Class Real Estate Infrastructure | No Shortcuts
  */
 final class AFCGlide_Shortcodes {
 
+    /**
+     * Initialize Shortcodes
+     */
     public static function init() {
         add_action( 'init', [ __CLASS__, 'register_shortcodes' ], 20 );
-        add_action( 'wp_enqueue_scripts', [ __CLASS__, 'enqueue_frontend_assets' ] );
     }
 
-    public static function enqueue_frontend_assets() {
-        global $post;
-        if ( ! is_a( $post, 'WP_Post' ) ) return;
-        
-        // World-Class Standards: Check content AND Elementor data for shortcodes
-        $content = $post->post_content;
-        if ( class_exists( '\Elementor\Plugin' ) ) {
-            $elementor_data = get_post_meta( $post->ID, '_elementor_data', true );
-            if ( is_string( $elementor_data ) ) { $content .= $elementor_data; }
-        }
-
-        $has_grid   = has_shortcode( $content, 'afcglide_listings_grid' );
-        $has_slider = has_shortcode( $content, 'afcglide_listings_slider' );
-        $has_submit = has_shortcode( $content, 'afcglide_submit_listing' ) 
-                   || has_shortcode( $content, 'afcglide_submission_form' );
-
-        if ( $has_grid || $has_slider || $has_submit ) {
-            wp_enqueue_style( 'afc-global-styles', AFCG_URL . 'assets/css/afcglide-global.css', [], AFCG_VERSION );
-        }
-
-        if ( $has_grid || $has_slider ) {
-            wp_enqueue_style( 'afc-shortcode-styles', AFCG_URL . 'assets/css/afcglide-shortcodes.css', ['afc-global-styles'], AFCG_VERSION );
-            wp_enqueue_script( 'afc-public-js', AFCG_URL . 'assets/js/afcglide-public.js', ['jquery'], AFCG_VERSION, true );
-        }
-        
-        if ( $has_submit ) {
-            wp_enqueue_style( 'afc-submission-form', AFCG_URL . 'assets/css/admin-submission.css', ['afc-global-styles'], AFCG_VERSION );
-        }
-    }
-
+    /**
+     * Register all available shortcodes for the plugin
+     */
     public static function register_shortcodes() {
+        // Agent Terminal
+        add_shortcode( 'afc_agent_inventory', [ __CLASS__, 'render_agent_inventory' ] );
+        
+        // Forms & Auth
         add_shortcode( 'afcglide_login', [ __CLASS__, 'render_login_form' ] );
         add_shortcode( 'afcglide_submit_listing', [ __CLASS__, 'render_submission_form' ] );
-        add_shortcode( 'afcglide_submission_form', [ __CLASS__, 'render_submission_form' ] ); // Alias for compatibility
+        add_shortcode( 'afcglide_submission_form', [ __CLASS__, 'render_submission_form' ] );
+        
+        // Public Displays
         add_shortcode( 'afcglide_listings_grid', [ __CLASS__, 'render_listing_grid' ] );
         add_shortcode( 'afcglide_listings_slider', [ __CLASS__, 'render_listing_slider' ] );
     }
 
+   /**
+     * 1. THE SYNERGY TERMINAL (AGENT INVENTORY)
+     * High-end dashboard interface for agents to manage assets.
+     */
+    public static function render_agent_inventory() {
+        if ( ! is_user_logged_in() ) {
+            return '<div class="afc-terminal-error">⚠️ SYNERGY AUTHENTICATION REQUIRED. PLEASE LOG IN.</div>';
+        }
+
+        // Connect to the Synergy Engine for Data and Query
+        $stats = \AFCGlide\Core\AFCGlide_Synergy_Engine::get_synergy_stats();
+        $user  = wp_get_current_user();
+        $query = \AFCGlide\Core\AFCGlide_Synergy_Engine::get_agent_inventory();
+
+        ob_start(); ?>
+
+        <div class="afc-synergy-terminal-wrapper">
+            
+            <div class="afc-synergy-header">
+                <div class="afc-welcome-meta">
+                    <h1>Welcome, <?php echo esc_html($user->display_name); ?></h1>
+                    <p>System Status: <span class="afc-status-online">● Online</span></p>
+                </div>
+                
+                <div class="afc-stat-tiles">
+                    <div class="afc-stat-tile">
+                        <strong><?php echo $stats['count']; ?></strong>
+                        <span>Active Assets</span>
+                    </div>
+                    <div class="afc-stat-tile">
+                        <strong><?php echo number_format($stats['views']); ?></strong>
+                        <span>Total Reach</span>
+                    </div>
+                </div>
+            </div>
+
+            <?php if ( $query->have_posts() ) : ?>
+                <div class="afcglide-grid-container afc-cols-3">
+                    <?php while ( $query->have_posts() ) : $query->the_post(); 
+                        self::render_listing_card(); 
+                    endwhile; wp_reset_postdata(); ?>
+                </div>
+            <?php else : ?>
+                <div class="afc-synergy-empty-state">
+                    <div class="afc-empty-icon">📂</div>
+                    <h2>Terminal Ready for Deployment</h2>
+                    <p>Your synergy workspace is active and secure, but no assets have been detected in your inventory yet.</p>
+                    
+                    <div class="afc-empty-actions">
+                        <a href="<?php echo home_url('/submit-listing'); ?>" class="afc-execute-btn">
+                            + DEPLOY NEW ASSET
+                        </a>
+                        <p class="afc-empty-hint">Need help? Contact the Managing Broker for assistance.</p>
+                    </div>
+
+                    <div class="afc-system-ready">
+                        <span class="afc-pulse"></span> SYSTEM STATUS: AWAITING INPUT
+                    </div>
+                </div>
+            <?php endif; ?>
+
+        </div>
+
+        <?php
+        return ob_get_clean();
+    }
+
     /**
-     * 1. FEATURED LISTINGS SLIDER (Multi-Instance Safe)
+     * 2. FEATURED LISTINGS SLIDER (Full Multi-Instance Safe Logic)
      */
     public static function render_listing_slider( $atts ) {
         $atts = shortcode_atts( [ 'count' => 6 ], $atts );
@@ -67,7 +115,8 @@ final class AFCGlide_Shortcodes {
 
         if ( ! $query->have_posts() ) return '';
 
-        $slider_id = 'afc-slider-' . wp_generate_password(4, false); // Unique ID for multiple sliders
+        // Unique ID ensures multiple sliders on one page don't conflict
+        $slider_id = 'afc-slider-' . wp_generate_password(4, false); 
         ob_start();
         ?>
         <div id="<?php echo $slider_id; ?>" class="afc-vogue-slider-outer">
@@ -82,7 +131,7 @@ final class AFCGlide_Shortcodes {
         </div>
         
         <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        (function() {
             const container = document.getElementById('<?php echo $slider_id; ?>');
             const track = container.querySelector('.afc-slider-track');
             const slides = container.querySelectorAll('.afc-slider-slide');
@@ -96,7 +145,6 @@ final class AFCGlide_Shortcodes {
                 if(current > maxIndex) current = maxIndex;
                 track.style.transform = `translateX(-${current * (100 / perView)}%)`;
                 
-                // Sync Dots
                 dotsContainer.innerHTML = '';
                 for (let i = 0; i <= maxIndex; i++) {
                     const dot = document.createElement('span');
@@ -116,7 +164,7 @@ final class AFCGlide_Shortcodes {
             
             updateSlider();
             window.addEventListener('resize', updateSlider);
-        });
+        })();
         </script>
         <?php
         wp_reset_postdata();
@@ -124,7 +172,7 @@ final class AFCGlide_Shortcodes {
     }
 
     /**
-     * 2. LISTINGS GRID (The High-End Asset Wall)
+     * 3. LISTINGS GRID (Public Facing Asset Wall)
      */
     public static function render_listing_grid( $atts ) {
         $atts = shortcode_atts( [
@@ -135,7 +183,6 @@ final class AFCGlide_Shortcodes {
         ], $atts );
 
         $paged = ( get_query_var( 'paged' ) ) ? get_query_var( 'paged' ) : 1;
-        
         $search_term = isset($_GET['afc_query']) ? sanitize_text_field($_GET['afc_query']) : '';
         $max_price   = isset($_GET['afc_max_price']) ? intval($_GET['afc_max_price']) : 0;
 
@@ -168,7 +215,6 @@ final class AFCGlide_Shortcodes {
         if ( ! $query->have_posts() ) {
             echo '<div class="afc-no-results">🚫 NO ASSETS MATCHING CRITERIA</div>';
         } else {
-            // Precise column handling
             echo '<div class="afcglide-grid-container afc-cols-' . esc_attr($atts['columns']) . '">';
             while ( $query->have_posts() ) { 
                 $query->the_post(); 
@@ -186,26 +232,31 @@ final class AFCGlide_Shortcodes {
         return ob_get_clean();
     }
 
+    /**
+     * HELPERS & TEMPLATE LOADERS
+     */
+    public static function render_listing_card() {
+        $template = AFCG_PATH . 'templates/listing-card.php';
+        if ( file_exists( $template ) ) {
+            include $template;
+        }
+    }
+
     private static function render_search_bar($search_term, $max_price) {
         ?>
         <div class="afc-search-terminal">
             <form method="get" action="" class="afc-search-grid">
-                <div class="afc-search-input-wrapper">
-                    <input type="text" name="afc_query" value="<?php echo esc_attr($search_term); ?>" class="afc-search-input" placeholder="City, Zip, or Asset ID...">
-                </div>
-                
-                <div class="afc-price-select-wrapper">
-                    <select name="afc_max_price" class="afc-search-select">
-                        <option value="">MAX PRICE (UNLIMITED)</option>
-                        <?php 
-                        $prices = [500000, 1000000, 2500000, 5000000, 10000000];
-                        foreach($prices as $p) {
-                            echo '<option value="'.$p.'" '.selected($max_price, $p, false).'>UNDER $'.number_format($p/1000000, 1).'M</option>';
-                        }
-                        ?>
-                    </select>
-                </div>
-                <button type="submit" class="afc-vogue-btn">FILTER ASSETS</button>
+                <input type="text" name="afc_query" value="<?php echo esc_attr($search_term); ?>" class="afc-search-input" placeholder="Search Assets...">
+                <select name="afc_max_price" class="afc-search-select">
+                    <option value="">MAX PRICE (UNLIMITED)</option>
+                    <?php 
+                    $prices = [500000, 1000000, 2500000, 5000000, 10000000];
+                    foreach($prices as $p) {
+                        echo '<option value="'.$p.'" '.selected($max_price, $p, false).'>UNDER $'.number_format($p/1000000, 1).'M</option>';
+                    }
+                    ?>
+                </select>
+                <button type="submit" class="afc-vogue-btn">FILTER</button>
             </form>
         </div>
         <?php
@@ -221,14 +272,6 @@ final class AFCGlide_Shortcodes {
             'type'      => 'list'
         ]);
         echo '</div>';
-    }
-
-    public static function render_listing_card() {
-        // Enforce a isolated scope for the template include
-        $template = AFCG_PATH . 'templates/listing-card.php';
-        if ( file_exists( $template ) ) {
-            include $template;
-        }
     }
 
     public static function render_submission_form() {

@@ -47,6 +47,7 @@ $core_classes = [
     'includes/class-afcglide-inventory.php',
     'includes/class-afcglide-welcome.php',
     'includes/helpers/class-validator.php',
+    'includes/class-afcglide-synergy-engine.php',
 ];
 
 foreach ( $core_classes as $file ) {
@@ -79,6 +80,7 @@ function afcglide_init_components() {
     
     // Dashboard & Settings
     if ( class_exists( '\AFCGlide\Admin\AFCGlide_Dashboard' ) ) \AFCGlide\Admin\AFCGlide_Dashboard::init();
+    if ( class_exists( '\AFCGlide\Admin\AFCGlide_Settings' ) ) \AFCGlide\Admin\AFCGlide_Settings::init();
     
     // Listings Core
     if ( class_exists( '\AFCGlide\Listings\AFCGlide_Metaboxes' ) ) \AFCGlide\Listings\AFCGlide_Metaboxes::init();
@@ -100,6 +102,9 @@ function afcglide_init_components() {
     // Inventory & Welcome
     if ( class_exists( '\AFCGlide\Admin\AFCGlide_Inventory' ) ) \AFCGlide\Admin\AFCGlide_Inventory::init();
     if ( class_exists( '\AFCGlide\Admin\AFCGlide_Welcome' ) ) \AFCGlide\Admin\AFCGlide_Welcome::init();
+   
+    // Synergy Engine (The Brains of the Workspace)
+    if ( class_exists( '\AFCGlide\Core\AFCGlide_Synergy_Engine' ) ) \AFCGlide\Core\AFCGlide_Synergy_Engine::init();
 }
 
 /**
@@ -111,6 +116,7 @@ add_action( 'wp_enqueue_scripts', 'afcglide_frontend_assets' );
 
 function afcglide_frontend_assets() {
     global $post;
+    if ( ! is_a( $post, 'WP_Post' ) ) return;
 
     // 1. Single Listing Page Styles
     if ( is_singular( \AFCGlide\Core\Constants::POST_TYPE ) ) {
@@ -118,16 +124,15 @@ function afcglide_frontend_assets() {
     }
 
     // 2. Submission Form (The Professional Agent Interface)
-    if ( is_a( $post, 'WP_Post' ) && has_shortcode( $post->post_content, 'afcglide_submission_form' ) ) {
-        
+    if ( has_shortcode( $post->post_content, 'afcglide_submission_form' ) ) {
         wp_enqueue_style( 'afc-submission-css', AFCG_URL . 'assets/css/afcglide-frontend-submission.css', [], AFCG_VERSION );
         wp_enqueue_script( 'afc-submission-js', AFCG_URL . 'assets/js/afcglide-submission.js', ['jquery'], AFCG_VERSION, true );
 
         wp_localize_script( 'afc-submission-js', 'afc_vars', [
             'ajax_url'          => admin_url('admin-ajax.php'),
             'nonce'             => wp_create_nonce( \AFCGlide\Core\Constants::NONCE_AJAX ),
-            'action'            => \AFCGlide\Core\Constants::AJAX_SUBMIT, // 'afc_handle_submission'
-            'max_gallery'       => \AFCGlide\Core\Constants::MAX_GALLERY, // 16
+            'action'            => \AFCGlide\Core\Constants::AJAX_SUBMIT,
+            'max_gallery'       => \AFCGlide\Core\Constants::MAX_GALLERY,
             'autosave_interval' => 30000,
             'strings' => [
                 'invalid'      => __( '🚫 INVALID FILE: Please upload a JPG or PNG.', 'afcglide' ),
@@ -144,9 +149,20 @@ function afcglide_frontend_assets() {
         ]);
     }
 
-    // 3. Shortcode / Grid Styles
-    if ( is_a( $post, 'WP_Post' ) && (has_shortcode( $post->post_content, 'afcglide' ) || has_shortcode( $post->post_content, 'afcglide_grid' )) ) {
+    // 3. Synergy Terminal & Grid Styles
+    $sc_check = ['afcglide', 'afcglide_grid', 'afc_agent_inventory'];
+    $has_afc_shortcode = false;
+
+    foreach ( $sc_check as $sc ) {
+        if ( has_shortcode( $post->post_content, $sc ) ) {
+            $has_afc_shortcode = true;
+            break;
+        }
+    }
+
+    if ( $has_afc_shortcode ) {
         wp_enqueue_style( 'afc-shortcodes', AFCG_URL . 'assets/css/afcglide-shortcodes.css', [], AFCG_VERSION );
+        wp_enqueue_style( 'afc-dashboard-css', AFCG_URL . 'assets/css/afcglide-dashboard.css', [], AFCG_VERSION );
     }
 }
 
@@ -181,15 +197,20 @@ function afcglide_admin_assets( $hook ) {
         wp_enqueue_style( 'afc-admin-submission', AFCG_URL . 'assets/css/admin-submission.css', ['afc-admin-core'], AFCG_VERSION );
     }
     
+    // LOAD THE SETTINGS UI STYLES
+    if ( isset($_GET['page']) && $_GET['page'] === 'afcglide-settings' ) {
+        wp_enqueue_style( 'afc-settings-ui', AFCG_URL . 'assets/css/afcglide-admin-settings.css', ['afc-admin-core'], AFCG_VERSION );
+    }
+
+    if ( isset($_GET['page']) && $_GET['page'] === 'afcglide-dashboard' ) {
+        wp_enqueue_style( 'afc-dashboard-css', AFCG_URL . 'assets/css/afcglide-dashboard.css', ['afc-admin-core'], AFCG_VERSION );
+    }
+    
     wp_enqueue_script( 'afc-admin-js', AFCG_URL . 'assets/js/afcglide-admin.js', ['jquery', 'jquery-ui-sortable'], AFCG_VERSION, true );
     wp_localize_script( 'afc-admin-js', 'afc_vars', [
         'ajax_url' => admin_url('admin-ajax.php'),
         'nonce'    => wp_create_nonce( \AFCGlide\Core\Constants::NONCE_AJAX ),
     ]);
-
-    if ( isset($_GET['page']) && $_GET['page'] === 'afcglide-dashboard' ) {
-        wp_enqueue_style( 'afc-dashboard-css', AFCG_URL . 'assets/css/afcglide-dashboard.css', ['afc-admin-core'], AFCG_VERSION );
-    }
 }
 
 /**
@@ -225,7 +246,6 @@ function afcglide_activate() {
     \AFCGlide\Listings\AFCGlide_CPT_Tax::register_taxonomies();
     flush_rewrite_rules();
     
-    // Roles
     if ( function_exists('afcglide_init_roles') ) {
         afcglide_init_roles();
     }

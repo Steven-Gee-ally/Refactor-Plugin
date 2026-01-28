@@ -1,14 +1,16 @@
 <?php
 /**
  * AFCGlide AJAX Handler (S-Grade Production Master)
- * Version 4.3.1 - Full Structure Synergy
- * * Handles: Full Submissions, Autosave Drafts, Global Lockdown, 
- * Advanced Image Processing (Auto-Resize), and AJAX Filtering.
+ * Version 5.0.0 - Enhanced with Cache Management
+ * 
+ * Handles: Full Submissions, Autosave Drafts, Global Lockdown, 
+ * Advanced Image Processing (Auto-Resize), AJAX Filtering, and Cache Clearing.
  */
 
 namespace AFCGlide\Listings;
 
 use AFCGlide\Core\Constants as C;
+use AFCGlide\Core\AFCGlide_Synergy_Engine as Engine;
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -30,6 +32,11 @@ class AFCGlide_Ajax_Handler {
         // Global Grid Filtering (Public + Private)
         add_action( 'wp_ajax_' . C::AJAX_FILTER, [ __CLASS__, 'handle_listings_filter' ] );
         add_action( 'wp_ajax_nopriv_' . C::AJAX_FILTER, [ __CLASS__, 'handle_listings_filter' ] );
+        
+        // NEW: Cache Management Hooks
+        add_action( 'save_post_' . C::POST_TYPE, [ __CLASS__, 'clear_stats_on_save' ], 10, 3 );
+        add_action( 'delete_post', [ __CLASS__, 'clear_stats_on_delete' ], 10, 2 );
+        add_action( 'transition_post_status', [ __CLASS__, 'clear_stats_on_status_change' ], 10, 3 );
     }
 
     /**
@@ -118,6 +125,17 @@ class AFCGlide_Ajax_Handler {
             $gallery_saved_ids = self::upload_gallery( 'gallery_files', $final_id, C::META_GALLERY_IDS, $allowed );
         }
 
+        // NEW: Clear cache after successful save
+        $post = get_post( $final_id );
+        if ( $post ) {
+            Engine::clear_stats_cache( $post->post_author );
+            
+            // If admin, also clear global cache
+            if ( current_user_can( C::CAP_MANAGE ) ) {
+                Engine::clear_stats_cache( get_current_user_id() );
+            }
+        }
+
         self::send_success( $message, [
             'url'           => get_permalink( $final_id ),
             'post_id'       => $final_id,
@@ -155,6 +173,10 @@ class AFCGlide_Ajax_Handler {
 
         if ( ! is_wp_error( $final_id ) ) {
             self::save_standard_meta( $final_id );
+            
+            // NEW: Clear cache on draft save
+            Engine::clear_stats_cache( $user_id );
+            
             self::send_success( 'Draft Auto-Synced', [ 'post_id' => $final_id ] );
         } else {
             self::send_error( 'Draft sync failed.' );
@@ -164,36 +186,36 @@ class AFCGlide_Ajax_Handler {
     /**
      * 🗺️ SYNC CORE META & GEOSPATIAL DATA
      */
-     private static function save_standard_meta( $post_id ) {
-    $meta_map = [
-        'listing_price'        => C::META_PRICE,
-        'listing_address'      => C::META_ADDRESS,
-        'listing_beds'         => C::META_BEDS,
-        'listing_baths'        => C::META_BATHS,
-        'listing_sqft'         => C::META_SQFT,
-        'listing_status'       => C::META_STATUS,
-        'gps_lat'              => C::META_GPS_LAT,
-        'gps_lng'              => C::META_GPS_LNG,
-        'listing_intro_es'     => C::META_INTRO_ES,
-        'listing_narrative_es' => C::META_NARRATIVE_ES,
-    ];
+    private static function save_standard_meta( $post_id ) {
+        $meta_map = [
+            'listing_price'        => C::META_PRICE,
+            'listing_address'      => C::META_ADDRESS,
+            'listing_beds'         => C::META_BEDS,
+            'listing_baths'        => C::META_BATHS,
+            'listing_sqft'         => C::META_SQFT,
+            'listing_status'       => C::META_STATUS,
+            'gps_lat'              => C::META_GPS_LAT,
+            'gps_lng'              => C::META_GPS_LNG,
+            'listing_intro_es'     => C::META_INTRO_ES,
+            'listing_narrative_es' => C::META_NARRATIVE_ES,
+        ];
 
-    foreach ( $meta_map as $form_field => $meta_key ) {
-        if ( isset( $_POST[$form_field] ) ) {
-            
-            // WORLD-CLASS CLEANER: Specifically for GPS
-            if ( $form_field === 'gps_lat' || $form_field === 'gps_lng' ) {
-                // Strips everything except numbers, dots, and minus signs
-                $value = preg_replace( '/[^0-9.-]/', '', $_POST[$form_field] );
-            } else {
-                // Standard cleaning for everything else
-                $value = is_numeric($_POST[$form_field]) ? floatval($_POST[$form_field]) : sanitize_text_field($_POST[$form_field]);
+        foreach ( $meta_map as $form_field => $meta_key ) {
+            if ( isset( $_POST[$form_field] ) ) {
+                
+                // WORLD-CLASS CLEANER: Specifically for GPS
+                if ( $form_field === 'gps_lat' || $form_field === 'gps_lng' ) {
+                    // Strips everything except numbers, dots, and minus signs
+                    $value = preg_replace( '/[^0-9.-]/', '', $_POST[$form_field] );
+                } else {
+                    // Standard cleaning for everything else
+                    $value = is_numeric($_POST[$form_field]) ? floatval($_POST[$form_field]) : sanitize_text_field($_POST[$form_field]);
+                }
+                
+                C::update_meta( $post_id, $meta_key, $value );
             }
-            
-            C::update_meta( $post_id, $meta_key, $value );
         }
     }
-}
 
     /**
      * 🏡 SYNC AMENITIES ARRAY
@@ -344,4 +366,86 @@ class AFCGlide_Ajax_Handler {
         ]);
     }
     
+    /**
+     * ============================================================================
+     * NEW: CACHE MANAGEMENT HOOKS
+     * ============================================================================
+     */
+    
+    /**
+     * Clear stats cache when a listing is saved
+     * 
+     * @param int $post_id The post ID
+     * @param WP_Post $post The post object
+     * @param bool $update Whether this is an update
+     */
+    public static function clear_stats_on_save( $post_id, $post, $update ) {
+        // Don't clear cache for autosaves or revisions
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+            return;
+        }
+        
+        if ( wp_is_post_revision( $post_id ) ) {
+            return;
+        }
+        
+        // Clear cache for the post author
+        Engine::clear_stats_cache( $post->post_author );
+        
+        // If admin/broker is editing, also clear their cache
+        $current_user_id = get_current_user_id();
+        if ( $current_user_id !== $post->post_author && current_user_can( C::CAP_MANAGE ) ) {
+            Engine::clear_stats_cache( $current_user_id );
+        }
+    }
+    
+    /**
+     * Clear stats cache when a listing is deleted
+     * 
+     * @param int $post_id The post ID
+     * @param WP_Post $post The post object
+     */
+    public static function clear_stats_on_delete( $post_id, $post ) {
+        // Only for our post type
+        if ( ! $post || $post->post_type !== C::POST_TYPE ) {
+            return;
+        }
+        
+        // Clear cache for the post author
+        Engine::clear_stats_cache( $post->post_author );
+        
+        // Clear cache for current user if different
+        $current_user_id = get_current_user_id();
+        if ( $current_user_id !== $post->post_author ) {
+            Engine::clear_stats_cache( $current_user_id );
+        }
+    }
+    
+    /**
+     * Clear stats cache when post status changes
+     * (e.g., draft to publish, publish to sold)
+     * 
+     * @param string $new_status New post status
+     * @param string $old_status Old post status
+     * @param WP_Post $post The post object
+     */
+    public static function clear_stats_on_status_change( $new_status, $old_status, $post ) {
+        // Only for our post type
+        if ( $post->post_type !== C::POST_TYPE ) {
+            return;
+        }
+        
+        // Only clear if status actually changed
+        if ( $new_status === $old_status ) {
+            return;
+        }
+        
+        // Clear cache for the post author
+        Engine::clear_stats_cache( $post->post_author );
+        
+        // Clear cache for current user if admin
+        if ( current_user_can( C::CAP_MANAGE ) ) {
+            Engine::clear_stats_cache( get_current_user_id() );
+        }
+    }
 }

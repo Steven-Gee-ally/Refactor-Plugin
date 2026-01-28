@@ -309,3 +309,70 @@ input:checked+.switch-slider {
 input:checked+.switch-slider:before {
     transform: translateX(22px);
 }
+
+/* Synergy Terminal: Executive Header */
+.afc-synergy-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.afc-welcome-meta h1 {
+    margin: 0;
+    font-size: 24px;
+    color: #0f172a;
+    font-weight: 800;
+}
+
+.afc-status-online {
+    color: #10b981;
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Executive Stat Tiles */
+.afc-stat-tiles {
+    display: flex;
+    gap: 20px;
+}
+
+.afc-stat-tile {
+    background: #f8fafc;
+    padding: 15px 25px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+    min-width: 120px;
+}
+
+.afc-stat-tile strong {
+    display: block;
+    font-size: 28px;
+    color: #0369a1; /* High-end Sky Blue */
+    line-height: 1;
+}
+
+.afc-stat-tile span {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .afc-synergy-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 20px;
+    }
+}
