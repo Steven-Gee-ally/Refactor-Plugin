@@ -25,6 +25,11 @@ $display_sqft  = ( ! empty($sqft) ) ? number_format( (float)$sqft ) . ' <small>S
 ?>
 
 <div class="afcglide-card">
+    <?php 
+    if ( get_post_field('post_author', $post_id) == get_current_user_id() ) {
+        echo '<div class="afc-personal-badge">MY ASSET</div>';
+    }
+    ?>
     <div class="afcglide-card-image">
         <a href="<?php echo esc_url( get_permalink() ); ?>" class="afc-image-link">
             <?php if ( has_post_thumbnail() ) : ?>
@@ -72,6 +77,20 @@ $display_sqft  = ( ! empty($sqft) ) ? number_format( (float)$sqft ) . ' <small>S
         
         <div class="afc-card-footer">
             <a href="<?php echo esc_url( get_permalink() ); ?>" class="afc-view-btn">EXPLORE PROPERTY</a>
+            
+            <?php if ( is_user_logged_in() && ! is_admin() ) : ?>
+            <div class="afc-asset-toolkit">
+                <a href="#" class="afc-toolkit-btn" title="Generate PDF Brochure">
+                    <span class="dashicons dashicons-pdf"></span> BROCHURE
+                </a>
+                <a href="#" class="afc-toolkit-btn" title="Copy Social Media Text">
+                    <span class="dashicons dashicons-share"></span> SOCIAL
+                </a>
+                <a href="<?php echo esc_url( admin_url('post.php?action=edit&post=' . $post_id) ); ?>" class="afc-toolkit-btn" title="Edit Listing">
+                    <span class="dashicons dashicons-edit"></span> EDIT
+                </a>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>

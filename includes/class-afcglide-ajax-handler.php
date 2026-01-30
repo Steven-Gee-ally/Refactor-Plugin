@@ -37,6 +37,15 @@ class AFCGlide_Ajax_Handler {
         add_action( 'save_post_' . C::POST_TYPE, [ __CLASS__, 'clear_stats_on_save' ], 10, 3 );
         add_action( 'delete_post', [ __CLASS__, 'clear_stats_on_delete' ], 10, 2 );
         add_action( 'transition_post_status', [ __CLASS__, 'clear_stats_on_status_change' ], 10, 3 );
+
+        // NEW: Agent Recruitment Protocol (Broker Only)
+        add_action( 'wp_ajax_afcg_recruit_agent', [ __CLASS__, 'handle_agent_recruitment' ] );
+
+        // NEW: Focus Mode Toggle
+        add_action( 'wp_ajax_afcg_toggle_focus', [ __CLASS__, 'handle_focus_toggle' ] );
+
+        // NEW: Backbone System Sync
+        add_action( 'wp_ajax_afcg_sync_backbone', [ __CLASS__, 'handle_sync_backbone' ] );
     }
 
     /**
@@ -447,5 +456,43 @@ class AFCGlide_Ajax_Handler {
         if ( current_user_can( C::CAP_MANAGE ) ) {
             Engine::clear_stats_cache( get_current_user_id() );
         }
+    }
+
+    /**
+     * 👑 AGENT RECRUITMENT PROTOCOL (Bulletproof)
+     */
+    public static function handle_agent_recruitment() {
+        check_ajax_referer( C::NONCE_RECRUITMENT, 'security' );
+        if ( ! current_user_can( C::CAP_MANAGE ) ) self::send_error( 'Permission Denied.' );
+        $user_id = wp_create_user( sanitize_user($_POST['agent_username']), $_POST['password'], sanitize_email($_POST['agent_email']) );
+        if ( is_wp_error($user_id) ) self::send_error( $user_id->get_error_message() );
+        $user = new \WP_User( $user_id );
+        $user->set_role( 'listing_agent' ); 
+        self::send_success( '🚀 AGENT RECRUITED' );
+    }
+
+    /**
+     * 👁️ FOCUS MODE TOGGLE
+     */
+    public static function handle_focus_toggle() {
+        check_ajax_referer( C::NONCE_AJAX, 'security' );
+        $status = sanitize_text_field( $_POST['status'] ?? '0' );
+        update_user_meta( get_current_user_id(), 'afc_focus_mode', $status === '1' ? '1' : '0' );
+        self::send_success( 'Focus Mode Updated' );
+    }
+
+    /**
+     * ⚙️ SYSTEM BACKBONE SYNC
+     */
+    public static function handle_sync_backbone() {
+        check_ajax_referer( C::NONCE_AJAX, 'security' );
+        if ( ! current_user_can( C::CAP_MANAGE ) ) self::send_error( 'Permission Denied.' );
+
+        update_option( 'afc_system_label', sanitize_text_field( $_POST['system_label'] ?? '' ) );
+        update_option( 'afc_whatsapp_color', sanitize_hex_color( $_POST['whatsapp_color'] ?? '#25d366' ) );
+        update_option( 'afc_global_lockdown', ( $_POST['lockdown'] === '1' ) ? '1' : '0' );
+        update_option( 'afc_quality_gatekeeper', ( $_POST['gatekeeper'] === '1' ) ? '1' : '0' );
+
+        self::send_success( 'System Sync Executed' );
     }
 }

@@ -1,7 +1,7 @@
 <?php
 /**
  * AFCGlide - Professional Agent Submission Form
- * Version 4.4.0 - Full Production Master
+ * Version 5.0.0-GOLD - Full Production Master
  * NO COMPROMISE EDITION - Full Narrative & Metric Logic
  */
 

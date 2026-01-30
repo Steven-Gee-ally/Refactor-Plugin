@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * 1. CORE CONSTANTS & CONFIGURATION
  * ============================================================================
  */
-define( 'AFCG_VERSION', '5.0.0' );
+define( 'AFCG_VERSION', '5.0.7' );
 define( 'AFCG_PATH', plugin_dir_path( __FILE__ ) );
 define( 'AFCG_URL', plugin_dir_url( __FILE__ ) );
 
@@ -48,6 +48,7 @@ $core_classes = [
     'includes/class-afcglide-welcome.php',
     'includes/helpers/class-validator.php',
     'includes/class-afcglide-synergy-engine.php',
+    'includes/class-afcglide-agent-protection.php',
 ];
 
 foreach ( $core_classes as $file ) {
@@ -105,6 +106,9 @@ function afcglide_init_components() {
    
     // Synergy Engine (The Brains of the Workspace)
     if ( class_exists( '\AFCGlide\Core\AFCGlide_Synergy_Engine' ) ) \AFCGlide\Core\AFCGlide_Synergy_Engine::init();
+
+    // Agent Protection Gatekeeper
+    if ( class_exists( '\AFCGlide\Admin\AFCGlide_Agent_Protections' ) ) \AFCGlide\Admin\AFCGlide_Agent_Protections::init();
 }
 
 /**
@@ -117,6 +121,9 @@ add_action( 'wp_enqueue_scripts', 'afcglide_frontend_assets' );
 function afcglide_frontend_assets() {
     global $post;
     if ( ! is_a( $post, 'WP_Post' ) ) return;
+
+    // 0. Base Design System (Global Variables & Layout)
+    wp_enqueue_style( 'afc-global', AFCG_URL . 'assets/css/afcglide-global.css', [], AFCG_VERSION );
 
     // 1. Single Listing Page Styles
     if ( is_singular( \AFCGlide\Core\Constants::POST_TYPE ) ) {
@@ -131,6 +138,8 @@ function afcglide_frontend_assets() {
         wp_localize_script( 'afc-submission-js', 'afc_vars', [
             'ajax_url'          => admin_url('admin-ajax.php'),
             'nonce'             => wp_create_nonce( \AFCGlide\Core\Constants::NONCE_AJAX ),
+            'inquiry_nonce'     => wp_create_nonce( \AFCGlide\Core\Constants::NONCE_INQUIRY ),
+            'recruit_nonce'     => wp_create_nonce( \AFCGlide\Core\Constants::NONCE_RECRUITMENT ),
             'action'            => \AFCGlide\Core\Constants::AJAX_SUBMIT,
             'max_gallery'       => \AFCGlide\Core\Constants::MAX_GALLERY,
             'autosave_interval' => 30000,
@@ -150,13 +159,22 @@ function afcglide_frontend_assets() {
     }
 
     // 3. Synergy Terminal & Grid Styles
-    $sc_check = ['afcglide', 'afcglide_grid', 'afc_agent_inventory'];
+    $sc_check = [
+        'afc_agent_inventory', 
+        'afcglide_login', 
+        'afcglide_submit_listing', 
+        'afcglide_submission_form', 
+        'afcglide_listings_grid', 
+        'afcglide_listings_slider'
+    ];
     $has_afc_shortcode = false;
 
-    foreach ( $sc_check as $sc ) {
-        if ( has_shortcode( $post->post_content, $sc ) ) {
-            $has_afc_shortcode = true;
-            break;
+    if ( is_singular() && isset( $post->post_content ) ) {
+        foreach ( $sc_check as $sc ) {
+            if ( has_shortcode( $post->post_content, $sc ) ) {
+                $has_afc_shortcode = true;
+                break;
+            }
         }
     }
 
@@ -202,14 +220,15 @@ function afcglide_admin_assets( $hook ) {
         wp_enqueue_style( 'afc-settings-ui', AFCG_URL . 'assets/css/afcglide-admin-settings.css', ['afc-admin-core'], AFCG_VERSION );
     }
 
-    if ( isset($_GET['page']) && $_GET['page'] === 'afcglide-dashboard' ) {
+    if ( isset($_GET['page']) && in_array($_GET['page'], ['afcglide-dashboard', 'afcglide-inventory']) ) {
         wp_enqueue_style( 'afc-dashboard-css', AFCG_URL . 'assets/css/afcglide-dashboard.css', ['afc-admin-core'], AFCG_VERSION );
     }
     
     wp_enqueue_script( 'afc-admin-js', AFCG_URL . 'assets/js/afcglide-admin.js', ['jquery', 'jquery-ui-sortable'], AFCG_VERSION, true );
     wp_localize_script( 'afc-admin-js', 'afc_vars', [
-        'ajax_url' => admin_url('admin-ajax.php'),
-        'nonce'    => wp_create_nonce( \AFCGlide\Core\Constants::NONCE_AJAX ),
+        'ajax_url'      => admin_url('admin-ajax.php'),
+        'nonce'         => wp_create_nonce( \AFCGlide\Core\Constants::NONCE_AJAX ),
+        'nonce_recruit' => wp_create_nonce( \AFCGlide\Core\Constants::NONCE_RECRUITMENT ),
     ]);
 }
 

@@ -33,57 +33,80 @@ class AFCGlide_Inventory {
             [ __CLASS__, 'render_inventory_screen' ]
         );
     }
-
     public static function render_inventory_screen() {
         $current_user = wp_get_current_user();
         $is_broker = current_user_can( C::CAP_MANAGE );
         
-        // Pagination
+        // Pagination & Filters
         $paged = isset( $_GET['paged'] ) ? max( 1, intval( $_GET['paged'] ) ) : 1;
-        
-        // Search
         $search = isset( $_GET['s'] ) ? sanitize_text_field( $_GET['s'] ) : '';
-        
-        // Status filter
         $status_filter = isset( $_GET['status'] ) ? sanitize_text_field( $_GET['status'] ) : '';
         
-        // Build query args
-        $query_args = [
+        $query = self::get_inventory_query([
             'paged' => $paged,
+            's' => $search,
+            'status' => $status_filter
+        ]);
+        
+        $detailed_stats = Engine::get_detailed_stats( $is_broker ? null : $current_user->ID );
+        ?>
+        <div class="afc-control-center" style="margin-right: 20px;">
+            <?php self::render_inventory_table( $query, $detailed_stats ); ?>
+        </div>
+        <?php
+    }
+
+    /**
+     * WORLD-CLASS: Helper to get inventory query
+     */
+    public static function get_inventory_query( $args = [] ) {
+        $defaults = [
+            'paged' => 1,
             'posts_per_page' => 20,
+            's' => '',
+            'status' => 'all'
+        ];
+        $params = wp_parse_args( $args, $defaults );
+        
+        $query_args = [
+            'paged' => $params['paged'],
+            'posts_per_page' => $params['posts_per_page'],
         ];
         
-        // Add search
-        if ( ! empty( $search ) ) {
-            $query_args['s'] = $search;
+        if ( ! empty( $params['s'] ) ) {
+            $query_args['s'] = $params['s'];
         }
         
-        // Add status filter
-        if ( ! empty( $status_filter ) && $status_filter !== 'all' ) {
-            $query_args['post_status'] = $status_filter;
+        if ( ! empty( $params['status'] ) && $params['status'] !== 'all' ) {
+            $query_args['post_status'] = $params['status'];
         } else {
             $query_args['post_status'] = [ 'publish', 'pending', 'draft', 'sold' ];
         }
         
-        // WORLD-CLASS: Fetch via Synergy Engine for data consistency
-        $query = Engine::get_agent_inventory( 20, $query_args );
-        
-        // Get detailed stats
-        $detailed_stats = Engine::get_detailed_stats( $is_broker ? null : $current_user->ID );
-        ?>
+        return Engine::get_agent_inventory( $params['posts_per_page'], $query_args );
+    }
 
-        <div class="afc-control-center" style="margin-right: 20px;">
-            <div class="afc-top-bar" style="background: linear-gradient(90deg, #f0fdf4 0%, #dcfce7 100%); border-bottom: 2px solid #86efac; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-radius: 12px 12px 0 0;">
-                <div style="font-size: 11px; font-weight: 600; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase;">Operator: <span style="color:#059669; font-weight: 800;"><?php echo esc_html($current_user->display_name); ?></span></div>
-                <div style="font-size: 13px; font-weight: 700; color: #059669; letter-spacing: 1px;">💼 GLOBAL ASSET INVENTORY</div>
-                <div style="font-size: 11px; font-weight: 600; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase;">Total Assets: <span style="color:#059669; font-weight: 800;"><?php echo $query->found_posts; ?></span></div>
+    /**
+     * WORLD-CLASS: Refactored to allow embedding in other pages (Dashboard merge)
+     */
+    public static function render_inventory_table( $query, $detailed_stats ) {
+        $current_user = wp_get_current_user();
+        $is_broker = current_user_can( C::CAP_MANAGE );
+        $search = isset( $_GET['s'] ) ? sanitize_text_field( $_GET['s'] ) : '';
+        $status_filter = isset( $_GET['status'] ) ? sanitize_text_field( $_GET['status'] ) : '';
+        $paged = isset( $_GET['paged'] ) ? max( 1, intval( $_GET['paged'] ) ) : 1;
+        ?>
+            <div class="afc-inventory-top-blue">
+                <div class="op-label">OPERATOR: <span><?php echo esc_html($current_user->display_name); ?></span></div>
+                <div class="hub-label">💼 GLOBAL ASSET MANAGEMENT HUB</div>
+                <div class="count-label">TOTAL ASSETS: <span><?php echo $query->found_posts; ?></span></div>
             </div>
 
             <div style="background: white; padding: 40px 45px; border-bottom: 1px solid #e2e8f0; margin-bottom: 0;">
                 <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 30px;">
                     <div>
-                        <h1 style="margin:0; font-size:28px; font-weight: 800; letter-spacing:-1px; color:#1e293b;">Asset Management Terminal</h1>
-                        <p style="margin:8px 0 0; color:#64748b; font-size:15px; font-weight:500;">Precision monitoring and deployment of your high-end portfolio.</p>
+                        <h1 style="margin:0; font-size:32px; font-weight: 900; letter-spacing:-1.5px; color:#064e3b;">Global Asset Management Hub</h1>
+                        <p style="margin:8px 0 0; color:#166534; font-size:16px; font-weight:600; opacity:0.8;">Precision monitoring and multi-channel deployment of the company portfolio.</p>
                     </div>
                     <a href="<?php echo admin_url('post-new.php?post_type=' . C::POST_TYPE); ?>" 
                        style="background: #10b981; color: white; padding: 14px 28px; font-size: 12px; font-weight: 800; text-decoration: none; border-radius: 8px; text-transform: uppercase; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); display: inline-flex; align-items: center; gap: 8px;">
@@ -157,7 +180,7 @@ class AFCGlide_Inventory {
                             <tr>
                                 <td colspan="7" style="padding: 80px; text-align: center; color: #94a3b8; font-size: 15px; font-weight: 600;">
                                     <?php if ( ! empty( $search ) ) : ?>
-                                        No assets found matching "<?php echo esc_html( $search ); ?>". <a href="<?php echo admin_url('admin.php?page=afcglide-inventory'); ?>" style="color:#10b981; text-decoration:none;">Clear search</a>
+                                        No assets found matching "<?php echo esc_html( $search ); ?>". <a href="<?php echo admin_url('admin.php?page=afcglide-dashboard'); ?>" style="color:#10b981; text-decoration:none;">Clear search</a>
                                     <?php else : ?>
                                         No assets detected. Ready to <a href="<?php echo admin_url('post-new.php?post_type=' . C::POST_TYPE); ?>" style="color:#10b981; text-decoration:none;">initialize your first deployment</a>?
                                     <?php endif; ?>
@@ -189,8 +212,8 @@ class AFCGlide_Inventory {
                             ?>
                                 <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
                                     <td style="padding: 15px 25px;">
-                                        <div style="width: 50px; height: 50px; border-radius: 10px; overflow: hidden; border: 2px solid #f1f5f9; background: #f1f5f9;">
-                                            <img src="<?php echo esc_url($thumb); ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                                        <div style="width: 50px; height: 50px; border-radius: 10px; overflow: hidden; border: 2px solid #86efac; background: #f1f5f9; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                                            <img src="<?php echo esc_url($thumb); ?>" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
                                         </div>
                                     </td>
                                     <td style="padding: 15px 25px;">
@@ -230,9 +253,9 @@ class AFCGlide_Inventory {
                                     </td>
                                     <td style="padding: 15px 25px; text-align: right;">
                                         <div style="display: flex; gap: 6px; justify-content: flex-end;">
-                                            <a href="<?php echo get_edit_post_link( $post_id ); ?>" style="background:#f1f5f9; color:#475569; padding: 8px 12px; border-radius: 6px; font-size:10px; font-weight:800; text-decoration:none; border: 1px solid #e2e8f0;">EDIT</a>
-                                            <a href="<?php echo get_permalink( $post_id ); ?>" target="_blank" style="background:#10b981; color:white; padding: 8px 12px; border-radius: 6px; font-size:10px; font-weight:800; text-decoration:none;">VIEW</a>
-                                            <a href="<?php echo get_delete_post_link( $post_id ); ?>" onclick="return confirm('Archive this asset?');" style="background:#fef2f2; color:#ef4444; padding: 8px 12px; border-radius: 6px; font-size:10px; font-weight:800; text-decoration:none; border: 1px solid #fecaca;">TRASH</a>
+                                            <a href="<?php echo get_edit_post_link( $post_id ); ?>" style="background:white; color:#166534; padding: 8px 14px; border-radius: 8px; font-size:10px; font-weight:800; text-decoration:none; border: 2px solid #86efac; transition: 0.2s;" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='white'">EDIT</a>
+                                            <a href="<?php echo get_permalink( $post_id ); ?>" target="_blank" style="background:#10b981; color:white; padding: 8px 14px; border-radius: 8px; font-size:10px; font-weight:800; text-decoration:none; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);">VIEW</a>
+                                            <a href="<?php echo get_delete_post_link( $post_id ); ?>" onclick="return confirm('Archive this asset?');" style="background:#fef2f2; color:#ef4444; padding: 8px 14px; border-radius: 8px; font-size:10px; font-weight:800; text-decoration:none; border: 2px solid #fecaca;">TRASH</a>
                                         </div>
                                     </td>
                                 </tr>

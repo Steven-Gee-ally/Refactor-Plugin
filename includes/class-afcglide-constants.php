@@ -2,8 +2,8 @@
 /**
  * AFCGlide Constants
  * Central definition of all meta keys, options, and system constants
- * * @package AFCGlide
- * @version 4.1.0 (Aligned with Settings v4.7.2)
+ * @package AFCGlide
+ * @version 5.0.0-GOLD
  */
 
 namespace AFCGlide\Core;
@@ -15,7 +15,7 @@ final class Constants {
     /**
      * Plugin Version
      */
-    const VERSION = '4.1.0';
+    const VERSION = '5.0.0-GOLD';
     
     /**
      * Meta Keys - Listing Data
@@ -111,6 +111,8 @@ final class Constants {
      * Nonces
      */
     const NONCE_AJAX       = 'afc_listing_submit'; // MATCHES THE FORM NONCE
+    const NONCE_INQUIRY    = 'afc_inquiry_nonce'; 
+    const NONCE_RECRUITMENT = 'afc_agent_recruit';
     const NONCE_META       = 'afcglide_meta_nonce';
     const NONCE_PROTOCOLS  = 'afc_protocols';
     

@@ -1,7 +1,7 @@
 /**
  * AFCGlide Admin JavaScript
- * Version 4.0.0 - Production Ready
- * Handles all admin interface interactions
+ * Version 5.0.0 - Full Hub Matrix Integration
+ * Handles: Media, UI Optimization, Broker Matrix, and Focus Mode.
  */
 
 jQuery(document).ready(function ($) {
@@ -34,248 +34,171 @@ jQuery(document).ready(function ($) {
     });
 
     // ==========================================
-    // 2. AGENT PHOTO UPLOAD (Single Select)
+    // 2. MEDIA UPLOADERS (Hero, PDF, Gallery)
     // ==========================================
-    $(document).on('click', '.afcglide-upload-image-btn', function (e) {
-        e.preventDefault();
-
-        const $btn = $(this);
-        const frame = wp.media({
-            title: 'Select Agent Photo',
-            multiple: false,
-            library: { type: 'image' }
-        });
-
-        frame.on('select', function () {
-            const attachment = frame.state().get('selection').first().toJSON();
-
-            // Validate dimensions
-            if (attachment.width < 500) {
-                alert('⚠️ IMAGE TOO SMALL\nMinimum 500px width required for agent photos.');
-                return;
-            }
-
-            // Update preview and hidden field
-            $('#agent_photo_id').val(attachment.id);
-            $('#agent-photo-img').attr('src', attachment.url);
-
-            formChanged = true;
-        });
-
-        frame.open();
-    });
-
-   // ==========================================
-    // 2.2 PDF UPLOAD (Asset Intelligence - Fixed IDs)
-    // ==========================================
-    $(document).on('click', '.afc-pdf-upload-btn', function (e) {
-        e.preventDefault();
-        const frame = wp.media({
-            title: 'Select Property Fact Sheet (PDF)',
-            multiple: false,
-            library: { type: 'application/pdf' }
-        });
-
-        frame.on('select', function () {
-            const attachment = frame.state().get('selection').first().toJSON();
-            // Sync with PHP field name: _listing_pdf_id
-            $('input[name="_listing_pdf_id"]').val(attachment.id); 
-            $('#pdf-filename').text('Attached: ' + attachment.filename).css('color', '#10b981');
-            formChanged = true;
-        });
-        frame.open();
-    });
-
-    // ==========================================
-    // 3 & 4. UNIFIED COMMAND CENTER UPLOAD
-    // ==========================================
-    $(document).on('click', '.afc-upload-btn', function (e) {
+    $(document).on('click', '.afcglide-upload-image-btn, .afc-pdf-upload-btn, .afc-upload-btn', function (e) {
         e.preventDefault();
         const $btn = $(this);
+        const isPdf = $btn.hasClass('afc-pdf-upload-btn');
         const $zone = $btn.closest('.afc-upload-zone');
         const type = $zone.data('type'); // 'hero', 'gallery', or 'stack'
         const $input = $zone.find('input[type="hidden"]');
         const $preview = $zone.find('.afc-preview-grid');
 
         const frame = wp.media({
-            title: 'Select Asset Media',
-            multiple: (type !== 'hero'),
-            library: { type: 'image' }
+            title: isPdf ? 'Select Property Fact Sheet' : 'Select Asset Media',
+            multiple: (type !== 'hero' && !isPdf && !$btn.hasClass('afcglide-upload-image-btn')),
+            library: { type: isPdf ? 'application/pdf' : 'image' }
         });
 
         frame.on('select', function () {
             const selection = frame.state().get('selection');
-            let currentIds = $input.val() ? $input.val().split(',').filter(Boolean) : [];
 
-            if (type === 'hero') {
+            if (isPdf) {
                 const attachment = selection.first().toJSON();
-                $input.val(attachment.id);
-                $preview.html(`
-                    <div class="afc-preview-item" data-id="${attachment.id}">
-                        <img src="${attachment.url}">
-                        <span class="afc-remove-img">×</span>
-                    </div>
-                `);
+                $('input[name="_listing_pdf_id"]').val(attachment.id);
+                $('#pdf-filename').text('Attached: ' + attachment.filename).css('color', '#3b82f6');
+            } else if ($btn.hasClass('afcglide-upload-image-btn')) {
+                const attachment = selection.first().toJSON();
+                $('#agent_photo_id').val(attachment.id);
+                $('#agent-photo-img').attr('src', attachment.url);
             } else {
-                // Batch Gallery Logic
-                selection.map(function(attachment) {
-                    attachment = attachment.toJSON();
-                    if (!currentIds.includes(attachment.id.toString())) {
-                        currentIds.push(attachment.id);
-                        $preview.append(`
-                            <div class="afc-preview-item" data-id="${attachment.id}">
-                                <img src="${attachment.url}">
-                                <span class="afc-remove-img">×</span>
-                            </div>
-                        `);
-                    }
-                });
-                $input.val(currentIds.join(','));
+                let currentIds = $input.val() ? $input.val().split(',').filter(Boolean) : [];
+                if (type === 'hero') {
+                    const attachment = selection.first().toJSON();
+                    $input.val(attachment.id);
+                    $preview.html(`<div class="afc-preview-item" data-id="${attachment.id}"><img src="${attachment.url}"><span class="afc-remove-img">×</span></div>`);
+                } else {
+                    selection.map(attachment => {
+                        attachment = attachment.toJSON();
+                        if (!currentIds.includes(attachment.id.toString())) {
+                            currentIds.push(attachment.id);
+                            $preview.append(`<div class="afc-preview-item" data-id="${attachment.id}"><img src="${attachment.url}"><span class="afc-remove-img">×</span></div>`);
+                        }
+                    });
+                    $input.val(currentIds.join(','));
+                }
+                initSortable();
             }
-            initSortable();
             formChanged = true;
         });
         frame.open();
     });
 
     // ==========================================
-    // 5. REMOVE IMAGE (Unified Logic)
+    // 3. REMOVE IMAGE & SORTING
     // ==========================================
     $(document).on('click', '.afc-remove-img', function (e) {
         const $item = $(this).closest('.afc-preview-item');
         const $zone = $item.closest('.afc-upload-zone');
         const $input = $zone.find('input[type="hidden"]');
-        
-        $item.fadeOut(200, function() {
+        $item.fadeOut(200, function () {
             $(this).remove();
-            // Recalculate remaining IDs
-            const remainingIds = $zone.find('.afc-preview-item').map(function() {
-                return $(this).data('id');
-            }).get();
+            const remainingIds = $zone.find('.afc-preview-item').map(function () { return $(this).data('id'); }).get();
             $input.val(remainingIds.join(','));
         });
         formChanged = true;
     });
-    // ==========================================
-    // 6. AGENT AUTO-FILL
-    // ==========================================
-    $(document).on('change', '#afc_agent_selector', function () {
-        const $selected = $(this).find(':selected');
 
-        if (!$selected.val()) return;
-
-        // Fill in fields
-        $('#afc_agent_name').val($selected.data('name'));
-        $('#afc_agent_phone').val($selected.data('phone'));
-        $('#agent_photo_id').val($selected.data('photo-id'));
-
-        // Update photo preview
-        const photoUrl = $selected.data('photo-url');
-        if (photoUrl) {
-            $('#agent-photo-img').attr('src', photoUrl);
-        }
-
-        formChanged = true;
-    });
-
-    // ==========================================
-    // 7. DRAG & DROP SORTING (Gallery & Stack)
-    // ==========================================
     function initSortable() {
-        if (typeof $.fn.sortable === 'undefined') {
-            console.warn('jQuery UI Sortable not loaded');
-            return;
+        if (typeof $.fn.sortable !== 'undefined') {
+            $('.afc-preview-grid').sortable({
+                items: '.afc-preview-item',
+                cursor: 'grabbing',
+                placeholder: 'afc-sortable-placeholder',
+                update: function () {
+                    const $zone = $(this).closest('.afc-upload-zone');
+                    const newIds = $(this).find('.afc-preview-item').map(function () { return $(this).data('id'); }).get();
+                    $zone.find('input[type="hidden"]').val(newIds.join(','));
+                    formChanged = true;
+                }
+            });
         }
-
-        $('.afc-preview-grid').sortable({
-            items: '.afc-preview-item',
-            cursor: 'grabbing',
-            placeholder: 'afc-sortable-placeholder',
-            tolerance: 'pointer',
-            update: function (event, ui) {
-                const $zone = $(this).closest('.afc-upload-zone');
-                const $input = $zone.find('input[type="hidden"]');
-
-                // Recalculate order
-                const newIds = [];
-                $(this).find('.afc-preview-item').each(function () {
-                    newIds.push($(this).data('id'));
-                });
-
-                $input.val(newIds.join(','));
-
-                console.log('New order saved: ' + newIds.join(','));
-                formChanged = true;
-            }
-        });
     }
-
-    // Initialize on page load
     initSortable();
 
     // ==========================================
-    // 8. ENFORCE METABOX ORDER
+    // 4. HUB INTERACTIVITY (MATRIX & FOCUS)
+    // ==========================================
+
+    // FOCUS MODE TOGGLE
+    $(document).on('change', '#afc-focus-toggle', function () {
+        $.post(ajaxurl, {
+            action: 'afcg_toggle_focus',
+            security: afc_vars.nonce,
+            status: $(this).is(':checked') ? '1' : '0'
+        }, function (res) {
+            if (res.success) location.reload();
+        });
+    });
+
+    // BACKBONE SYNC
+    $(document).on('click', '#afc-save-backbone', function (e) {
+        e.preventDefault();
+        const $btn = $(this);
+        $btn.text('SYNCING...').prop('disabled', true);
+
+        $.post(ajaxurl, {
+            action: 'afcg_sync_backbone',
+            security: afc_vars.nonce,
+            system_label: $('#afc-system-label').val(),
+            whatsapp_color: $('#afc-whatsapp-color').val(),
+            lockdown: $('#afc-lockdown-toggle').is(':checked') ? '1' : '0',
+            gatekeeper: $('#afc-gatekeeper-toggle').is(':checked') ? '1' : '0'
+        }, function (res) {
+            if (res.success) {
+                $btn.text('✅ SYNCED').css('background', '#3b82f6');
+                setTimeout(() => location.reload(), 800);
+            } else {
+                alert('Sync Error: ' + (res.data || 'Permission Denied'));
+                $btn.text('EXECUTE SYSTEM SYNC').prop('disabled', false);
+            }
+        });
+    });
+
+    // AGENT RECRUITMENT
+    $(document).on('click', '#afc-recruit-btn', function (e) {
+        e.preventDefault();
+        const $btn = $(this);
+        const data = {
+            action: 'afcg_recruit_agent',
+            security: afc_vars.nonce_recruit,
+            agent_username: $('#afc-new-user').val(),
+            agent_email: $('#afc-new-email').val(),
+            password: $('#afc-new-pass').val()
+        };
+
+        if (!data.agent_username || !data.agent_email) {
+            alert('Username and Email are mandatory.');
+            return;
+        }
+
+        $btn.text('RECRUITING...').prop('disabled', true);
+        $.post(ajaxurl, data, function (res) {
+            if (res.success) {
+                $btn.text('✅ RECRUITED');
+                setTimeout(() => location.search += '&agent_added=1', 1000);
+            } else {
+                alert('Recruitment Error: ' + (res.data || 'User likely exists'));
+                $btn.text('RECRUIT AGENT').prop('disabled', false);
+            }
+        });
+    });
+
+    // ==========================================
+    // 5. LAYOUT ENFORCEMENT & OPTIMIZATION
     // ==========================================
     function enforceLayoutOrder() {
         const $container = $('#normal-sortables');
         if (!$container.length) return;
-
-        const order = [
-            'afc_intro',       // 1. Property Description (Headline)
-            'afc_description', // 2. Property Narrative
-            'afc_details',     // 3. Property Specifications
-            'afc_media_hub',   // 4. Visual Command Center
-            'afc_slider',      // 5. Gallery Slider
-            'afc_location_v2', // 6. Location & GPS
-            'afc_amenities',   // 7. Property Features
-            'afc_agent',       // 8. Agent Branding
-            'afc_intelligence',// 10. Intelligence & Files
-            'afc_publish_box'  // 11. Publish Control
-        ];
-
-        order.forEach(function (id) {
-            const $box = $('#' + id);
-            if ($box.length) {
-                $container.append($box);
-            }
-        });
+        const order = ['afc_intro', 'afc_description', 'afc_details', 'afc_media_hub', 'afc_slider', 'afc_location_v2', 'afc_amenities', 'afc_agent', 'afc_intelligence', 'afc_publish_box'];
+        order.forEach(id => { const $box = $('#' + id); if ($box.length) $container.append($box); });
     }
-
     enforceLayoutOrder();
 
     // ==========================================
-    // 9. PUBLISH BUTTON ENHANCEMENT
+    // 6. CONSOLE LOG
     // ==========================================
-    $(document).on('click', '#publish', function (e) {
-        const $title = $('#title');
-
-        if ($title.val().trim() === '') {
-            e.preventDefault();
-            alert('⚠️ Please enter a property title before publishing.');
-            $title.focus();
-            return false;
-        }
-
-        // Check if hero image is set
-        const heroId = $('input[name="_listing_hero_id"]').val();
-
-        if (!heroId) {
-            const confirmed = confirm('⚠️ NO HERO IMAGE SET\n\nThis listing does not have a hero image. Publishing without one may result in poor presentation.\n\nDo you want to continue anyway?');
-
-            if (!confirmed) {
-                e.preventDefault();
-                return false;
-            }
-        }
-
-        // Show loading state
-        $(this).prop('disabled', true).val('Publishing...').css('opacity', '0.7');
-    });
-
-    // ==========================================
-    // 10. CONSOLE WELCOME MESSAGE
-    // ==========================================
-    console.log('%c🚀 AFCGlide Admin v4.0.0 Loaded', 'color: #10b981; font-weight: bold; font-size: 14px;');
-    console.log('%cDrag to reorder | Click × to remove | Auto-save on publish', 'color: #64748b; font-size: 12px;');
+    console.log('%c🚀 AFCGlide Admin v5.0.0 (Matrix-Ready) Loaded', 'color: #3b82f6; font-weight: 800;');
 
 });

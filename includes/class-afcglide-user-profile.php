@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
  * AFCGlide User Profile Extensions
- * Version 2.0 - Identity Shield Integration
+ * Version 2.1 - Identity Shield & Notification Routing
  */
 class AFCGlide_User_Profile {
 
@@ -15,10 +15,8 @@ class AFCGlide_User_Profile {
         add_action( 'personal_options_update', [ __CLASS__, 'save_agent_fields' ] );
         add_action( 'edit_user_profile_update', [ __CLASS__, 'save_agent_fields' ] );
         
-        // Add lockdown notice
         add_action( 'admin_notices', [ __CLASS__, 'show_identity_shield_notice' ] );
         
-        // Add custom styling to profile page
         add_action( 'admin_head-profile.php', [ __CLASS__, 'profile_page_styles' ] );
         add_action( 'admin_head-user-edit.php', [ __CLASS__, 'profile_page_styles' ] );
     }
@@ -49,7 +47,102 @@ class AFCGlide_User_Profile {
      * Add custom styling to profile page
      */
     public static function profile_page_styles() {
-        // Styles moved to assets/css/afcglide-admin.css
+        echo '<style>
+            /* 🛑 SUPPRESS WORDPRESS CLUTTER */
+            #personal-options, 
+            .user-rich-editing-wrap, 
+            .user-admin-color-wrap, 
+            .user-comment-shortcuts-wrap, 
+            .user-admin-bar-front-wrap, 
+            .user-language-wrap,
+            .user-first-name-wrap, 
+            .user-last-name-wrap, 
+            .user-nickname-wrap, 
+            .user-display-name-wrap,
+            .user-url-wrap,
+            .user-description-wrap,
+            .user-profile-picture-wrap,
+            .application-passwords,
+            form#your-profile > h2,
+            form#your-profile > h3 {
+                display: none !important;
+            }
+
+            /* 🟢 THE PREMIUM LOOK */
+            .afc-profile-section {
+                background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+                padding: 45px;
+                border-radius: 25px;
+                margin-bottom: 40px;
+                border: 2px solid #86efac;
+                box-shadow: 0 15px 35px rgba(22, 101, 52, 0.08);
+                font-family: "Inter", sans-serif;
+            }
+
+            .afc-profile-section h2 {
+                font-size: 32px !important;
+                font-weight: 900 !important;
+                color: #064e3b !important;
+                margin-top: 0 !important;
+                letter-spacing: -1.5px !important;
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+
+            .afc-profile-section h3 {
+                font-size: 18px !important;
+                font-weight: 800 !important;
+                color: #166534 !important;
+                margin: 40px 0 20px 0 !important;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                border-bottom: 2px solid rgba(22,101,52,0.1);
+                padding-bottom: 10px;
+            }
+
+            .afc-profile-section table.form-table th {
+                width: 250px;
+                color: #166534;
+                font-weight: 700;
+            }
+
+            .afc-profile-section table.form-table input[type="text"],
+            .afc-profile-section table.form-table input[type="number"],
+            .afc-profile-section table.form-table textarea {
+                border-radius: 12px;
+                border: 1px solid #86efac;
+                padding: 12px 18px;
+                background: white;
+                box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+                width: 100%;
+                max-width: 450px;
+            }
+
+            .afc-profile-section table.form-table input:focus {
+                border-color: #10b981;
+                box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+            }
+
+            .afc-broker-badge {
+                background: #1e40af;
+                color: white;
+                padding: 6px 14px;
+                border-radius: 30px;
+                font-size: 12px;
+                font-weight: 900;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+            
+            .user-email-wrap, .user-pass1-wrap, .user-pass2-wrap {
+                background: white;
+                padding: 20px;
+                border-radius: 15px;
+                margin-bottom: 10px;
+                border: 1px solid #e2e8f0;
+            }
+        </style>';
     }
 
     /**
@@ -57,139 +150,94 @@ class AFCGlide_User_Profile {
      */
     public static function add_agent_fields( $user ) {
         $is_locked = get_option('afc_identity_shield', '0') === '1' && ! current_user_can('manage_options');
+        $is_broker = current_user_can('manage_options');
         $disabled = $is_locked ? 'disabled' : '';
         
         // Get existing values
-        $phone = get_user_meta( $user->ID, 'agent_phone', true );
-        $license = get_user_meta( $user->ID, 'agent_license', true );
-        $bio = get_user_meta( $user->ID, 'agent_bio', true );
-        $office = get_user_meta( $user->ID, 'agent_office', true );
+        $phone       = get_user_meta( $user->ID, 'agent_phone', true );
+        $whatsapp    = get_user_meta( $user->ID, 'agent_whatsapp', true );
+        $cell_sms    = get_user_meta( $user->ID, 'agent_cell_sms', true );
+        $license     = get_user_meta( $user->ID, 'agent_license', true );
+        $bio         = get_user_meta( $user->ID, 'agent_bio', true );
         $specialties = get_user_meta( $user->ID, 'agent_specialties', true );
+        $commission  = get_user_meta( $user->ID, 'agent_commission', true ) ?: '100';
         ?>
         
         <div class="afc-profile-section">
             <h2>
-                <span style="font-size: 28px;">🏢</span>
-                AFCGlide Agent Profile
-                <?php if ($is_locked) : ?>
-                    <span style="font-size: 20px; margin-left: auto;">🔒</span>
+                <span style="font-size: 40px;">👤</span>
+                <?php echo $is_broker ? 'Brokerage Headquarters' : 'Agent Identity Terminal'; ?>
+                <?php if ($is_broker) : ?>
+                    <span class="afc-broker-badge">LEAD OPERATOR</span>
                 <?php endif; ?>
             </h2>
-            
+
+            <?php if ($is_broker) : ?>
+            <h3>📉 Brokerage Protocols</h3>
+            <table class="form-table">
+                <tr>
+                    <th><label for="agent_commission">Commission Split (%)</label></th>
+                    <td>
+                        <input type="number" name="agent_commission" id="agent_commission" value="<?php echo esc_attr($commission); ?>" class="small-text">
+                        <p class="description">Global default for transactional calculations.</p>
+                    </td>
+                </tr>
+            </table>
+            <?php endif; ?>
+
+            <h3>📱 Agent Identity & Contact</h3>
             <table class="form-table">
                 <tbody>
                     <tr>
-                        <th><label for="agent_phone">Contact Phone</label></th>
+                        <th><label for="agent_phone">Public Display Phone</label></th>
                         <td>
-                            <input type="text" 
-                                   name="agent_phone" 
-                                   id="agent_phone" 
-                                   value="<?php echo esc_attr( $phone ); ?>" 
-                                   class="regular-text" 
-                                   placeholder="e.g. +1 (555) 123-4567"
-                                   <?php echo $disabled; ?>>
-                            <p class="description">
-                                This phone number will be used for WhatsApp contact buttons and public inquiries.
-                            </p>
-                            <?php if ($is_locked) : ?>
-                                <div class="afc-locked-field">
-                                    🔒 Locked by Identity Shield
-                                </div>
-                            <?php endif; ?>
+                            <input type="text" name="agent_phone" id="agent_phone" value="<?php echo esc_attr( $phone ); ?>" placeholder="e.g. +1 (555) 123-4567" <?php echo $disabled; ?>>
+                            <p class="description">This number is shown on the listing cards.</p>
                         </td>
                     </tr>
-                    
+                    <tr>
+                        <th><label for="agent_whatsapp">WhatsApp Lead Line</label></th>
+                        <td>
+                            <input type="text" name="agent_whatsapp" id="agent_whatsapp" value="<?php echo esc_attr( $whatsapp ); ?>" placeholder="Include Country Code (e.g. 50688889999)" <?php echo $disabled; ?>>
+                            <p class="description">Direct routing for instant Lead Alerts via WhatsApp.</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="agent_cell_sms">Direct Cell (SMS)</label></th>
+                        <td>
+                            <input type="text" name="agent_cell_sms" id="agent_cell_sms" value="<?php echo esc_attr( $cell_sms ); ?>" placeholder="For emergency SMS lead backups" <?php echo $disabled; ?>>
+                        </td>
+                    </tr>
                     <tr>
                         <th><label for="agent_license">License Number</label></th>
                         <td>
-                            <input type="text" 
-                                   name="agent_license" 
-                                   id="agent_license" 
-                                   value="<?php echo esc_attr( $license ); ?>" 
-                                   class="regular-text"
-                                   placeholder="e.g. BRE #12345678"
-                                   <?php echo $disabled; ?>>
-                            <p class="description">
-                                Your real estate license number (displayed on listings if configured).
-                            </p>
-                            <?php if ($is_locked) : ?>
-                                <div class="afc-locked-field">
-                                    🔒 Locked by Identity Shield
-                                </div>
-                            <?php endif; ?>
+                            <input type="text" name="agent_license" id="agent_license" value="<?php echo esc_attr( $license ); ?>" placeholder="e.g. BRE #12345678" <?php echo $disabled; ?>>
                         </td>
                     </tr>
-                    
                     <tr>
-                        <th><label for="agent_office">Office Location</label></th>
+                        <th><label for="agent_specialties">Luxury Specialties</label></th>
                         <td>
-                            <input type="text" 
-                                   name="agent_office" 
-                                   id="agent_office" 
-                                   value="<?php echo esc_attr( $office ); ?>" 
-                                   class="regular-text"
-                                   placeholder="e.g. Beverly Hills Office"
-                                   <?php echo $disabled; ?>>
-                            <?php if ($is_locked) : ?>
-                                <div class="afc-locked-field">
-                                    🔒 Locked by Identity Shield
-                                </div>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                    
-                    <tr>
-                        <th><label for="agent_specialties">Specialties</label></th>
-                        <td>
-                            <input type="text" 
-                                   name="agent_specialties" 
-                                   id="agent_specialties" 
-                                   value="<?php echo esc_attr( $specialties ); ?>" 
-                                   class="regular-text"
-                                   placeholder="e.g. Luxury Estates, Waterfront Properties"
-                                   <?php echo $disabled; ?>>
-                            <p class="description">
-                                Your areas of expertise (comma separated).
-                            </p>
-                            <?php if ($is_locked) : ?>
-                                <div class="afc-locked-field">
-                                    🔒 Locked by Identity Shield
-                                </div>
-                            <?php endif; ?>
-                        </td>
-                    </tr>
-                    
-                    <tr>
-                        <th><label for="agent_bio">Professional Bio</label></th>
-                        <td>
-                            <textarea name="agent_bio" 
-                                      id="agent_bio" 
-                                      rows="6" 
-                                      class="large-text"
-                                      placeholder="Tell potential clients about your experience and expertise..."
-                                      <?php echo $disabled; ?>><?php echo esc_textarea( $bio ); ?></textarea>
-                            <p class="description">
-                                This bio may be displayed on your listings and agent profile pages.
-                            </p>
-                            <?php if ($is_locked) : ?>
-                                <div class="afc-locked-field">
-                                    🔒 Locked by Identity Shield
-                                </div>
-                            <?php endif; ?>
+                            <input type="text" name="agent_specialties" id="agent_specialties" value="<?php echo esc_attr( $specialties ); ?>" placeholder="e.g. Waterfront, Modern Estates" <?php echo $disabled; ?>>
                         </td>
                     </tr>
                 </tbody>
             </table>
-            
-            <?php if ($is_locked) : ?>
-                <div style="margin-top: 20px; padding: 15px 20px; background: #fef3c7; border-left: 4px solid #f59e0b; border-radius: 8px;">
-                    <p style="margin: 0; color: #92400e; font-weight: 600;">
-                        <strong>🛡️ Security Notice:</strong> The Lead Broker has enabled Identity Shield. 
-                        All changes to your agent profile are currently restricted. Contact your administrator to request modifications.
-                    </p>
-                </div>
-            <?php endif; ?>
+
+            <h3>📝 Professional Narrative</h3>
+            <table class="form-table">
+                <tr>
+                    <th><label for="agent_bio">Agent Bio</label></th>
+                    <td>
+                        <textarea name="agent_bio" id="agent_bio" rows="6" placeholder="The story of your real estate expertise..." <?php echo $disabled; ?>><?php echo esc_textarea( $bio ); ?></textarea>
+                    </td>
+                </tr>
+            </table>
+            <input type="hidden" name="afc_identity_operator" value="1">
         </div>
+
+        <div class="afc-profile-section" style="background: white !important; border-color: #e2e8f0 !important;">
+            <h2 style="font-size: 24px !important; color: #1e293b !important;">📡 System Access Protocols</h2>
+            <p style="color: #64748b; margin-top: -10px;">Security and credentials for the AFCGlide secure network.</p>
         <?php
     }
 
@@ -201,33 +249,29 @@ class AFCGlide_User_Profile {
             return;
         }
 
-        // 🔒 IDENTITY SHIELD CHECK
         if ( get_option('afc_identity_shield', '0') === '1' && ! current_user_can('manage_options') ) {
-            // Add an admin notice that will show after redirect
             set_transient( 'afc_profile_locked_' . $user_id, true, 30 );
-            return; // Exit early - don't save anything
+            return; 
         }
 
-        // Save all agent fields if not locked
         $fields = [
             'agent_phone',
+            'agent_whatsapp',
+            'agent_cell_sms',
             'agent_license',
             'agent_office',
             'agent_specialties',
-            'agent_bio'
+            'agent_bio',
+            'agent_commission'
         ];
 
         foreach ($fields as $field) {
             if ( isset($_POST[$field]) ) {
-                $value = sanitize_text_field( $_POST[$field] );
-                if ( $field === 'agent_bio' ) {
-                    $value = sanitize_textarea_field( $_POST[$field] );
-                }
+                $value = ($field === 'agent_bio') ? sanitize_textarea_field( $_POST[$field] ) : sanitize_text_field( $_POST[$field] );
                 update_user_meta( $user_id, $field, $value );
             }
         }
 
-        // Success transient
         set_transient( 'afc_profile_saved_' . $user_id, true, 30 );
     }
 }

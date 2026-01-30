@@ -147,9 +147,14 @@ foreach ($gallery_ids as $img_id) {
                     WhatsApp Enquiry
                 </a>
                 
-                <a href="tel:<?php echo esc_attr($clean_phone); ?>" style="display: block; text-align: center; color: var(--afc-gray); margin-top: 20px; text-decoration: none; font-weight: 600; font-size: 14px;">
-                   Direct: <?php echo esc_html($agent_phone); ?>
-                </a>
+                <div style="margin-top: 30px;">
+                    <?php 
+                    $inquiry_template = AFCG_PATH . 'templates/template-inquiry-form.php';
+                    if ( file_exists( $inquiry_template ) ) {
+                        include $inquiry_template;
+                    }
+                    ?>
+                </div>
             </div>
         </aside>
 

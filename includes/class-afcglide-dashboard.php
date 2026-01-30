@@ -20,13 +20,13 @@ class AFCGlide_Dashboard {
     public static function register_backbone_settings() {
         register_setting( 'afcglide_settings_group', 'afc_agent_name' );
         register_setting( 'afcglide_settings_group', 'afc_agent_phone_display' ); 
-        register_setting( 'afcglide_settings_group', 'afc_primary_color' );
-        register_setting( 'afcglide_settings_group', 'afc_whatsapp_color' );
-        register_setting( 'afcglide_settings_group', 'afc_brokerage_address' );
-        register_setting( 'afcglide_settings_group', 'afc_license_number' );
-        register_setting( 'afcglide_settings_group', 'afc_quality_gatekeeper' );
+        register_setting( 'afc_primary_color', 'afc_primary_color' );
+        register_setting( 'afc_whatsapp_color', 'afc_whatsapp_color' );
+        register_setting( 'afc_brokerage_address', 'afc_brokerage_address' );
+        register_setting( 'afc_license_number', 'afc_license_number' );
+        register_setting( 'afc_quality_gatekeeper', 'afc_quality_gatekeeper' );
         register_setting( 'afc_global_lockdown', 'afc_global_lockdown' );
-        register_setting( 'afcglide_settings_group', 'afc_whatsapp_global' );
+        register_setting( 'afc_whatsapp_global', 'afc_whatsapp_global' );
     }
 
     public static function register_welcome_page() {
@@ -35,12 +35,6 @@ class AFCGlide_Dashboard {
         
         add_menu_page($system_label . ' Hub', $system_label, 'read', 'afcglide-dashboard', [ __CLASS__, 'render_welcome_screen' ], 'dashicons-dashboard', 5.9);
         add_submenu_page('afcglide-dashboard', 'Hub Overview', '📊 Hub Overview', 'read', 'afcglide-dashboard', [ __CLASS__, 'render_welcome_screen' ]);
-        
-        if ($is_broker) {
-            add_submenu_page('afcglide-dashboard', 'Global Inventory', '💼 Global Inventory', 'read', 'afcglide-inventory', '');
-        } else {
-            add_submenu_page('afcglide-dashboard', 'My Portfolio', '💼 My Portfolio', 'read', 'afcglide-inventory', '');
-        }
         
         add_submenu_page('afcglide-dashboard', 'Add New Asset', '🛸 Add New Asset', 'read', 'post-new.php?post_type=' . C::POST_TYPE);
         add_submenu_page('afcglide-dashboard', 'My Profile', '👤 My Profile', 'read', 'profile.php');
@@ -88,134 +82,155 @@ class AFCGlide_Dashboard {
         $current_user = wp_get_current_user();
         $is_broker = current_user_can('manage_options');
         $display_name = strtoupper($current_user->first_name ?: $current_user->display_name);
+        $focus_mode = get_user_meta(get_current_user_id(), 'afc_focus_mode', true) === '1';
         
         // WORLD-CLASS: Fetch stats via Synergy Engine for high performance
         $stats = Engine::get_synergy_stats();
         ?>
 
         <div class="afc-control-center">
-            <div class="afc-top-bar">
-                <div class="afc-top-bar-section">SYSTEM OPERATOR: <span><?php echo esc_html($display_name); ?></span></div>
-                <div class="afc-top-bar-section" style="font-weight:900; text-transform:uppercase;"><?php echo esc_html(get_option('afc_system_label', 'AFCGlide')); ?> GLOBAL INFRASTRUCTURE</div>
-                <div class="afc-top-bar-section">SYSTEM NODE: <span style="font-weight:900;">AFCG-PRO-v5.0</span></div>
+            
+            <!-- 🏢 BRAND Identity -->
+            <div class="afc-hub-brand">
+                <div class="afc-main-logo">
+                    <div class="afc-logo-icon-wrap">
+                        <span class="dashicons dashicons-shield"></span>
+                    </div>
+                    <div class="afc-logo-text">
+                        <strong><?php echo esc_html(get_option('afc_system_label', 'AFCGlide')); ?></strong>
+                        <span>BROKER COMMAND HUB</span>
+                    </div>
+                </div>
             </div>
 
-            <?php if (!$is_broker) : ?>
+            <!-- 🌐 HUB TOP BAR -->
+            <div class="afc-top-bar">
+                <div class="afc-top-bar-section">SYSTEM OPERATOR: <span><?php echo esc_html($display_name); ?></span></div>
+                <div class="afc-top-bar-section"><?php echo esc_html(get_option('afc_system_label', 'AFCGlide')); ?> GLOBAL HUB</div>
+                
+                <div class="afc-focus-wrap">
+                    <span>EYE_FOCUS MODE</span>
+                    <label class="afc-switch">
+                        <input type="checkbox" id="afc-focus-toggle" <?php checked($focus_mode); ?>>
+                        <span class="switch-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 🗲 HERO SECTION -->
             <div class="afc-hero">
                 <div>
-                    <h1 style="margin:0; font-size:36px; font-weight:900; letter-spacing:-1.5px;">PROPERTY PRODUCTION: HQ</h1>
-                    <p style="margin:10px 0 0; opacity:0.9; font-size:18px; font-weight:600;">Welcome back. Initialize your next global asset with one click.</p>
+                    <h1>PROPERTY PRODUCTION: HQ</h1>
+                    <p>Synergy active. Initialize your next global asset now.</p>
                 </div>
                 <a href="<?php echo admin_url('post-new.php?post_type='.C::POST_TYPE); ?>" class="afc-hero-btn">
                     <span>🚀 FAST SUBMIT ASSET</span>
                 </a>
             </div>
-            <?php endif; ?>
 
+            <!-- 📊 UNIFIED SCOREBOARD -->
             <?php echo \AFCGlide\Reporting\AFCGlide_Scoreboard::render_scoreboard( $is_broker ? null : $current_user->ID ); ?>
 
-            <?php if (!$is_broker) : 
-                $drafts = get_posts(['post_type' => C::POST_TYPE, 'post_status' => 'draft', 'author' => $current_user->ID, 'posts_per_page' => -1]);
-                $pending_listings = count(get_posts(['post_type' => C::POST_TYPE, 'post_status' => 'pending', 'author' => $current_user->ID, 'posts_per_page' => -1, 'fields' => 'ids']));
-                $has_profile_photo = get_user_meta($current_user->ID, '_agent_photo_id', true);
-            ?>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; margin-bottom: 35px;">
-                <div style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); padding: 30px; border-radius: 16px; border: 2px solid #93c5fd;">
-                    <div style="font-size: 24px; margin-bottom: 12px;">🎯</div>
-                    <h3 style="margin: 0 0 15px 0; font-size: 16px; font-weight: 800; color: #1e40af;">Quick Start</h3>
-                    <ul style="margin: 0; padding: 0; list-style: none; font-size: 14px; color: #1e293b;">
-                        <?php if (!$has_profile_photo) : ?>
-                        <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;"><span style="color: #f59e0b;">⚠️</span> <a href="<?php echo admin_url('profile.php'); ?>" style="color: #1e40af; text-decoration: none; font-weight: 600;">Complete Your Profile</a></li>
-                        <?php endif; ?>
-                        <li style="margin-bottom: 10px; display: flex; align-items: center; gap: 10px;"><span style="color: #059669;">✓</span> <a href="<?php echo admin_url('post-new.php?post_type='.C::POST_TYPE); ?>" style="color: #1e40af; text-decoration: none; font-weight: 600;">Upload New Listing</a></li>
-                    </ul>
-                </div>
-
-                <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); padding: 30px; border-radius: 16px; border: 2px solid #86efac;">
-                    <div style="font-size: 24px; margin-bottom: 12px;">📈</div>
-                    <h3 style="margin: 0 0 15px 0; font-size: 16px; font-weight: 800; color: #166534;">Your Performance</h3>
-                    <div style="font-size: 14px; color: #1e293b; line-height: 1.8;">
-                        <div style="margin-bottom: 12px;"><span style="font-weight: 700; color: #059669;"><?php echo $stats['count']; ?></span> Active Listings</div>
-                        <div style="margin-bottom: 12px;"><span style="font-weight: 700; color: #059669;"><?php echo number_format($stats['views']); ?></span> Total Views</div>
-                        <div><span style="font-weight: 700; color: #f59e0b;"><?php echo $pending_listings; ?></span> Pending Sale<?php echo $pending_listings != 1 ? 's' : ''; ?></div>
-                    </div>
-                </div>
-
-                <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 30px; border-radius: 16px; border: 2px solid #fbbf24;">
-                    <div style="font-size: 24px; margin-bottom: 12px;">⚡</div>
-                    <h3 style="margin: 0 0 15px 0; font-size: 16px; font-weight: 800; color: #92400e;">Need Attention</h3>
-                    <?php if (!empty($drafts)) : ?>
-                        <div style="font-size: 14px; color: #1e293b; margin-bottom: 12px;"><span style="font-weight: 700; color: #f59e0b;"><?php echo count($drafts); ?></span> Drafts Need Completion</div>
-                        <a href="<?php echo admin_url('admin.php?page=afcglide-inventory'); ?>" style="display: inline-block; background: #f59e0b; color: white; padding: 8px 16px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 700;">View Drafts →</a>
-                    <?php else : ?>
-                        <div style="font-size: 14px; color: #64748b;"><span style="color: #059669;">✓</span> All listings up to date!</div>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <?php endif; ?>
-
-            <?php if ($is_broker) : ?>
-            <div class="afc-quick-actions">
-                <a href="<?php echo admin_url('post-new.php?post_type='.C::POST_TYPE); ?>" class="afc-action-card action-add"><span>➕</span><h3>Add Asset</h3></a>
-                <a href="<?php echo admin_url('admin.php?page=afcglide-inventory'); ?>" class="afc-action-card action-inventory"><span>💼</span><h3>Inventory</h3></a>
-                <a href="<?php echo admin_url('profile.php'); ?>" class="afc-action-card action-identity"><span>👤</span><h3>Profile</h3></a>
-                <a href="<?php echo admin_url('admin.php?page=afcglide-settings'); ?>" class="afc-action-card action-config"><span>⚙️</span><h3>Backbone</h3></a>
-            </div>
-
-            <div class="afc-section" style="background:#fef2f2 !important; border-color:#fecaca !important;">
-                <div class="afc-section-header"><div class="afc-pulse"></div><h2 style="color:#991b1b !important;">💓 SYSTEM HEARTBEAT: GLOBAL ACTIVITY</h2></div>
-                <div class="afc-activity-stream"><?php self::render_activity_stream(); ?></div>
-            </div>
-
-            <div class="afc-section" style="background:#eff6ff !important; border-color:#dbeafe !important;">
-                <div class="afc-section-header"><h2 style="color:#1e40af !important;">👥 TEAM PERFORMANCE ROSTER</h2></div>
-                <div style="margin: 0 -45px -45px;"><?php self::render_team_roster(); ?></div>
-            </div>
-
-            <div class="afc-section" style="background:#f5f3ff !important; border-color:#ddd6fe !important;">
-                <div class="afc-section-header"><h2 style="color:#5b21b6 !important;">🚀 RAPID AGENT ONBOARDING</h2></div>
-                <?php if ( isset($_GET['agent_added']) && $guide = get_transient('afc_last_created_agent') ) : ?>
-                    <div style="background:#ecfdf5; border:2px dashed #10b981; padding:30px; border-radius:15px; margin-bottom:35px;">
-                        <h3 style="color:#065f46; margin-top:0; font-size:16px;">✅ AGENT ACCESS GUIDE GENERATED</h3>
-                        <p style="font-size:13px; color:#065f46; font-weight:700;">Copy and send this to your new client:</p>
-                        <textarea readonly style="width:100%; height:100px; padding:15px; border-radius:10px; background:white; border:1px solid #10b981; font-family:monospace; font-size:12px;">Welcome to the AFCGlide Network!
-Portal URL: <?php echo esc_url($guide['url']); ?>
-
-Username: <?php echo esc_html($guide['user']); ?>
-
-Password: <?php echo esc_html($guide['pass']); ?></textarea>
-                    </div>
-                <?php endif; ?>
-                <form method="post" action="">
-                    <?php wp_nonce_field('afc_rapid_agent', 'afc_rapid_agent_nonce'); ?>
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; align-items: end;">
-                        <div><label style="display:block; font-size:10px; font-weight:800; color:#64748b; margin-bottom:8px; text-transform:uppercase;">Agent Username</label><input type="text" name="agent_user" required style="width:100%; padding:12px; border-radius:10px; border:1px solid #cbd5e1;"></div>
-                        <div><label style="display:block; font-size:10px; font-weight:800; color:#64748b; margin-bottom:8px; text-transform:uppercase;">Email Address</label><input type="email" name="agent_email" required style="width:100%; padding:12px; border-radius:10px; border:1px solid #cbd5e1;"></div>
-                        <div><label style="display:block; font-size:10px; font-weight:800; color:#64748b; margin-bottom:8px; text-transform:uppercase;">Set Password</label><input type="text" name="agent_pass" required style="width:100%; padding:12px; border-radius:10px; border:1px solid #cbd5e1;"></div>
-                        <button type="submit" name="afc_rapid_add_agent" class="afc-execute-btn" style="background:#8b5cf6 !important; width:100%;">CREATE & GENERATE GUIDE</button>
-                    </div>
-                </form>
-            </div>
-            <?php endif; ?>
-
-            <div class="afc-section" style="background: #fef2f2 !important; border: 1px solid #fecaca !important;">
-                <div class="afc-section-header"><h2 style="color:#991b1b !important;">🔒 SECURITY PROTOCOLS & LOCKDOWN</h2></div>
-                <form method="post" action="">
-                    <?php wp_nonce_field('afc_protocols', 'afc_protocols_nonce'); ?>
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div style="display:flex; gap:60px;">
-                            <div style="display:flex; align-items:center; gap:15px;">
-                                <label class="afc-switch"><input type="checkbox" name="global_lockdown" value="1" <?php checked(get_option('afc_global_lockdown'), '1'); ?>><span class="switch-slider"></span></label>
-                                <span style="font-size:14px; font-weight:900; color:#7f1d1d;">GLOBAL LOCKDOWN</span>
+            <?php if ( $is_broker ) : ?>
+            <!-- 🏰 BROKER COMMAND MATRIX -->
+            <div class="afc-broker-matrix">
+                <!-- ⚙️ SYSTEM BACKBONE -->
+                <div class="afc-matrix-card afc-header-green">
+                    <h2><span class="dashicons dashicons-admin-generic"></span> SYSTEM BACKBONE</h2>
+                    <div class="afc-backbone-grid">
+                        <div class="afc-backbone-item">
+                            <label>System White Label</label>
+                            <input type="text" id="afc-system-label" value="<?php echo esc_attr(get_option('afc_system_label', 'AFCGlide')); ?>">
+                        </div>
+                        <div class="afc-backbone-item">
+                            <label>WhatsApp Accent Color</label>
+                            <input type="color" id="afc-whatsapp-color" value="<?php echo esc_attr(get_option('afc_whatsapp_color', '#25d366')); ?>">
+                        </div>
+                        <div class="afc-toggle-row">
+                            <div class="afc-toggle-item">
+                                <label class="afc-switch">
+                                    <input type="checkbox" id="afc-lockdown-toggle" <?php checked(get_option('afc_global_lockdown'), '1'); ?>>
+                                    <span class="switch-slider"></span>
+                                </label>
+                                <span>NETWORK LOCKDOWN</span>
+                            </div>
+                            <div class="afc-toggle-item">
+                                <label class="afc-switch">
+                                    <input type="checkbox" id="afc-gatekeeper-toggle" <?php checked(get_option('afc_quality_gatekeeper'), '1'); ?>>
+                                    <span class="switch-slider"></span>
+                                </label>
+                                <span>IMAGE GATEKEEPER</span>
                             </div>
                         </div>
-                        <button type="submit" name="afc_execute_protocols" class="afc-execute-btn" style="background:#dc2626 !important;">EXECUTE PROTOCOLS</button>
+                        <div class="afc-matrix-footer">
+                            <button id="afc-save-backbone" class="afc-vogue-btn">EXECUTE SYSTEM SYNC</button>
+                        </div>
                     </div>
-                </form>
+                </div>
+
+                <!-- 👤 RAPID ONBOARDING -->
+                <div class="afc-matrix-card afc-header-yellow">
+                    <h2><span class="dashicons dashicons-admin-users"></span> RAPID ONBOARDING</h2>
+                    <div class="afc-backbone-grid">
+                        <div class="afc-backbone-item">
+                            <label>Agent Username</label>
+                            <input type="text" id="afc-new-user" placeholder="e.g. jdoe">
+                        </div>
+                        <div class="afc-backbone-item">
+                            <label>Email Address</label>
+                            <input type="email" id="afc-new-email" placeholder="agent@network.com">
+                        </div>
+                        <div class="afc-backbone-item" style="grid-column: span 2;">
+                            <label>Agent Password</label>
+                            <input type="text" id="afc-new-pass" value="<?php echo wp_generate_password(12, false); ?>">
+                        </div>
+                        <div class="afc-matrix-footer">
+                            <button id="afc-recruit-btn" class="afc-vogue-btn" style="background:#3b82f6 !important;">RECRUIT AGENT</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+                <!-- 💓 SYSTEM HEARTBEAT -->
+                <div class="afc-section afc-header-red" style="padding: 25px;">
+                    <div class="afc-section-header">
+                        <div class="afc-pulse"></div>
+                        <h2>SYSTEM HEARTBEAT</h2>
+                    </div>
+                    <?php self::render_activity_stream(); ?>
+                </div>
+
+                <!-- 👥 TEAM PERFORMANCE -->
+                <div class="afc-section afc-header-orange" style="padding: 25px;">
+                    <div class="afc-section-header">
+                        <h2>TEAM PERFORMANCE ROSTER</h2>
+                    </div>
+                    <?php self::render_team_roster(); ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <!-- 💼 UNIVERSAL INVENTORY -->
+            <div class="afc-section" style="padding: 0; background: transparent !important; border: none !important; box-shadow: none !important;">
+                <?php 
+                $paged = isset( $_GET['paged'] ) ? max( 1, intval( $_GET['paged'] ) ) : 1;
+                $search = isset( $_GET['s'] ) ? sanitize_text_field( $_GET['s'] ) : '';
+                $status = isset( $_GET['status'] ) ? sanitize_text_field( $_GET['status'] ) : '';
+                
+                $inv_query = \AFCGlide\Admin\AFCGlide_Inventory::get_inventory_query([
+                    'paged' => $paged,
+                    's' => $search,
+                    'status' => $status
+                ]);
+                
+                $inv_stats = Engine::get_detailed_stats( $is_broker ? null : $current_user->ID );
+                
+                \AFCGlide\Admin\AFCGlide_Inventory::render_inventory_table( $inv_query, $inv_stats ); 
+                ?>
             </div>
         </div>
-        <?php
+<?php
     }
 
     public static function render_manual_page() {

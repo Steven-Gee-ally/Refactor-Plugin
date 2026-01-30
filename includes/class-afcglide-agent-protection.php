@@ -107,6 +107,57 @@ class AFCGlide_Agent_Protections {
         }
     }
 
-    // (show_delete_confirmation and add_duplicate_button remain the same as your high-end UI)
+    /**
+     * Add "Duplicate" link to row actions
+     */
+    public static function add_duplicate_button( $actions, $post ) {
+        if ( $post->post_type !== 'afcglide_listing' ) return $actions;
+        if ( ! current_user_can( 'edit_posts' ) ) return $actions;
+
+        $url = wp_nonce_url( 
+            admin_url( 'admin.php?action=afcg_duplicate_listing&post=' . $post->ID ), 
+            'duplicate_listing_' . $post->ID 
+        );
+
+        $actions['duplicate'] = '<a href="' . $url . '" title="Sync Duplicate Asset" rel="permalink">Duplicate List</a>';
+        return $actions;
+    }
+
+    /**
+     * Show Success Notice after duplication
+     */
+    public static function show_duplicate_notice() {
+        if ( ! isset( $_GET['post'] ) ) return;
+        $post_id = absint( $_GET['post'] );
+        
+        if ( get_transient( 'afcg_duplicate_success_' . $post_id ) ) {
+            delete_transient( 'afcg_duplicate_success_' . $post_id );
+            ?>
+            <div class="notice notice-success is-dismissible" style="border-left: 4px solid #10b981;">
+                <p><strong>🚀 ASSET SYNCED:</strong> Listing duplicated successfully. You are now editing the clone.</p>
+            </div>
+            <?php
+        }
+    }
+
+    /**
+     * High-End Delete Interception Screen
+     */
+    private static function show_delete_confirmation( $post ) {
+        wp_die(
+            '<div style="text-align:center; padding: 40px; font-family: sans-serif;">
+                <h1 style="color:#ef4444; font-size: 48px; margin-bottom: 10px;">🛑 CRITICAL ACTION</h1>
+                <p style="font-size: 18px; color:#475569; font-weight: 600;">You are about to archive a <strong>PUBLISHED</strong> luxury asset.</p>
+                <div style="background:#f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; margin: 30px 0;">
+                    <strong style="color:#1e293b;">' . esc_html($post->post_title) . '</strong>
+                </div>
+                <div style="display:flex; gap: 20px; justify-content: center;">
+                    <a href="' . admin_url('edit.php?post_type=afcglide_listing') . '" style="background:#6366f1; color:white; padding: 15px 30px; border-radius: 8px; text-decoration:none; font-weight:800;">ABORT OPERATION</a>
+                    <a href="' . add_query_arg('confirm_delete', '1', get_delete_post_link($post->ID)) . '" style="background:#ef4444; color:white; padding: 15px 30px; border-radius: 8px; text-decoration:none; font-weight:800;">PROCEED TO TRASH</a>
+                </div>
+            </div>',
+            'Security Protocol Engaged'
+        );
+    }
 }
 AFCGlide_Agent_Protections::init();

@@ -10,6 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class AFCGlide_Admin_UI {
 
     public static function init() {
+        add_action( 'admin_init', [ __CLASS__, 'redirect_native_list_table' ] );
         add_action( 'admin_menu', [ __CLASS__, 'streamline_admin_menu' ], 999 );
         add_action( 'admin_bar_menu', [ __CLASS__, 'add_admin_bar_shortcut' ], 999 );
         add_action( 'pre_get_posts', [ __CLASS__, 'filter_inventory_for_agents' ] );
@@ -101,15 +102,42 @@ class AFCGlide_Admin_UI {
             
         }
 
-        // ==========================================
-        // BROKERS: Full Command Center Access
-        // ==========================================
-        if ($is_broker) {
-            // Brokers see everything, but we can still hide taxonomies for cleanliness
-            remove_submenu_page( 'edit.php?post_type=afcglide_listing', 'edit-tags.php?taxonomy=property_type&post_type=afcglide_listing' );
-            remove_submenu_page( 'edit.php?post_type=afcglide_listing', 'edit-tags.php?taxonomy=property_status&post_type=afcglide_listing' );
-            remove_submenu_page( 'edit.php?post_type=afcglide_listing', 'edit-tags.php?taxonomy=property_location&post_type=afcglide_listing' );
-            remove_submenu_page( 'edit.php?post_type=afcglide_listing', 'edit-tags.php?taxonomy=property_amenity&post_type=afcglide_listing' );
+        // BROKERS: Focus Mode - Strip everything but AFCGlide
+        if ( current_user_can( 'manage_options' ) ) {
+            if ( get_user_meta( get_current_user_id(), 'afc_focus_mode', true ) === '1' ) {
+                global $menu, $submenu;
+                $allowed = [
+                    'afcglide-dashboard',
+                    'edit.php?post_type=afcglide_listing',
+                    'profile.php'
+                ];
+                
+                foreach ( $menu as $key => $item ) {
+                    if ( ! in_array( $item[2], $allowed ) && strpos($item[2], 'afcglide') === false ) {
+                        unset( $menu[$key] );
+                        unset( $submenu[$item[2]] ); // Clear submenus
+                    }
+                }
+            }
+        }
+
+        // AGENTS: Hide standard WP Listing Sidebar menu
+        remove_menu_page( 'edit.php?post_type=afcglide_listing' );
+    }
+
+    /**
+     * UNBREAKABLE REDIRECTION
+     * Intercepts standard WordPress list table and redirects to the Hub.
+     */
+    public static function redirect_native_list_table() {
+        global $pagenow;
+        
+        if ( $pagenow === 'edit.php' && isset( $_GET['post_type'] ) && $_GET['post_type'] === \AFCGlide\Core\Constants::POST_TYPE ) {
+            // Already filtered for AJAX/REST in restrictive loops elsewhere, but being safe
+            if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) return;
+            
+            wp_safe_redirect( admin_url( 'admin.php?page=afcglide-dashboard' ) );
+            exit;
         }
     }
 
@@ -142,6 +170,10 @@ class AFCGlide_Admin_UI {
             $classes .= ' afc-agent-portal';
         } elseif ( current_user_can('manage_options') ) {
             $classes .= ' afc-broker-command';
+        }
+
+        if ( get_user_meta( $user->ID, 'afc_focus_mode', true ) === '1' ) {
+            $classes .= ' afc-focus-active';
         }
         
         return $classes;
