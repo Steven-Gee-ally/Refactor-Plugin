@@ -19,17 +19,17 @@
 .post-type-afcglide_listing #post-body.columns-2 #postbox-container-1,
 .post-type-afcglide_listing #titlewrap,
 .post-type-afcglide_listing #titlediv,
-.post-type-afcglide_listing #title-prompt-text { 
-    display: none !important; 
+.post-type-afcglide_listing #title-prompt-text {
+    display: none !important;
 }
 
-.post-type-afcglide_listing #post-body.columns-2 #postbox-container-2 { 
-    width: 100% !important; 
-    margin-right: 0 !important; 
+.post-type-afcglide_listing #post-body.columns-2 #postbox-container-2 {
+    width: 100% !important;
+    margin-right: 0 !important;
 }
 
-.post-type-afcglide_listing #normal-sortables { 
-    display: block !important; 
+.post-type-afcglide_listing #normal-sortables {
+    display: block !important;
 }
 
 /* ==========================================
@@ -202,52 +202,82 @@
 #afc_intro .postbox-header {
     background: linear-gradient(135deg, #ffedd5, #fed7aa) !important;
 }
-#afc_intro .postbox-header h2 { color: #9a3412 !important; }
+
+#afc_intro .postbox-header h2 {
+    color: #9a3412 !important;
+}
 
 #afc_description .postbox-header {
     background: linear-gradient(135deg, #e0e7ff, #c7d2fe) !important;
 }
-#afc_description .postbox-header h2 { color: #3730a3 !important; }
+
+#afc_description .postbox-header h2 {
+    color: #3730a3 !important;
+}
 
 #afc_details .postbox-header {
     background: linear-gradient(135deg, #dcfce7, #bbf7d0) !important;
 }
-#afc_details .postbox-header h2 { color: #166534 !important; }
+
+#afc_details .postbox-header h2 {
+    color: #166534 !important;
+}
 
 #afc_media_hub .postbox-header {
     background: linear-gradient(135deg, #dbeafe, #bfdbfe) !important;
 }
-#afc_media_hub .postbox-header h2 { color: #1e40af !important; }
+
+#afc_media_hub .postbox-header h2 {
+    color: #1e40af !important;
+}
 
 #afc_slider .postbox-header {
     background: linear-gradient(135deg, #ccfbf1, #99f6e4) !important;
 }
-#afc_slider .postbox-header h2 { color: #115e59 !important; }
+
+#afc_slider .postbox-header h2 {
+    color: #115e59 !important;
+}
 
 #afc_location_v2 .postbox-header {
     background: linear-gradient(135deg, #ecfccb, #d9f99d) !important;
 }
-#afc_location_v2 .postbox-header h2 { color: #3f6212 !important; }
+
+#afc_location_v2 .postbox-header h2 {
+    color: #3f6212 !important;
+}
 
 #afc_amenities .postbox-header {
     background: linear-gradient(135deg, #fce7f3, #fbcfe8) !important;
 }
-#afc_amenities .postbox-header h2 { color: #9f1239 !important; }
+
+#afc_amenities .postbox-header h2 {
+    color: #9f1239 !important;
+}
 
 #afc_agent .postbox-header {
     background: linear-gradient(135deg, #f3e8ff, #e9d5ff) !important;
 }
-#afc_agent .postbox-header h2 { color: #6b21a8 !important; }
+
+#afc_agent .postbox-header h2 {
+    color: #6b21a8 !important;
+}
 
 #afc_publish_box .postbox-header {
     background: linear-gradient(135deg, #ffedd5, #fed7aa) !important;
 }
-#afc_publish_box .postbox-header h2 { color: #9a3412 !important; }
+
+#afc_publish_box .postbox-header h2 {
+    color: #9a3412 !important;
+}
 
 #afc_intelligence .postbox-header {
     background: linear-gradient(135deg, #dbeafe, #bfdbfe) !important;
 }
-#afc_intelligence .postbox-header h2 { color: #1e40af !important; }
+
+#afc_intelligence .postbox-header h2 {
+    color: #1e40af !important;
+}
 
 .afc-metabox-content {
     padding: 25px;
@@ -522,7 +552,7 @@
    ========================================== */
 .afc-amenities-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 12px;
 }
 
@@ -967,15 +997,15 @@ ul#adminmenu li.current a.menu-top:after {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.afc-switch input:checked + .slider {
+.afc-switch input:checked+.slider {
     background-color: #10b981;
 }
 
-.afc-switch input:checked + .slider:before {
+.afc-switch input:checked+.slider:before {
     transform: translateX(24px);
 }
 
-.afc-switch input:focus + .slider {
+.afc-switch input:focus+.slider {
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
 }
 
@@ -1046,9 +1076,12 @@ ul#adminmenu li.current a.menu-top:after {
 
 /* Pulse animation for notifications */
 @keyframes afc-pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         opacity: 1;
     }
+
     50% {
         opacity: 0.7;
     }
@@ -1064,6 +1097,7 @@ ul#adminmenu li.current a.menu-top:after {
         opacity: 0;
         transform: translateY(10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);

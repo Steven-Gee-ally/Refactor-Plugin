@@ -28,8 +28,15 @@ final class AFCGlide_Identity_Shield {
         add_filter( 'login_headerurl', function() { return home_url(); } );
         add_filter( 'login_headertext', function() { return get_option( C::OPT_SYSTEM_LABEL, 'AFCGlide Infrastructure' ); } );
         
-        // 5. Hide WordPress update notices from agents
-        add_action( 'admin_head', [ __CLASS__, 'hide_update_notices_for_agents' ] );
+        // 5. SURGICAL STRIKE: Remove update pestering at the server level
+        add_action( 'admin_head', function() {
+            if ( ! current_user_can( C::CAP_MANAGE ) ) {
+                remove_action( 'admin_notices', 'update_nag', 3 );
+                remove_action( 'admin_notices', 'maintenance_nag', 10 );
+                // Also call the CSS hiding method we built
+                self::hide_update_notices_for_agents();
+            }
+        });
     }
 
     /**

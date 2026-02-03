@@ -33,6 +33,11 @@ jQuery(document).ready(function ($) {
     afc_media_upload('.afc-upload-zone[data-type="hero"] .afc-upload-btn', '_listing_hero_id', 'afc-preview-grid', 'hero');
     afc_media_upload('.afc-pdf-upload-btn', '_listing_pdf_id', 'pdf-status', 'pdf');
 
+    // NEW: Generic Logo/Agent Uploaders
+    // Re-uses the 'hero' logic but targeting specific preview containers
+    afc_media_upload('.afc-agent-upload-btn', 'agent_photo_id', 'afc-agent-preview', 'hero');
+    afc_media_upload('.afc-upload-logo-btn', '_listing_broker_logo', 'afc-broker-preview', 'hero');
+
     // Gallery Logic
     $('.afc-upload-zone[data-type="gallery"] .afc-upload-btn').click(function (e) {
         e.preventDefault();
@@ -68,6 +73,16 @@ jQuery(document).ready(function ($) {
         if (parent_grid.closest('.afc-upload-zone[data-type="hero"]').length > 0) {
             container.remove();
             $('input[name="_listing_hero_id"]').val('');
+        }
+
+        // If Agent or Broker Logo
+        if (parent_grid.hasClass('afc-agent-preview') || parent_grid.attr('id') === 'afc-broker-preview') {
+            container.remove();
+            // Determine which input to clear based on the button sibling or context
+            // Ideally we'd use a more robust way, but for now let's rely on the DOM structure if needed.
+            // Actually, the preview container usually has the hidden input nearby. 
+            // Let's safe-guard:
+            parent_grid.siblings('input[type="hidden"]').val('');
         }
 
         // If Gallery

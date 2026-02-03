@@ -1,13 +1,5 @@
 <?php
-/**
- * AFCGlide AJAX Handler (S-Grade Production Master)
- * Version 5.0.0 - Enhanced with Cache Management
- * 
- * Handles: Full Submissions, Autosave Drafts, Global Lockdown, 
- * Advanced Image Processing (Auto-Resize), AJAX Filtering, and Cache Clearing.
- */
-
-namespace AFCGlide\Listings;
+namespace AFCGlide\Admin; 
 
 use AFCGlide\Core\Constants as C;
 use AFCGlide\Core\AFCGlide_Synergy_Engine as Engine;
@@ -15,484 +7,722 @@ use AFCGlide\Core\AFCGlide_Synergy_Engine as Engine;
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 class AFCGlide_Ajax_Handler {
-
-    /**
-     * Initialize All Core AJAX Protocols
-     */
+    
     public static function init() {
-        // Frontend Asset Deployment
-        add_action( 'wp_ajax_' . C::AJAX_SUBMIT, [ __CLASS__, 'handle_front_submission' ] );
+        add_action( 'admin_menu', [ __CLASS__, 'register_welcome_page' ] );
+        add_action( 'admin_init', [ __CLASS__, 'handle_protocol_execution' ] );
+        add_action( 'admin_init', [ __CLASS__, 'handle_agent_creation' ] );
+        add_action( 'admin_init', [ __CLASS__, 'handle_core_setup' ] );
+        add_action( 'admin_init', [ __CLASS__, 'register_backbone_settings' ] );
+        add_action( 'admin_enqueue_scripts', [ __CLASS__, 'enqueue_dashboard_scripts' ] );
+        add_action( 'admin_notices', [ __CLASS__, 'check_homepage_configuration' ] );
         
-        // Secure Autosave/Draft Protocol
-        add_action( 'wp_ajax_' . C::AJAX_SAVE_DRAFT, [ __CLASS__, 'handle_save_draft' ] );
-
-        // Admin Lockdown Control
-        add_action( 'wp_ajax_' . C::AJAX_LOCKDOWN, [ __CLASS__, 'handle_lockdown_toggle' ] );
-
-        // Global Grid Filtering (Public + Private)
-        add_action( 'wp_ajax_' . C::AJAX_FILTER, [ __CLASS__, 'handle_listings_filter' ] );
-        add_action( 'wp_ajax_nopriv_' . C::AJAX_FILTER, [ __CLASS__, 'handle_listings_filter' ] );
-        
-        // NEW: Cache Management Hooks
-        add_action( 'save_post_' . C::POST_TYPE, [ __CLASS__, 'clear_stats_on_save' ], 10, 3 );
-        add_action( 'delete_post', [ __CLASS__, 'clear_stats_on_delete' ], 10, 2 );
-        add_action( 'transition_post_status', [ __CLASS__, 'clear_stats_on_status_change' ], 10, 3 );
-
-        // NEW: Agent Recruitment Protocol (Broker Only)
-        add_action( 'wp_ajax_afcg_recruit_agent', [ __CLASS__, 'handle_agent_recruitment' ] );
-
-        // NEW: Focus Mode Toggle
-        add_action( 'wp_ajax_afcg_toggle_focus', [ __CLASS__, 'handle_focus_toggle' ] );
-
-        // NEW: Backbone System Sync
-        add_action( 'wp_ajax_afcg_sync_backbone', [ __CLASS__, 'handle_sync_backbone' ] );
+        // Form Handlers
+        add_action( 'wp_ajax_afc_handle_submission', [ __CLASS__, 'afc_handle_submission' ] );
+        add_action( 'wp_ajax_nopriv_afc_handle_submission', [ __CLASS__, 'afc_handle_submission' ] );
     }
 
     /**
-     * Standardized JSON Handshakes
+     * Enqueue Dashboard Scripts & Styles
      */
-    private static function send_success( $message = '', $data = [] ) {
-        wp_send_json_success(['message' => $message, 'data' => $data]);
+    public static function enqueue_dashboard_scripts( $hook ) {
+        // Only load on our dashboard page
+        if ( $hook !== 'toplevel_page_afcglide-dashboard' && $hook !== 'afcglide_page_afcglide-manual' ) {
+            return;
+        }
+
+        // Inline JavaScript for dashboard interactions
+        wp_add_inline_script( 'jquery', self::get_dashboard_js() );
     }
 
-    private static function send_error( $message = '', $data = [] ) {
-        wp_send_json_error(['message' => $message, 'data' => $data]);
+    /**
+     * Get Dashboard JavaScript
+     */
+    private static function get_dashboard_js() {
+        $ajax_url = admin_url( 'admin-ajax.php' );
+        $nonce = wp_create_nonce( C::NONCE_AJAX );
+        $recruitment_nonce = wp_create_nonce( C::NONCE_RECRUITMENT );
+
+        return <<<JS
+        jQuery(document).ready(function($) {
+            
+            // ============================================
+            // SYSTEM BACKBONE SYNC
+            // ============================================
+            $('#afc-save-backbone').on('click', function(e) {
+                e.preventDefault();
+                const btn = $(this);
+                const originalText = btn.text();
+                
+                btn.prop('disabled', true).text('SYNCING...');
+                
+                $.ajax({
+                    url: '{$ajax_url}',
+                    type: 'POST',
+                    data: {
+                        action: 'afcg_sync_backbone',
+                        afc_listing_nonce: '{$nonce}',
+                        system_label: $('#afc-system-label').val(),
+                        whatsapp_color: $('#afc-whatsapp-color').val(),
+                        lockdown: $('#afc-lockdown-toggle').is(':checked') ? '1' : '0',
+                        gatekeeper: $('#afc-gatekeeper-toggle').is(':checked') ? '1' : '0'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            btn.text('✓ SYNCED').css('background', '#22c55e');
+                            setTimeout(function() {
+                                btn.text(originalText).css('background', '').prop('disabled', false);
+                            }, 2000);
+                        } else {
+                            alert('Sync failed: ' + (response.data?.message || 'Unknown error'));
+                            btn.text(originalText).prop('disabled', false);
+                        }
+                    },
+                    error: function() {
+                        alert('Network error. Please try again.');
+                        btn.text(originalText).prop('disabled', false);
+                    }
+                });
+            });
+
+            // ============================================
+            // AGENT RECRUITMENT
+            // ============================================
+            $('#afc-recruit-btn').on('click', function(e) {
+                e.preventDefault();
+                const btn = $(this);
+                const originalText = btn.text();
+                
+                const username = $('#afc-new-user').val().trim();
+                const email = $('#afc-new-email').val().trim();
+                const password = $('#afc-new-pass').val();
+                
+                // Validation
+                if (!username || !email || !password) {
+                    alert('All fields are required for agent recruitment.');
+                    return;
+                }
+                
+                if (username.length < 4) {
+                    alert('Username must be at least 4 characters.');
+                    return;
+                }
+                
+                if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                    alert('Please enter a valid email address.');
+                    return;
+                }
+                
+                if (password.length < 8) {
+                    alert('Password must be at least 8 characters.');
+                    return;
+                }
+                
+                btn.prop('disabled', true).text('RECRUITING...');
+                
+                $.ajax({
+                    url: '{$ajax_url}',
+                    type: 'POST',
+                    data: {
+                        action: 'afcg_recruit_agent',
+                        afc_listing_nonce: '{$recruitment_nonce}',
+                        agent_username: username,
+                        agent_email: email,
+                        password: password
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            btn.text('✓ RECRUITED').css('background', '#22c55e');
+                            alert('Agent recruited successfully!\\n\\nUsername: ' + username + '\\nPassword: ' + password + '\\n\\nPlease save these credentials.');
+                            
+                            // Clear form
+                            $('#afc-new-user').val('');
+                            $('#afc-new-email').val('');
+                            $('#afc-new-pass').val('');
+                            
+                            setTimeout(function() {
+                                btn.text(originalText).css('background', '').prop('disabled', false);
+                                location.reload(); // Refresh to show new agent
+                            }, 2000);
+                        } else {
+                            alert('Recruitment failed: ' + (response.data?.message || 'Unknown error'));
+                            btn.text(originalText).prop('disabled', false);
+                        }
+                    },
+                    error: function() {
+                        alert('Network error. Please try again.');
+                        btn.text(originalText).prop('disabled', false);
+                    }
+                });
+            });
+
+            // ============================================
+            // FOCUS MODE TOGGLE
+            // ============================================
+            $('#afc-focus-toggle').on('change', function() {
+                const status = $(this).is(':checked') ? '1' : '0';
+                
+                $.ajax({
+                    url: '{$ajax_url}',
+                    type: 'POST',
+                    data: {
+                        action: 'afcg_toggle_focus',
+                        afc_listing_nonce: '{$nonce}',
+                        status: status
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            console.log('Focus mode updated');
+                        }
+                    }
+                });
+            });
+
+            // ============================================
+            // REAL-TIME TOGGLE SYNC (Lockdown & Gatekeeper)
+            // ============================================
+            // These are saved when user clicks "EXECUTE SYSTEM SYNC"
+            // No individual AJAX calls needed - they're part of backbone sync
+            
+        });
+        JS;
     }
 
-    private static function log_error( $message ) {
-        if ( defined('WP_DEBUG') && WP_DEBUG ) {
-            error_log( 'AFCGlide Critical: ' . $message );
+    public static function register_backbone_settings() {
+        register_setting( 'afcglide_settings_group', 'afc_agent_name' );
+        register_setting( 'afcglide_settings_group', 'afc_agent_phone_display' ); 
+        register_setting( 'afc_primary_color', 'afc_primary_color' );
+        register_setting( 'afc_whatsapp_color', 'afc_whatsapp_color' );
+        register_setting( 'afc_brokerage_address', 'afc_brokerage_address' );
+        register_setting( 'afc_license_number', 'afc_license_number' );
+        register_setting( 'afc_quality_gatekeeper', 'afc_quality_gatekeeper' );
+        register_setting( 'afc_global_lockdown', 'afc_global_lockdown' );
+        register_setting( 'afc_whatsapp_global', 'afc_whatsapp_global' );
+    }
+
+    public static function register_welcome_page() {
+        $is_broker = current_user_can('manage_options');
+        $system_label = get_option('afc_system_label', 'AFCGlide');
+        
+        add_menu_page($system_label . ' Hub', $system_label, 'read', 'afcglide-dashboard', [ __CLASS__, 'render_welcome_screen' ], 'dashicons-dashboard', 5.9);
+        add_submenu_page('afcglide-dashboard', 'Hub Overview', '📊 Hub Overview', 'read', 'afcglide-dashboard', [ __CLASS__, 'render_welcome_screen' ]);
+        
+        add_submenu_page('afcglide-dashboard', 'Add New Asset', '🛸 Add New Asset', 'read', 'post-new.php?post_type=' . C::POST_TYPE);
+        add_submenu_page('afcglide-dashboard', 'My Profile', '👤 My Profile', 'read', 'profile.php');
+        add_submenu_page('afcglide-dashboard', 'System Manual', '📘 System Manual', 'read', 'afcglide-manual', [ __CLASS__, 'render_manual_page' ]);
+    }
+
+    public static function handle_protocol_execution() {
+        if ( isset($_POST['afc_execute_protocols']) && check_admin_referer('afc_protocols', 'afc_protocols_nonce') ) {
+            update_option('afc_global_lockdown', isset($_POST['global_lockdown']) ? '1' : '0');
+            wp_redirect( admin_url('admin.php?page=afcglide-dashboard&protocols=executed') );
+            exit;
+        }
+    }
+
+    public static function handle_agent_creation() {
+        if ( isset($_POST['afc_rapid_add_agent']) && check_admin_referer('afc_rapid_agent', 'afc_rapid_agent_nonce') ) {
+            $user_login = sanitize_user($_POST['agent_user']);
+            $user_email = sanitize_email($_POST['agent_email']);
+            $user_pass  = $_POST['agent_pass'];
+
+            if ( username_exists($user_login) || email_exists($user_email) ) {
+                wp_redirect( admin_url('admin.php?page=afcglide-dashboard&agent_error=exists') );
+                exit;
+            }
+
+            $user_id = wp_create_user($user_login, $user_pass, $user_email);
+            if ( ! is_wp_error($user_id) ) {
+                $user = new \WP_User($user_id);
+                $user->set_role('listing_agent');
+                update_user_meta($user_id, 'agent_phone', sanitize_text_field($_POST['agent_phone']));
+                
+                set_transient('afc_last_created_agent', [
+                    'user' => $user_login,
+                    'pass' => $user_pass,
+                    'url'  => wp_login_url()
+                ], 300);
+
+                wp_redirect( admin_url('admin.php?page=afcglide-dashboard&agent_added=1') );
+                exit;
+            }
+        }
+    }
+
+    public static function handle_core_setup() {
+        if ( isset($_POST['afc_run_initializer']) && check_admin_referer('afc_initializer', 'afc_initializer_nonce') ) {
+            $pages = [
+                ['title' => 'Agent Hub', 'content' => '[afc_agent_inventory]', 'slug' => 'agent-hub'],
+                ['title' => 'Add New Listing', 'content' => '[afcglide_submit_listing]', 'slug' => 'submit-listing'],
+                ['title' => 'Listings Portfolio', 'content' => '[afcglide_listings_grid]', 'slug' => 'portfolio'],
+                ['title' => 'Agent Login', 'content' => '[afcglide_login]', 'slug' => 'agent-login']
+            ];
+
+            foreach ( $pages as $page ) {
+                if ( ! get_page_by_path( $page['slug'] ) ) {
+                    wp_insert_post([
+                        'post_title'   => $page['title'],
+                        'post_content' => $page['content'],
+                        'post_status'  => 'publish',
+                        'post_type'    => 'page',
+                        'post_name'    => $page['slug']
+                    ]);
+                }
+            }
+            wp_redirect( admin_url('admin.php?page=afcglide-dashboard&core_setup=executed') );
+            exit;
+        }
+    }
+
+    public static function render_welcome_screen() {
+        $current_user = wp_get_current_user();
+        $is_broker = current_user_can('manage_options');
+        $display_name = strtoupper($current_user->first_name ?: $current_user->display_name);
+        $focus_mode = get_user_meta(get_current_user_id(), 'afc_focus_mode', true) === '1';
+        
+        // WORLD-CLASS: Fetch stats via Synergy Engine for high performance
+        $stats = Engine::get_synergy_stats();
+        ?>
+
+        <div class="afc-control-center">
+            
+            <!-- 🏢 BRAND Identity -->
+            <div class="afc-hub-brand">
+                <div class="afc-main-logo">
+                    <div class="afc-logo-icon-wrap">
+                        <span class="dashicons dashicons-shield"></span>
+                    </div>
+                    <div class="afc-logo-text">
+                        <strong><?php echo esc_html(get_option('afc_system_label', 'AFCGlide')); ?></strong>
+                        <span>BROKER COMMAND HUB</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🌐 HUB TOP BAR -->
+            <div class="afc-top-bar">
+                <div class="afc-top-bar-section">SYSTEM OPERATOR: <span><?php echo esc_html($display_name); ?></span></div>
+                <div class="afc-top-bar-section"><?php echo esc_html(get_option('afc_system_label', 'AFCGlide')); ?> GLOBAL HUB</div>
+                
+                <div class="afc-focus-wrap">
+                    <span>EYE_FOCUS MODE</span>
+                    <label class="afc-switch">
+                        <input type="checkbox" id="afc-focus-toggle" <?php checked($focus_mode); ?>>
+                        <span class="switch-slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 🗲 HERO SECTION -->
+            <div class="afc-hero">
+                <div>
+                    <h1>PROPERTY PRODUCTION: HQ</h1>
+                    <p>Synergy active. Initialize your next global asset now.</p>
+                </div>
+                <a href="<?php echo admin_url('post-new.php?post_type='.C::POST_TYPE); ?>" class="afc-hero-btn">
+                    <span>🚀 FAST SUBMIT ASSET</span>
+                </a>
+            </div>
+
+            <!-- 📊 UNIFIED SCOREBOARD -->
+            <?php echo \AFCGlide\Reporting\AFCGlide_Scoreboard::render_scoreboard( $is_broker ? null : $current_user->ID ); ?>
+
+            <?php if ( $is_broker ) : ?>
+            <!-- 🏰 BROKER COMMAND MATRIX -->
+            <div class="afc-broker-matrix">
+                <!-- ⚙️ SYSTEM BACKBONE -->
+                <div class="afc-matrix-card afc-header-green">
+                    <h2><span class="dashicons dashicons-admin-generic"></span> SYSTEM BACKBONE</h2>
+                    <div class="afc-backbone-grid">
+                        <div class="afc-backbone-item">
+                            <label>System White Label</label>
+                            <input type="text" id="afc-system-label" value="<?php echo esc_attr(get_option('afc_system_label', 'AFCGlide')); ?>">
+                        </div>
+                        <div class="afc-backbone-item">
+                            <label>WhatsApp Accent Color</label>
+                            <input type="color" id="afc-whatsapp-color" value="<?php echo esc_attr(get_option('afc_whatsapp_color', '#25d366')); ?>">
+                        </div>
+                        <div class="afc-toggle-row">
+                            <div class="afc-toggle-item">
+                                <label class="afc-switch">
+                                    <input type="checkbox" id="afc-lockdown-toggle" <?php checked(get_option('afc_global_lockdown'), '1'); ?>>
+                                    <span class="switch-slider"></span>
+                                </label>
+                                <span>NETWORK LOCKDOWN</span>
+                            </div>
+                            <div class="afc-toggle-item">
+                                <label class="afc-switch">
+                                    <input type="checkbox" id="afc-gatekeeper-toggle" <?php checked(get_option('afc_quality_gatekeeper'), '1'); ?>>
+                                    <span class="switch-slider"></span>
+                                </label>
+                                <span>IMAGE GATEKEEPER</span>
+                            </div>
+                        </div>
+                        <div class="afc-matrix-footer">
+                            <button id="afc-save-backbone" class="afc-vogue-btn">EXECUTE SYSTEM SYNC</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🚀 SYSTEM INITIALIZER -->
+                <div class="afc-matrix-card afc-header-orange">
+                    <h2><span class="dashicons dashicons-admin-links"></span> SYSTEM INITIALIZER</h2>
+                    <div class="afc-backbone-grid">
+                        <?php 
+                        $pages_to_create = [
+                            'agent-hub' => 'Agent Hub',
+                            'submit-listing' => 'Add New Listing',
+                            'portfolio' => 'Listings Portfolio',
+                            'agent-login' => 'Agent Login'
+                        ];
+                        $existing_count = 0;
+                        foreach ($pages_to_create as $slug => $title) {
+                            if (get_page_by_path($slug)) $existing_count++;
+                        }
+                        $all_exist = ($existing_count === count($pages_to_create));
+                        ?>
+                        
+                        <?php if (isset($_GET['core_setup']) && $_GET['core_setup'] === 'executed') : ?>
+                        <div class="afc-initializer-success" style="grid-column: span 2; background: #dcfce7; border: 1px solid #86efac; padding: 15px; border-radius: 10px; color: #166534; font-weight: 700;">
+                            ✅ Core pages have been deployed successfully!
+                        </div>
+                        <?php elseif ($all_exist) : ?>
+                        <div class="afc-initializer-alert" style="grid-column: span 2; background: #eff6ff; border: 1px solid #93c5fd; padding: 15px; border-radius: 10px; color: #1e40af;">
+                            <strong>✓ FULLY DEPLOYED:</strong> All <?php echo count($pages_to_create); ?> core pages are already live.
+                        </div>
+                        <?php else : ?>
+                        <div class="afc-initializer-alert" style="grid-column: span 2;">
+                            <strong>AWAITING DEPLOYMENT:</strong> <?php echo (count($pages_to_create) - $existing_count); ?> core pages ready to be auto-generated.
+                        </div>
+                        <?php endif; ?>
+                        
+                        <div class="afc-matrix-footer">
+                            <form method="post" action="" class="afc-full-width-flex">
+                                <?php wp_nonce_field('afc_initializer', 'afc_initializer_nonce'); ?>
+                                <button type="submit" name="afc_run_initializer" value="1" class="afc-vogue-btn afc-initialize-btn" <?php echo $all_exist ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''; ?>>
+                                    <?php echo $all_exist ? '✓ PAGES DEPLOYED' : 'INITIALIZE CORE PAGES'; ?>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 👤 RAPID ONBOARDING -->
+                <div class="afc-matrix-card afc-header-yellow">
+                    <h2><span class="dashicons dashicons-admin-users"></span> RAPID ONBOARDING</h2>
+                    <div class="afc-backbone-grid">
+                        <div class="afc-backbone-item">
+                            <label>Agent Username</label>
+                            <input type="text" id="afc-new-user" placeholder="e.g. jdoe">
+                        </div>
+                        <div class="afc-backbone-item">
+                            <label>Email Address</label>
+                            <input type="email" id="afc-new-email" placeholder="agent@network.com">
+                        </div>
+                        <div class="afc-backbone-item full-width">
+                            <label>Agent Password</label>
+                            <input type="text" id="afc-new-pass" value="<?php echo wp_generate_password(12, false); ?>">
+                        </div>
+                        <div class="afc-matrix-footer">
+                            <button id="afc-recruit-btn" class="afc-vogue-btn afc-recruit-btn">RECRUIT AGENT</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🎛️ COMMAND CENTER -->
+                <div class="afc-matrix-card afc-header-blue">
+                    <h2><span class="dashicons dashicons-dashboard"></span> COMMAND CENTER</h2>
+                    <div class="afc-backbone-grid">
+                        <?php 
+                        $pending_count = wp_count_posts(C::POST_TYPE)->pending ?? 0;
+                        $draft_count = wp_count_posts(C::POST_TYPE)->draft ?? 0;
+                        ?>
+                        <!-- Pending Approvals -->
+                        <div class="afc-command-stat">
+                            <div class="afc-stat-icon" style="background: #fef3c7; color: #d97706;">
+                                <span class="dashicons dashicons-clock"></span>
+                            </div>
+                            <div class="afc-stat-info">
+                                <span class="afc-stat-count"><?php echo esc_html($pending_count); ?></span>
+                                <span class="afc-stat-label">Pending Review</span>
+                            </div>
+                            <?php if ($pending_count > 0) : ?>
+                            <a href="<?php echo admin_url('edit.php?post_status=pending&post_type=' . C::POST_TYPE); ?>" class="afc-stat-action">Review →</a>
+                            <?php endif; ?>
+                        </div>
+                        <!-- Drafts -->
+                        <div class="afc-command-stat">
+                            <div class="afc-stat-icon" style="background: #e0e7ff; color: #4f46e5;">
+                                <span class="dashicons dashicons-edit"></span>
+                            </div>
+                            <div class="afc-stat-info">
+                                <span class="afc-stat-count"><?php echo esc_html($draft_count); ?></span>
+                                <span class="afc-stat-label">Drafts</span>
+                            </div>
+                            <?php if ($draft_count > 0) : ?>
+                            <a href="<?php echo admin_url('edit.php?post_status=draft&post_type=' . C::POST_TYPE); ?>" class="afc-stat-action">View →</a>
+                            <?php endif; ?>
+                        </div>
+                        <!-- Quick Actions -->
+                        <div class="afc-quick-actions">
+                            <a href="<?php echo admin_url('edit.php?post_type=' . C::POST_TYPE); ?>" class="afc-quick-link">
+                                <span class="dashicons dashicons-list-view"></span> All Listings
+                            </a>
+                            <a href="<?php echo admin_url('users.php?role=listing_agent'); ?>" class="afc-quick-link">
+                                <span class="dashicons dashicons-groups"></span> All Agents
+                            </a>
+                            <a href="<?php echo home_url('/portfolio/'); ?>" target="_blank" class="afc-quick-link">
+                                <span class="dashicons dashicons-external"></span> View Portfolio
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="afc-performance-grid">
+                <!-- 💓 SYSTEM HEARTBEAT -->
+                <div class="afc-section afc-header-red afc-performance-section">
+                    <div class="afc-section-header">
+                        <div class="afc-pulse"></div>
+                        <h2>SYSTEM HEARTBEAT</h2>
+                    </div>
+                    <?php self::render_activity_stream(); ?>
+                </div>
+
+                <!-- 👥 TEAM PERFORMANCE -->
+                <div class="afc-section afc-header-orange afc-performance-section">
+                    <div class="afc-section-header">
+                        <h2>TEAM PERFORMANCE ROSTER</h2>
+                    </div>
+                    <?php self::render_team_roster(); ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <!-- 💼 UNIVERSAL INVENTORY -->
+            <div class="afc-section afc-inventory-container">
+                <?php 
+                $paged = isset( $_GET['paged'] ) ? max( 1, intval( $_GET['paged'] ) ) : 1;
+                $search = isset( $_GET['s'] ) ? sanitize_text_field( $_GET['s'] ) : '';
+                $status = isset( $_GET['status'] ) ? sanitize_text_field( $_GET['status'] ) : '';
+                
+                $inv_query = \AFCGlide\Admin\AFCGlide_Inventory::get_inventory_query([
+                    'paged' => $paged,
+                    's' => $search,
+                    'status' => $status
+                ]);
+                
+                $inv_stats = Engine::get_detailed_stats( $is_broker ? null : $current_user->ID );
+                
+                \AFCGlide\Admin\AFCGlide_Inventory::render_inventory_table( $inv_query, $inv_stats ); 
+                ?>
+            </div>
+        </div>
+<?php
+    }
+
+    public static function render_manual_page() {
+        ?>
+        <div class="wrap afc-system-manual">
+            <button onclick="window.print()" class="afc-manual-print-btn">🖨️ Print to PDF</button>
+            <div class="afc-clearfix"></div>
+
+            <div class="afc-manual-container">
+                <div class="afc-cover">
+                    <h1 class="afc-manual-h1">THE REAL ESTATE MACHINE</h1>
+                    <p style="font-size: 20px; color: #64748b; font-weight: 600;">System Operator Manual: S-Grade Edition</p>
+                </div>
+
+                <h2 class="afc-manual-h2">1. The Core Infrastructure</h2>
+                <p>Congratulations. AFCGlide isn't just a plugin; it's a <strong>Real Estate Machine</strong> designed for high-volume asset broadcasting.</p>
+
+                <h2 class="afc-manual-h2">2. Roles & Permissions</h2>
+                <div class="afc-step-box">
+                    <span class="afc-role-badge bg-broker">MANAGING BROKER</span>
+                    <p>Full control over the global inventory, agent onboarding, and security protocols.</p>
+                </div>
+                <div class="afc-step-box">
+                    <span class="afc-role-badge bg-agent">LISTING AGENT</span>
+                    <p>Focused strictly on production. Manage your portfolio and track your performance stats.</p>
+                </div>
+
+                <h2 class="afc-manual-h2">3. The Submission Matrix</h2>
+                <p>Our world-class submission form ensures no listing is ever subpar:</p>
+                <ul>
+                    <li><strong>Bilingual Sync:</strong> Every asset requires English and Spanish data for maximum reach.</li>
+                    <li><strong>Quality Gatekeeper:</strong> System will reject images under 1200px to maintain luxury standards.</li>
+                    <li><strong>GPS Precision:</strong> Coordinates are used for high-fidelity mapping.</li>
+                </ul>
+
+                <div class="afc-tips-box">
+                    <strong>💡 PRO TIP:</strong> Use the "Rapid Onboarding" tool to create an agent in 5 seconds and generate a custom Access Guide for them.
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    public static function render_activity_stream() {
+        $recent = get_posts([
+            'post_type' => C::POST_TYPE,
+            'post_status' => ['publish', 'pending', 'sold', 'draft'],
+            'posts_per_page' => 8,
+            'orderby' => 'modified'
+        ]);
+        
+        if (empty($recent)) {
+            echo '<p class="afc-activity-empty">No recent activity.</p>';
+            return;
+        }
+        
+        foreach ($recent as $post) {
+            $author = get_the_author_meta('display_name', $post->post_author);
+            $time = human_time_diff(get_the_modified_time('U', $post->ID), current_time('timestamp')) . ' ago';
+            $status = strtoupper($post->post_status);
+            
+            echo '<div class="afc-activity-item">';
+            echo '<div>';
+            echo '<span class="afc-activity-status">' . esc_html($status) . '</span>';
+            echo '<strong>' . esc_html($post->post_title) . '</strong> ';
+            echo '<small>by ' . esc_html($author) . '</small>';
+            echo '</div>';
+            echo '<div class="afc-activity-time">' . esc_html($time) . '</div>';
+            echo '</div>';
+        }
+    }
+
+    public static function render_team_roster() {
+        $agents = get_users(['role__in' => ['listing_agent', 'managing_broker', 'administrator']]);
+        
+        echo '<table class="afc-team-table">';
+        echo '<thead><tr>';
+        echo '<th>AGENT</th>';
+        echo '<th>UNITS</th>';
+        echo '<th>VOLUME</th>';
+        echo '</tr></thead>';
+        echo '<tbody>';
+        
+        foreach ($agents as $user) {
+            $count = count(get_posts([
+                'post_type' => C::POST_TYPE,
+                'post_status' => 'publish',
+                'author' => $user->ID,
+                'fields' => 'ids',
+                'posts_per_page' => -1
+            ]));
+            
+            $vol = self::calculate_portfolio_volume($user->ID);
+            
+            echo '<tr>';
+            echo '<td>' . esc_html($user->display_name) . '</td>';
+            echo '<td>' . esc_html($count) . '</td>';
+            echo '<td>$' . number_format($vol) . '</td>';
+            echo '</tr>';
+        }
+        
+        echo '</tbody></table>';
+    }
+
+    public static function calculate_portfolio_volume($author_id = null) {
+        global $wpdb;
+        $meta_key = \AFCGlide\Core\Constants::META_PRICE;
+        $sql = "SELECT SUM(CAST(meta_value AS UNSIGNED)) FROM $wpdb->postmeta pm JOIN $wpdb->posts p ON pm.post_id = p.ID WHERE pm.meta_key = '$meta_key' AND p.post_status = 'publish'";
+        if ($author_id) {
+            $sql .= $wpdb->prepare(" AND p.post_author = %d", $author_id);
+        }
+        return (float) $wpdb->get_var($sql) ?: 0;
+    }
+
+    public static function check_homepage_configuration() {
+        if ( ! current_user_can( 'manage_options' ) ) return;
+        if ( get_option( 'show_on_front' ) !== 'page' ) {
+            echo '<div class="notice notice-warning is-dismissible">';
+            echo '<p><strong>AFCGlide Alert:</strong> For best results, set a static Front Page in ';
+            echo '<a href="' . admin_url('options-reading.php') . '">Settings > Reading</a>.</p>';
+            echo '</div>';
         }
     }
 
     /**
-     * 🚀 HANDLE FULL SUBMISSION
+     * PUBLIC SUBMISSION HANDLER (The Engine)
      */
-    public static function handle_front_submission() {
-        // Security Verification (Aligned with 'security' field in Form)
-        check_ajax_referer( C::NONCE_AJAX, 'security' );
+    public static function afc_handle_submission() {
+        // 1. Security Check
+        check_ajax_referer( C::NONCE_AJAX, 'afc_listing_nonce' );
 
-        $user_id = get_current_user_id();
-        if ( ! $user_id ) {
-            self::send_error( __( 'Security Session expired. Please re-authenticate.', 'afcglide' ) );
-        }
-
-        // Check Lockdown State
-        if ( C::get_option( C::OPT_GLOBAL_LOCKDOWN ) === '1' && ! current_user_can( C::CAP_MANAGE ) ) {
-            self::send_error( __( '🔒 GLOBAL LOCKDOWN: All asset transmissions are currently frozen.', 'afcglide' ) );
-        }
-
-        $title = sanitize_text_field( $_POST['listing_title'] ?? '' );
-        if ( empty( $title ) ) {
-            self::send_error( __( 'Asset Title is mandatory for deployment.', 'afcglide' ) );
-        }
-
-        $post_id = intval( $_POST['post_id'] ?? 0 );
-
+        // 2. Data Sanitization
+        $title = sanitize_text_field( $_POST['listing_title'] );
+        $price = sanitize_text_field( str_replace( [',','$'], '', $_POST['listing_price'] ) );
+        $type  = sanitize_text_field( $_POST['listing_type'] );
+        $status = sanitize_text_field( $_POST['listing_status'] );
+        
+        // 3. Create/Update Post
         $post_data = [
             'post_title'   => $title,
-            'post_content' => wp_kses_post( $_POST['listing_description'] ?? '' ),
-            'post_status'  => 'publish',
+            'post_content' => wp_kses_post( $_POST['listing_narrative'] ), // Safe HTML
+            'post_status'  => $status,
             'post_type'    => C::POST_TYPE,
-            'post_author'  => $user_id,
+            'post_author'  => get_current_user_id()
         ];
 
-        // Process Update vs. New Entry
-        if ( $post_id > 0 ) {
-            $existing_post = get_post( $post_id );
-            if ( ! $existing_post ) self::send_error( __( 'Target asset not found in database.', 'afcglide' ) );
-            if ( $existing_post->post_author != $user_id && ! current_user_can( C::CAP_MANAGE ) ) {
-                self::send_error( __( 'Unauthorized: You do not possess the credentials for this asset.', 'afcglide' ) );
-            }
-            $post_data['ID'] = $post_id;
-            $final_id = wp_update_post( $post_data, true );
-            $message = __( '✅ Global Asset Synced Successfully!', 'afcglide' );
-        } else {
-            $final_id = wp_insert_post( $post_data, true );
-            $message = __( '🚀 Global Asset Deployed Successfully!', 'afcglide' );
+        $post_id = wp_insert_post( $post_data );
+
+        if ( is_wp_error( $post_id ) ) {
+            wp_send_json_error( ['message' => 'System Error: Could not create asset.'] );
         }
 
-        if ( is_wp_error( $final_id ) ) {
-            self::log_error( 'Post save error: ' . $final_id->get_error_message() );
-            self::send_error( __( 'Database Synchronization Failed.', 'afcglide' ) );
-        }
+        // 4. Save Core Metadata (Using New _afc_ Keys)
+        update_post_meta( $post_id, C::META_PRICE, $price );
+        update_post_meta( $post_id, C::META_BEDS, sanitize_text_field($_POST['listing_beds']) );
+        update_post_meta( $post_id, C::META_BATHS, sanitize_text_field($_POST['listing_baths']) );
+        update_post_meta( $post_id, C::META_SQFT, sanitize_text_field($_POST['listing_sqft']) );
+        update_post_meta( $post_id, C::META_TYPE, $type );
+        update_post_meta( $post_id, C::META_ADDRESS, sanitize_textarea_field($_POST['listing_address']) );
+        update_post_meta( $post_id, C::META_LOCATION, sanitize_text_field($_POST['listing_location']) );
+        update_post_meta( $post_id, C::META_STATUS, $status );
 
-        // Save Standardized Meta Map
-        self::save_standard_meta( $final_id );
-        self::save_amenities( $final_id );
+        // 5. Handle Agent Info
+        update_post_meta( $post_id, C::META_AGENT_NAME, sanitize_text_field($_POST['agent_name']) );
+        update_post_meta( $post_id, C::META_AGENT_PHONE, sanitize_text_field($_POST['agent_phone']) );
 
-        // Process Hero Image (Required)
-        $hero_saved = self::upload_image( 'hero_file', $final_id, C::META_HERO_ID );
-
-        // Process Gallery Batch (Maximum Limit Enforced)
-        $existing_gallery = C::get_meta( $final_id, C::META_GALLERY_IDS, true ) ?: [];
-        $existing_count = is_array( $existing_gallery ) ? count( $existing_gallery ) : 0;
-        $allowed = max( 0, C::MAX_GALLERY - $existing_count );
-        
-        $gallery_saved_ids = [];
-        if ( $allowed > 0 && !empty($_FILES['gallery_files']['name'][0]) ) {
-            $gallery_saved_ids = self::upload_gallery( 'gallery_files', $final_id, C::META_GALLERY_IDS, $allowed );
-        }
-
-        // NEW: Clear cache after successful save
-        $post = get_post( $final_id );
-        if ( $post ) {
-            Engine::clear_stats_cache( $post->post_author );
-            
-            // If admin, also clear global cache
-            if ( current_user_can( C::CAP_MANAGE ) ) {
-                Engine::clear_stats_cache( get_current_user_id() );
-            }
-        }
-
-        self::send_success( $message, [
-            'url'           => get_permalink( $final_id ),
-            'post_id'       => $final_id,
-            'hero_status'   => $hero_saved ? 'Updated' : 'No Change',
-            'gallery_added' => count($gallery_saved_ids)
-        ]);
-    }
-
-    /**
-     * 💾 HANDLE AUTOSAVE DRAFT
-     */
-    public static function handle_save_draft() {
-        check_ajax_referer( C::NONCE_AJAX, 'security' );
-
-        $user_id = get_current_user_id();
-        if ( ! $user_id ) self::send_error( 'Session expired.' );
-
-        $post_id = intval( $_POST['post_id'] ?? 0 );
-        $title = sanitize_text_field( $_POST['listing_title'] ?? '' );
-
-        $post_data = [
-            'post_title'   => $title ?: __( 'Draft Asset', 'afcglide' ),
-            'post_content' => wp_kses_post( $_POST['listing_description'] ?? '' ),
-            'post_status'  => 'draft',
-            'post_type'    => C::POST_TYPE,
-            'post_author'  => $user_id,
-        ];
-
-        if ( $post_id > 0 ) {
-            $post_data['ID'] = $post_id;
-            $final_id = wp_update_post( $post_data, true );
-        } else {
-            $final_id = wp_insert_post( $post_data, true );
-        }
-
-        if ( ! is_wp_error( $final_id ) ) {
-            self::save_standard_meta( $final_id );
-            
-            // NEW: Clear cache on draft save
-            Engine::clear_stats_cache( $user_id );
-            
-            self::send_success( 'Draft Auto-Synced', [ 'post_id' => $final_id ] );
-        } else {
-            self::send_error( 'Draft sync failed.' );
-        }
-    }
-
-    /**
-     * 🗺️ SYNC CORE META & GEOSPATIAL DATA
-     */
-    private static function save_standard_meta( $post_id ) {
-        $meta_map = [
-            'listing_price'        => C::META_PRICE,
-            'listing_address'      => C::META_ADDRESS,
-            'listing_beds'         => C::META_BEDS,
-            'listing_baths'        => C::META_BATHS,
-            'listing_sqft'         => C::META_SQFT,
-            'listing_status'       => C::META_STATUS,
-            'gps_lat'              => C::META_GPS_LAT,
-            'gps_lng'              => C::META_GPS_LNG,
-            'listing_intro_es'     => C::META_INTRO_ES,
-            'listing_narrative_es' => C::META_NARRATIVE_ES,
-        ];
-
-        foreach ( $meta_map as $form_field => $meta_key ) {
-            if ( isset( $_POST[$form_field] ) ) {
-                
-                // WORLD-CLASS CLEANER: Specifically for GPS
-                if ( $form_field === 'gps_lat' || $form_field === 'gps_lng' ) {
-                    // Strips everything except numbers, dots, and minus signs
-                    $value = preg_replace( '/[^0-9.-]/', '', $_POST[$form_field] );
-                } else {
-                    // Standard cleaning for everything else
-                    $value = is_numeric($_POST[$form_field]) ? floatval($_POST[$form_field]) : sanitize_text_field($_POST[$form_field]);
-                }
-                
-                C::update_meta( $post_id, $meta_key, $value );
-            }
-        }
-    }
-
-    /**
-     * 🏡 SYNC AMENITIES ARRAY
-     */
-    private static function save_amenities( $post_id ) {
-        $amenities = $_POST['listing_amenities'] ?? [];
-        if ( is_array($amenities) ) {
-            $sanitized = array_map('sanitize_text_field', $amenities);
-            C::update_meta( $post_id, C::META_AMENITIES, $sanitized );
-        } else {
-            delete_post_meta( $post_id, C::META_AMENITIES );
-        }
-    }
-
-    /**
-     * 🖼️ S-GRADE IMAGE PROCESSOR (With Auto-Resize)
-     */
-    private static function upload_image( $file_key, $post_id, $meta_key ) {
-        if ( empty($_FILES[$file_key]['name']) ) return false;
-
+        // 6. Handle File Uploads (Hero, Agent Photo, Broker Logo)
         require_once( ABSPATH . 'wp-admin/includes/image.php' );
         require_once( ABSPATH . 'wp-admin/includes/file.php' );
         require_once( ABSPATH . 'wp-admin/includes/media.php' );
 
-        // Secure Upload Handshake
-        $attach_id = media_handle_upload( $file_key, $post_id );
-        if ( is_wp_error($attach_id) ) return false;
-
-        // Auto-Resize Large Assets (Cap at 2500px for high-end display without bloating server)
-        $file_path = get_attached_file( $attach_id );
-        $editor = wp_get_image_editor( $file_path );
-        if ( ! is_wp_error( $editor ) ) {
-            $size = $editor->get_size();
-            if ( $size['width'] > 2500 ) {
-                $editor->resize( 2500, null, false );
-                $editor->save( $file_path );
-                $metadata = wp_generate_attachment_metadata( $attach_id, $file_path );
-                wp_update_attachment_metadata( $attach_id, $metadata );
+        // A. Hero Image
+        if ( ! empty( $_FILES['hero_image']['name'] ) ) {
+            $hero_id = media_handle_upload( 'hero_image', $post_id );
+            if ( ! is_wp_error( $hero_id ) ) {
+                update_post_meta( $post_id, C::META_HERO_ID, $hero_id );
+                set_post_thumbnail( $post_id, $hero_id );
             }
         }
 
-        set_post_thumbnail( $post_id, $attach_id );
-        C::update_meta( $post_id, $meta_key, $attach_id );
-        return $attach_id;
-    }
-
-    /**
-     * 📸 GALLERY BATCH PROCESSOR
-     */
-    private static function upload_gallery( $file_key, $post_id, $meta_key, $max_files ) {
-        require_once( ABSPATH . 'wp-admin/includes/image.php' );
-        require_once( ABSPATH . 'wp-admin/includes/file.php' );
-        require_once( ABSPATH . 'wp-admin/includes/media.php' );
-
-        $gallery_ids = [];
-        $files = $_FILES[$file_key];
-
-        for ( $i = 0; $i < count( $files['name'] ); $i++ ) {
-            if ( empty( $files['name'][ $i ] ) ) continue;
-            if ( count( $gallery_ids ) >= $max_files ) break;
-
-            $_FILES['single_batch'] = [
-                'name'     => $files['name'][ $i ],
-                'type'     => $files['type'][ $i ],
-                'tmp_name' => $files['tmp_name'][ $i ],
-                'error'    => $files['error'][ $i ],
-                'size'     => $files['size'][ $i ],
-            ];
-
-            $attach_id = media_handle_upload( 'single_batch', $post_id );
-            if ( ! is_wp_error( $attach_id ) ) {
-                $gallery_ids[] = $attach_id;
+        // B. Agent Photo
+        if ( ! empty( $_FILES['agent_photo_file']['name'] ) ) {
+            $agent_photo_id = media_handle_upload( 'agent_photo_file', $post_id );
+            if ( ! is_wp_error( $agent_photo_id ) ) {
+                update_post_meta( $post_id, C::META_AGENT_PHOTO, $agent_photo_id );
             }
         }
 
-        if ( ! empty( $gallery_ids ) ) {
-            $existing = (array) C::get_meta( $post_id, $meta_key );
-            $merged = array_unique( array_merge( $existing, $gallery_ids ) );
-            C::update_meta( $post_id, $meta_key, array_values($merged) );
-        }
-        return $gallery_ids;
-    }
-
-    /**
-     * 🔒 GLOBAL LOCKDOWN TOGGLE
-     */
-    public static function handle_lockdown_toggle() {
-        check_ajax_referer( C::NONCE_AJAX, 'security' );
-        if ( ! current_user_can( C::CAP_MANAGE ) ) self::send_error('Unauthorized Access.');
-
-        $type   = sanitize_text_field( $_POST['type'] ?? '' );
-        $status = sanitize_text_field( $_POST['status'] ?? '0' );
-
-        update_option( 'afc_' . $type, $status === '1' ? '1' : '0' );
-        self::send_success('Security Settings Updated.');
-    }
-
-    /**
-     * 🔍 GLOBAL LISTINGS GRID FILTER
-     */
-    public static function handle_listings_filter() {
-        check_ajax_referer( C::NONCE_AJAX, 'security' );
-
-        $page    = intval( $_POST['page'] ?? 1 );
-        $filters = $_POST['filters'] ?? [];
-
-        $args = [
-            'post_type'      => C::POST_TYPE,
-            'post_status'    => 'publish',
-            'posts_per_page' => 9,
-            'paged'          => $page,
-        ];
-
-        // Advanced Meta Querying for Filters
-        $meta_query = [];
-        if ( ! empty($filters['min_price']) ) {
-            $meta_query[] = [
-                'key' => C::META_PRICE,
-                'value' => floatval($filters['min_price']),
-                'compare' => '>=',
-                'type' => 'NUMERIC',
-            ];
-        }
-        
-        if ( $meta_query ) $args['meta_query'] = $meta_query;
-
-        $query = new \WP_Query($args);
-
-        ob_start();
-        if ( $query->have_posts() ) {
-            while ( $query->have_posts() ) {
-                $query->the_post();
-                $template_path = AFCG_PATH . 'templates/listing-card.php';
-                if ( file_exists($template_path) ) {
-                    include $template_path;
-                }
+        // C. BROKERAGE LOGO (New!)
+        if ( ! empty( $_FILES['broker_logo_file']['name'] ) ) {
+            $logo_id = media_handle_upload( 'broker_logo_file', $post_id );
+            if ( ! is_wp_error( $logo_id ) ) {
+                update_post_meta( $post_id, C::META_BROKER_LOGO, $logo_id );
             }
-            wp_reset_postdata();
-        } else {
-            echo '<p class="afc-no-results">No luxury assets match your current parameters.</p>';
         }
-        $html = ob_get_clean();
 
-        self::send_success('Network Scanned.', [
-            'html'      => $html,
-            'pages'     => $query->max_num_pages,
-            'total'     => $query->found_posts,
+        // D. Gallery (Multiple)
+        // Handled via separate logic usually, or loop through $_FILES['gallery_files']
+        // For V1, we'll rely on the dedicated gallery uploader or add simple loop here if needed.
+
+        // 7. Success Response
+        wp_send_json_success([
+            'message' => 'Asset Initialized Successfully.',
+            'url'     => get_permalink( $post_id )
         ]);
-    }
-    
-    /**
-     * ============================================================================
-     * NEW: CACHE MANAGEMENT HOOKS
-     * ============================================================================
-     */
-    
-    /**
-     * Clear stats cache when a listing is saved
-     * 
-     * @param int $post_id The post ID
-     * @param WP_Post $post The post object
-     * @param bool $update Whether this is an update
-     */
-    public static function clear_stats_on_save( $post_id, $post, $update ) {
-        // Don't clear cache for autosaves or revisions
-        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-            return;
-        }
-        
-        if ( wp_is_post_revision( $post_id ) ) {
-            return;
-        }
-        
-        // Clear cache for the post author
-        Engine::clear_stats_cache( $post->post_author );
-        
-        // If admin/broker is editing, also clear their cache
-        $current_user_id = get_current_user_id();
-        if ( $current_user_id !== $post->post_author && current_user_can( C::CAP_MANAGE ) ) {
-            Engine::clear_stats_cache( $current_user_id );
-        }
-    }
-    
-    /**
-     * Clear stats cache when a listing is deleted
-     * 
-     * @param int $post_id The post ID
-     * @param WP_Post $post The post object
-     */
-    public static function clear_stats_on_delete( $post_id, $post ) {
-        // Only for our post type
-        if ( ! $post || $post->post_type !== C::POST_TYPE ) {
-            return;
-        }
-        
-        // Clear cache for the post author
-        Engine::clear_stats_cache( $post->post_author );
-        
-        // Clear cache for current user if different
-        $current_user_id = get_current_user_id();
-        if ( $current_user_id !== $post->post_author ) {
-            Engine::clear_stats_cache( $current_user_id );
-        }
-    }
-    
-    /**
-     * Clear stats cache when post status changes
-     * (e.g., draft to publish, publish to sold)
-     * 
-     * @param string $new_status New post status
-     * @param string $old_status Old post status
-     * @param WP_Post $post The post object
-     */
-    public static function clear_stats_on_status_change( $new_status, $old_status, $post ) {
-        // Only for our post type
-        if ( $post->post_type !== C::POST_TYPE ) {
-            return;
-        }
-        
-        // Only clear if status actually changed
-        if ( $new_status === $old_status ) {
-            return;
-        }
-        
-        // Clear cache for the post author
-        Engine::clear_stats_cache( $post->post_author );
-        
-        // Clear cache for current user if admin
-        if ( current_user_can( C::CAP_MANAGE ) ) {
-            Engine::clear_stats_cache( get_current_user_id() );
-        }
-    }
-
-    /**
-     * 👑 AGENT RECRUITMENT PROTOCOL (Bulletproof)
-     */
-    public static function handle_agent_recruitment() {
-        check_ajax_referer( C::NONCE_RECRUITMENT, 'security' );
-        if ( ! current_user_can( C::CAP_MANAGE ) ) self::send_error( 'Permission Denied.' );
-        $user_id = wp_create_user( sanitize_user($_POST['agent_username']), $_POST['password'], sanitize_email($_POST['agent_email']) );
-        if ( is_wp_error($user_id) ) self::send_error( $user_id->get_error_message() );
-        $user = new \WP_User( $user_id );
-        $user->set_role( 'listing_agent' ); 
-        self::send_success( '🚀 AGENT RECRUITED' );
-    }
-
-    /**
-     * 👁️ FOCUS MODE TOGGLE
-     */
-    public static function handle_focus_toggle() {
-        check_ajax_referer( C::NONCE_AJAX, 'security' );
-        $status = sanitize_text_field( $_POST['status'] ?? '0' );
-        update_user_meta( get_current_user_id(), 'afc_focus_mode', $status === '1' ? '1' : '0' );
-        self::send_success( 'Focus Mode Updated' );
-    }
-
-    /**
-     * ⚙️ SYSTEM BACKBONE SYNC
-     */
-    public static function handle_sync_backbone() {
-        check_ajax_referer( C::NONCE_AJAX, 'security' );
-        if ( ! current_user_can( C::CAP_MANAGE ) ) self::send_error( 'Permission Denied.' );
-
-        update_option( 'afc_system_label', sanitize_text_field( $_POST['system_label'] ?? '' ) );
-        update_option( 'afc_whatsapp_color', sanitize_hex_color( $_POST['whatsapp_color'] ?? '#25d366' ) );
-        update_option( 'afc_global_lockdown', ( $_POST['lockdown'] === '1' ) ? '1' : '0' );
-        update_option( 'afc_quality_gatekeeper', ( $_POST['gatekeeper'] === '1' ) ? '1' : '0' );
-
-        self::send_success( 'System Sync Executed' );
     }
 }

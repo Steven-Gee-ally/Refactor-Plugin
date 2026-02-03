@@ -168,8 +168,10 @@ class AFCGlide_Admin_Menu {
 
     private static function calculate_portfolio_volume() {
         global $wpdb;
-        $query = "SELECT SUM(CAST(meta_value AS UNSIGNED)) FROM $wpdb->postmeta WHERE meta_key = '_listing_price'";
-        return (float) $wpdb->get_var($query) ?: 0;
+        $meta_key = \AFCGlide\Core\Constants::META_PRICE;
+        $query = "SELECT SUM(CAST(meta_value AS UNSIGNED)) FROM $wpdb->postmeta WHERE meta_key = '$meta_key'";
+        $total_volume = $wpdb->get_var( $query ) ?: 0;
+        return (float) $total_volume;
     }
 
     public static function render_settings_page() {

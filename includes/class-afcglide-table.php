@@ -33,7 +33,7 @@ class AFCGlide_Table {
         switch ( $column ) {
             case 'afc_thumb' :
                 // Pull from our Hero Image ID
-                $hero_id = get_post_meta( $post_id, '_listing_hero_id', true );
+                $hero_id = get_post_meta( $post_id, \AFCGlide\Core\Constants::META_HERO_ID, true );
                 if ( $hero_id ) {
                     echo wp_get_attachment_image( $hero_id, [50, 50], true, [
                         'style' => 'border-radius:8px; border: 1px solid #e2e8f0; object-fit: cover;'
@@ -44,7 +44,7 @@ class AFCGlide_Table {
                 break;
 
             case 'afc_price' :
-                $price = get_post_meta( $post_id, '_listing_price', true );
+                $price = get_post_meta( $post_id, \AFCGlide\Core\Constants::META_PRICE, true );
                 if ( $price ) {
                     echo '<span style="color:#10b981; font-weight:800; font-size:14px;">$' . number_format(floatval($price)) . '</span>';
                 } else {
@@ -53,7 +53,7 @@ class AFCGlide_Table {
                 break;
 
             case 'afc_agent' :
-                $agent = get_post_meta( $post_id, '_afc_agent_name', true );
+                $agent = get_post_meta( $post_id, \AFCGlide\Core\Constants::META_AGENT_NAME, true );
                 echo '<span style="font-weight:600; color:#1e293b;">' . esc_html( $agent ?: 'Unassigned' ) . '</span>';
                 break;
         }

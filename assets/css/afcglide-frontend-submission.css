@@ -32,10 +32,23 @@
 }
 
 /* --- 2. Input Fields & Grid --- */
-.afc-flex-row { display: flex; gap: 20px; margin-bottom: 20px; }
-.flex-2 { flex: 2; }
-.flex-3 { flex: 3; }
-.full-width { width: 100%; }
+.afc-flex-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.flex-2 {
+    flex: 2;
+}
+
+.flex-3 {
+    flex: 3;
+}
+
+.full-width {
+    width: 100%;
+}
 
 .afc-field label {
     display: block;
@@ -47,7 +60,8 @@
     letter-spacing: 0.5px;
 }
 
-.afc-field input, .afc-field textarea {
+.afc-field input,
+.afc-field textarea {
     width: 100%;
     padding: 14px 18px;
     border: 2px solid #f1f5f9;
@@ -65,10 +79,26 @@
 }
 
 /* --- 3. Amenities & Checkboxes (Restored & Upgraded) --- */
+/* --- 3. Amenities & Checkboxes (Restored & Upgraded) --- */
 .amenities-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 12px;
+    /* Default: 2 columns for mobile */
+    grid-template-columns: repeat(2, 1fr);
+}
+
+/* Tablet: 3 columns */
+@media (min-width: 768px) {
+    .amenities-container {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* Desktop: Enforce 5 columns as requested */
+@media (min-width: 1200px) {
+    .amenities-container {
+        grid-template-columns: repeat(5, 1fr);
+    }
 }
 
 .afc-checkbox-item {
@@ -80,24 +110,34 @@
     border-radius: 12px;
     cursor: pointer;
     border: 2px solid transparent;
-    transition: all 0.2s;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    will-change: transform;
+    /* Prevent flickering */
+    backface-visibility: hidden;
+    /* Hardware acceleration */
 }
 
 .afc-checkbox-item:hover {
-    background: #f0f4ff;
-    border-color: #e0e7ff;
+    background: #eff6ff;
+    border-color: #6366f1;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .afc-checkbox-item input[type="checkbox"] {
     width: 18px;
     height: 18px;
-    accent-color: #10b981;
+    accent-color: #6366f1;
+    /* Match brand color */
+    flex-shrink: 0;
 }
 
 .afc-checkbox-item span {
-    font-size: 12px;
+    font-size: 13px;
+    /* Slightly larger for readability */
     font-weight: 700;
     color: #334155;
+    line-height: 1.2;
 }
 
 /* --- 4. Status Toggles (The "Vogue" Edition) --- */
@@ -107,8 +147,14 @@
     margin-top: 10px;
 }
 
-.status-opt { flex: 1; cursor: pointer; }
-.status-opt input { display: none; }
+.status-opt {
+    flex: 1;
+    cursor: pointer;
+}
+
+.status-opt input {
+    display: none;
+}
 
 .status-label {
     display: block;
@@ -125,9 +171,23 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.status-opt input:checked + .status-label.active { background: #ecfdf5; color: #10b981; border-color: #10b981; }
-.status-opt input:checked + .status-label.pending { background: #fffbeb; color: #d97706; border-color: #d97706; }
-.status-opt input:checked + .status-label.sold { background: #fef2f2; color: #e11d48; border-color: #e11d48; }
+.status-opt input:checked+.status-label.active {
+    background: #ecfdf5;
+    color: #10b981;
+    border-color: #10b981;
+}
+
+.status-opt input:checked+.status-label.pending {
+    background: #fffbeb;
+    color: #d97706;
+    border-color: #d97706;
+}
+
+.status-opt input:checked+.status-label.sold {
+    background: #fef2f2;
+    color: #e11d48;
+    border-color: #e11d48;
+}
 
 /* --- 5. Media Gallery & Previews (Restored) --- */
 .afc-media-uploader {
@@ -140,7 +200,10 @@
     transition: all 0.3s;
 }
 
-.afc-media-uploader:hover { border-color: #6366f1; background: #f5f7ff; }
+.afc-media-uploader:hover {
+    border-color: #6366f1;
+    background: #f5f7ff;
+}
 
 .afc-preview-grid {
     display: grid;
@@ -157,7 +220,11 @@
     position: relative;
 }
 
-.gallery-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.gallery-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 
 /* --- 6. Global Submit (Vogue Green) --- */
 .afc-main-submit {

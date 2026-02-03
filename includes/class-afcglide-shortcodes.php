@@ -333,6 +333,12 @@ final class AFCGlide_Shortcodes {
         ob_start();
         
         echo '<div class="afc-grid-wrapper">';
+        echo '<div class="afc-portfolio-header">';
+        echo '<h1 class="afc-portfolio-headline">LISTINGS PORTFOLIO</h1>';
+        echo '<a href="' . esc_url( get_permalink() ) . '" class="afc-portfolio-btn afc-browse-btn">';
+        echo '<span class="dashicons dashicons-admin-home"></span> BROWSE LISTINGS';
+        echo '</a>';
+        echo '</div>';
         
         if ( $atts['show_search'] === 'yes' ) {
             self::render_search_bar($search_term, $max_price);
@@ -363,8 +369,16 @@ final class AFCGlide_Shortcodes {
      */
     public static function render_listing_card() {
         $template = AFCG_PATH . 'templates/listing-card.php';
+        
+        // World-Class Resilience: Check original path, then fallback to relative path
+        if ( ! file_exists( $template ) ) {
+            $template = plugin_dir_path( __FILE__ ) . '../templates/listing-card.php';
+        }
+
         if ( file_exists( $template ) ) {
             include $template;
+        } else {
+            echo '';
         }
     }
 
@@ -382,7 +396,7 @@ final class AFCGlide_Shortcodes {
                     }
                     ?>
                 </select>
-                <button type="submit" class="afc-vogue-btn">FILTER</button>
+                <button type="submit" class="afc-portfolio-btn">FILTER</button>
             </form>
         </div>
         <?php

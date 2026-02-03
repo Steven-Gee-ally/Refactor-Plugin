@@ -145,8 +145,12 @@ class AFCGlide_Public {
         
         if ( ! isset( $_COOKIE[$cookie_name] ) ) {
             setcookie( $cookie_name, '1', time() + 86400, COOKIEPATH, COOKIE_DOMAIN );
-            $views = intval( get_post_meta( $post_id, '_listing_views_count', true ) );
-            update_post_meta( $post_id, '_listing_views_count', $views + 1 );
+            $views = intval( get_post_meta( $post_id, Constants::META_VIEWS, true ) );
+            if ( ! $views ) {
+                add_post_meta( $post_id, Constants::META_VIEWS, 1 );
+            } else {
+                update_post_meta( $post_id, Constants::META_VIEWS, $views + 1 );
+            }
         }
     }
 

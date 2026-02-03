@@ -8,6 +8,8 @@
 
 namespace AFCGlide\Listings\Helpers;
 
+use AFCGlide\Core\Constants;
+
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 class Upload_Helper {
@@ -88,11 +90,11 @@ class Upload_Helper {
         if ( empty( $attachment_ids ) ) return false;
 
         // CRITICAL SYNC: Save as JSON for the Slider
-        return update_post_meta( $post_id, '_slider_images_json', json_encode( $attachment_ids ) );
+        return update_post_meta( $post_id, Constants::META_SLIDER_JSON, json_encode( $attachment_ids ) );
     }
 
     public static function get_gallery( $post_id ) {
-        $data = get_post_meta( $post_id, '_slider_images_json', true );
+        $data = get_post_meta( $post_id, Constants::META_SLIDER_JSON, true );
         $ids  = json_decode( $data, true );
         return is_array( $ids ) ? $ids : [];
     }

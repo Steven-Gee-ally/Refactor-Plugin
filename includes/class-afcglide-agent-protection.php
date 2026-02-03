@@ -4,10 +4,10 @@ namespace AFCGlide\Admin;
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
- * AFCGlide Agent Protections
+ * AFCGlide Agent Protection
  * Version 1.2.0 - Secure Ownership + Rainbow Meta Duplication
  */
-class AFCGlide_Agent_Protections {
+class AFCGlide_Agent_Protection {
 
     public static function init() {
         add_action( 'admin_menu', [ __CLASS__, 'apply_ghost_mode' ], 999 );
@@ -87,12 +87,18 @@ class AFCGlide_Agent_Protections {
 
         if ( ! is_wp_error( $new_post_id ) ) {
             // DUPLICATE OUR SPECIFIC RAINBOW META
-            $keys_to_copy = [
-                '_listing_price', '_listing_beds', '_listing_baths', 
-                '_listing_sqft', '_listing_address', '_listing_status'
+            $meta_keys_to_copy = [
+                \AFCGlide\Core\Constants::META_PRICE, 
+                \AFCGlide\Core\Constants::META_BEDS, 
+                \AFCGlide\Core\Constants::META_BATHS,
+                \AFCGlide\Core\Constants::META_SQFT, 
+                \AFCGlide\Core\Constants::META_ADDRESS, 
+                \AFCGlide\Core\Constants::META_STATUS,
+                \AFCGlide\Core\Constants::META_INTRO,
+                \AFCGlide\Core\Constants::META_NARRATIVE
             ];
             
-            foreach ( $keys_to_copy as $key ) {
+            foreach ( $meta_keys_to_copy as $key ) {
                 $value = get_post_meta( $post_id, $key, true );
                 if ( $value ) update_post_meta( $new_post_id, $key, $value );
             }
@@ -160,4 +166,4 @@ class AFCGlide_Agent_Protections {
         );
     }
 }
-AFCGlide_Agent_Protections::init();
+AFCGlide_Agent_Protection::init();

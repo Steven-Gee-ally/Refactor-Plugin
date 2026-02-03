@@ -28,7 +28,7 @@ class AFCGlide_Settings {
             C::OPT_SYSTEM_LABEL,
             C::OPT_WA_COLOR,
             'afc_quality_gatekeeper',
-            C::OPT_LOCKDOWN, 
+            'afc_admin_lockdown', 
             'afc_min_image_width',
             'afc_brokerage_address',
             'afc_license_number'
@@ -83,7 +83,7 @@ class AFCGlide_Settings {
                             <span class="afc-description">Engage the Identity Shield for all visitors.</span>
                         </div>
                         <label class="afc-switch">
-                            <input type="checkbox" name="<?php echo C::OPT_LOCKDOWN; ?>" value="1" <?php checked(1, get_option(C::OPT_LOCKDOWN, 1)); ?>>
+                            <input type="checkbox" name="afc_admin_lockdown" value="1" <?php checked(1, get_option('afc_admin_lockdown', 1)); ?>>
                             <span class="slider"></span>
                         </label>
                     </div>

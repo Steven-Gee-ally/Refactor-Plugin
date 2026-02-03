@@ -27,7 +27,7 @@ function afcglide_get_template_part( $slug ) {
  * Used in the Single Listing and Grid templates.
  */
 function afcg_get_price( $post_id ) {
-    $price = get_post_meta( $post_id, '_price', true );
+    $price = get_post_meta( $post_id, \AFCGlide\Core\Constants::META_PRICE, true );
     if ( ! $price ) return __( 'Price on Request', 'afcglide' );
 
     // Default to $ if no currency is set in options
@@ -42,7 +42,7 @@ function afcg_get_price( $post_id ) {
  * Includes built-in translation support for your Spanish toggle later.
  */
 function afcg_get_status_badge( $post_id ) {
-    $status = get_post_meta( $post_id, '_listing_status', true ) ?: 'for-sale';
+    $status = get_post_meta( $post_id, \AFCGlide\Core\Constants::META_STATUS, true ) ?: 'for-sale';
     
     $labels = [
         'for-sale' => __( 'For Sale', 'afcglide' ),

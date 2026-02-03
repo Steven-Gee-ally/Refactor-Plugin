@@ -1,325 +1,390 @@
 <?php
 /**
- * AFCGlide - Professional Agent Submission Form
- * Version 5.0.0-GOLD - Full Production Master
- * NO COMPROMISE EDITION - Full Narrative & Metric Logic
+ * Template Name: Submit Listing - Professional Terminal
+ * Description: The 12-Section "Pastel Master" Submission Form for AFCGlide
+ * Version: 5.6.0-BULLETPROOF - CSS Extracted Edition
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-// 1. SYSTEM PROTOCOL - Clear the deck for a high-end interface
-remove_all_actions( 'admin_notices' );
-remove_all_actions( 'all_admin_notices' );
-remove_action( 'wp_footer', 'astra_theme_background_updater_info' ); 
-show_admin_bar( false );
-
 use AFCGlide\Core\Constants as C;
 
-// --- INITIALIZATION LOGIC ---
-$is_locked = C::get_option( C::OPT_GLOBAL_LOCKDOWN ) === '1' && ! current_user_can( C::CAP_MANAGE );
-$post_id = isset($_GET['post']) ? intval($_GET['post']) : 0;
-$defaults = [
-    'title' => '', 'price' => '', 'beds' => '', 'baths' => '', 
-    'sqft' => '', 'address' => '', 'status' => 'active', 'description' => '',
-    'gps_lat' => '', 'gps_lng' => '',
-    'intro_es' => '', 'narrative_es' => ''
-];
+// Check for global lockdown
+$lockdown = get_option('afc_global_lockdown') === '1';
+$is_broker = current_user_can('manage_options');
 
-if ( $post_id > 0 ) {
-    $post = get_post($post_id);
-    if ( $post && ($post->post_author == get_current_user_id() || current_user_can( C::CAP_MANAGE )) ) {
-        $defaults['title']       = $post->post_title;
-        $defaults['description'] = $post->post_content;
-        $defaults['price']       = C::get_meta($post_id, C::META_PRICE);
-        $defaults['beds']        = C::get_meta($post_id, C::META_BEDS);
-        $defaults['baths']       = C::get_meta($post_id, C::META_BATHS);
-        $defaults['sqft']        = C::get_meta($post_id, C::META_SQFT);
-        $defaults['address']     = C::get_meta($post_id, C::META_ADDRESS);
-        $defaults['status']      = C::get_meta($post_id, C::META_STATUS) ?: 'active';
-        $defaults['gps_lat']     = C::get_meta($post_id, C::META_GPS_LAT);
-        $defaults['gps_lng']     = C::get_meta($post_id, C::META_GPS_LNG);
-        $defaults['intro_es']      = C::get_meta($post_id, C::META_INTRO_ES);
-        $defaults['narrative_es']  = C::get_meta($post_id, C::META_NARRATIVE_ES);
-    }
-}
-
-$current_user = wp_get_current_user();
-$existing_gallery = $post_id ? C::get_meta($post_id, C::META_GALLERY_IDS) : [];
-$existing_amenities = $post_id ? (array) C::get_meta($post_id, C::META_AMENITIES) : [];
+get_header(); 
 ?>
 
-<div id="afcglide-submission-root">
-    
-    <?php if ($is_locked) : ?>
-    <div class="afc-lockdown-banner">
-        <div class="afc-section-number">🔒</div>
-        <div class="afc-banner-content">
-            <h3>GLOBAL LOCKDOWN ACTIVE</h3>
-            <p>Network security protocol engaged. Submission services are temporarily suspended for maintenance.</p>
-        </div>
-    </div>
-    <?php endif; ?>
-
-    <header class="afc-form-header">
-        <div class="afc-title-banner">
-            <div class="afc-banner-icon">🚀</div>
-            <div class="afc-banner-content">
-                <h3><?php echo $post_id ? 'UPDATE ASSET CORE' : 'NEW ASSET DEPLOYMENT'; ?></h3>
-                <p>Secure Terminal Access: <?php echo esc_html($current_user->display_name); ?></p>
+<div class="afc-submission-terminal">
+    <div class="afc-container">
+        
+        <!-- 🔒 LOCKDOWN BANNER -->
+        <?php if ($lockdown && !$is_broker): ?>
+        <div class="afc-lockdown-banner">
+            <div class="afc-lockdown-icon">🔒</div>
+            <div>
+                <h3 class="afc-lockdown-title">NETWORK LOCKDOWN ACTIVE</h3>
+                <p class="afc-lockdown-text">All asset submissions are currently frozen by the Managing Broker. Please contact your supervisor for authorization.</p>
             </div>
         </div>
-    </header>
+        <?php return; // Stop rendering form
+        endif; ?>
 
-    <form id="afcglide-front-submission" enctype="multipart/form-data">
-        <input type="hidden" name="action" value="<?php echo C::AJAX_SUBMIT; ?>">
-        <input type="hidden" name="security" value="<?php echo wp_create_nonce( C::NONCE_AJAX ); ?>">
-        <input type="hidden" name="post_id" value="<?php echo $post_id; ?>">
+        <!-- 📊 HEADER & PROGRESS BAR -->
+        <header class="afc-terminal-header">
+            <h1 class="afc-terminal-title">Submit New Asset</h1>
+            <div class="afc-progress-bar">
+                <div class="progress-fill" id="afc-progress-fill"></div>
+            </div>
+        </header>
 
-        <fieldset <?php echo $is_locked ? 'disabled' : ''; ?> style="border: none; padding: 0; margin: 0;">
-        
+        <!-- 🎯 MAIN SUBMISSION FORM -->
+        <form id="afc-submit-listing-form" enctype="multipart/form-data">
+            
+            <!-- SECTION 1: Basic Information -->
             <section class="afc-form-section">
-                <div class="afc-description-banner">
-                    <div class="afc-section-number">1</div>
-                    <div class="afc-banner-content">
-                        <h3>PROPERTY NARRATIVE</h3>
-                        <p>Configure the marketing storytelling for both English and Spanish markets.</p>
+                <h3 class="afc-section-title">
+                    <span class="afc-step-num">1</span>
+                    <i class="fas fa-info-circle"></i> Basic Information
+                </h3>
+                <div class="afc-field full-width">
+                    <label>Property Title *</label>
+                    <input type="text" name="listing_title" placeholder="e.g. Luxury Penthouse with Ocean View" required>
+                </div>
+                <div class="afc-field full-width">
+                    <label>Property Description (English) *</label>
+                    <textarea name="listing_description" rows="6" placeholder="Describe this luxury property in detail..." required></textarea>
+                </div>
+            </section>
+
+            <!-- SECTION 2: Pricing Architecture -->
+            <section class="afc-form-section">
+                <h3 class="afc-section-title">
+                    <span class="afc-step-num">2</span>
+                    <i class="fas fa-tag"></i> Pricing Architecture
+                </h3>
+                <div class="afc-flex-row">
+                    <div class="afc-field flex-2">
+                        <label>Price ($) *</label>
+                        <input type="number" name="listing_price" placeholder="350000" required>
+                    </div>
+                    <div class="afc-field flex-3">
+                        <label>Address *</label>
+                        <input type="text" name="listing_address" placeholder="123 Ocean Drive, Tamarindo">
                     </div>
                 </div>
+                <div class="afc-field full-width">
+                    <label>Location / Area</label>
+                    <input type="text" name="listing_location" placeholder="e.g. Tamarindo, Guanacaste">
+                </div>
+            </section>
 
-                <div class="afc-description-wrapper">
+            <!-- SECTION 3: Visual Assets -->
+            <section class="afc-form-section">
+                <h3 class="afc-section-title">
+                    <span class="afc-step-num">3</span>
+                    <i class="fas fa-camera"></i> Visual Assets
+                </h3>
+                
+                <div class="afc-field full-width">
+                    <label>Hero Image (Main Photo) *</label>
+                    <div class="afc-media-uploader" onclick="document.getElementById('hero-file').click()">
+                        <p>📸 Click to Upload Hero Image</p>
+                        <input type="file" id="hero-file" name="hero_file" accept="image/*" style="display:none;">
+                    </div>
+                    <div id="hero-preview" class="afc-preview-grid"></div>
+                </div>
+
+                <div class="afc-field full-width">
+                    <label>Gallery Images (Up to <?php echo C::MAX_GALLERY; ?>)</label>
+                    <div class="afc-media-uploader" onclick="document.getElementById('gallery-files').click()">
+                        <p>🖼️ Click to Upload Gallery Photos</p>
+                        <input type="file" id="gallery-files" name="gallery_files[]" multiple accept="image/*" style="display:none;">
+                    </div>
+                    <div id="gallery-preview" class="afc-preview-grid"></div>
+                </div>
+            </section>
+
+            <!-- SECTION 4: Location Intelligence -->
+            <section class="afc-form-section">
+                <h3 class="afc-section-title">
+                    <span class="afc-step-num">4</span>
+                    <i class="fas fa-map-marker-alt"></i> Location Intelligence
+                </h3>
+                <div class="afc-flex-row">
                     <div class="afc-field">
-                        <label class="afc-label">🇺🇸 Asset Title (English)</label>
-                        <input type="text" name="listing_title" class="afc-title-input" value="<?php echo esc_attr($defaults['title']); ?>" placeholder="e.g. The Sapphire Estate" required>
+                        <label>Latitude (GPS)</label>
+                        <input type="text" name="gps_lat" placeholder="10.3095" pattern="^-?([0-9]{1,2}|1[0-7][0-9]|180)(\.[0-9]{1,10})?$">
                     </div>
-
-                    <div class="afc-agent-selector-wrapper" style="margin-top: 25px;">
-                        <div class="afc-field">
-                            <label class="afc-label">🇨🇷 Título del Activo (Español)</label>
-                            <input type="text" name="listing_intro_es" class="afc-input" value="<?php echo esc_attr($defaults['intro_es']); ?>" placeholder="ej. La Finca Zafiro">
-                        </div>
-                    </div>
-                    
-                    <div class="afc-field" style="margin-top: 25px;">
-                        <label class="afc-label">🇺🇸 Marketing Story (English)</label>
-                        <textarea name="listing_description" class="afc-input" rows="8" placeholder="Describe the lifestyle and premium features in English..."><?php echo esc_textarea($defaults['description']); ?></textarea>
-                    </div>
-
-                    <div class="afc-agent-selector-wrapper" style="margin-top: 25px; border-left: 4px solid #3b82f6;">
-                        <div class="afc-field">
-                            <label class="afc-label">🇨🇷 Descripción de la Propiedad (Español)</label>
-                            <textarea name="listing_narrative_es" class="afc-input" rows="8" placeholder="Describa el estilo de vida y las características premium en español..."><?php echo esc_textarea($defaults['narrative_es']); ?></textarea>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section class="afc-form-section">
-                <div class="afc-description-banner">
-                    <div class="afc-section-number">2</div>
-                    <div class="afc-banner-content">
-                        <h3>CORE METRICS</h3>
-                        <p>Define the commercial status, pricing, and physical dimensions of the asset.</p>
-                    </div>
-                </div>
-
-                <div class="afc-metabox-content">
-                    <div class="afc-media-matrix">
-                        <div class="afc-field">
-                            <label class="afc-label">Current Market Status</label>
-                            <div class="afc-status-toggle">
-                                <?php foreach (['active' => 'ACTIVE', 'pending' => 'PENDING', 'sold' => 'SOLD'] as $val => $lab) : ?>
-                                <label>
-                                    <input type="radio" name="listing_status" value="<?php echo $val; ?>" <?php checked($defaults['status'], $val); ?> style="display:none;">
-                                    <span class="status-label <?php echo $val; ?>"><?php echo $lab; ?></span>
-                                </label>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                        <div class="afc-field">
-                            <label class="afc-label">Listing Price (USD)</label>
-                            <input type="number" name="listing_price" class="afc-input" value="<?php echo esc_attr($defaults['price']); ?>" placeholder="0.00" step="0.01" required>
-                        </div>
-                    </div>
-
-                    <div class="afc-field" style="margin-top: 30px;">
-                        <label class="afc-label">Vital Statistics</label>
-                        <div class="specs-mini-grid">
-                            <div class="afc-field">
-                                <label style="font-size: 9px;">BEDROOMS</label>
-                                <input type="number" name="listing_beds" class="afc-input" value="<?php echo esc_attr($defaults['beds']); ?>" placeholder="Beds">
-                            </div>
-                            <div class="afc-field">
-                                <label style="font-size: 9px;">BATHROOMS</label>
-                                <input type="number" name="listing_baths" class="afc-input" value="<?php echo esc_attr($defaults['baths']); ?>" placeholder="Baths" step="0.5">
-                            </div>
-                            <div class="afc-field">
-                                <label style="font-size: 9px;">SQUARE FEET</label>
-                                <input type="number" name="listing_sqft" class="afc-input" value="<?php echo esc_attr($defaults['sqft']); ?>" placeholder="Sq Ft">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section class="afc-form-section">
-                <div class="afc-description-banner">
-                    <div class="afc-section-number">3</div>
-                    <div class="afc-banner-content">
-                        <h3>SIGNATURE FEATURES</h3>
-                        <p>Select the elite amenities that define this listing's value proposition.</p>
-                    </div>
-                </div>
-
-                <div class="afc-metabox-content">
-                    <div class="amenities-container">
-                        <?php 
-                        $amenity_options = [
-                            'Gourmet Kitchen' => '🍳', 'Infinity Pool' => '🌊', 'Ocean View' => '🌅', 'Wine Cellar' => '🍷',
-                            'Private Gym' => '🏋️', 'Smart Home Tech' => '📱', 'Outdoor Cinema' => '🎬', 'Helipad Access' => '🚁',
-                            'Gated Community' => '🏰', 'Guest House' => '🏠', 'Solar Power' => '☀️', 'Beach Front' => '🏖️',
-                            'Spa / Sauna' => '🧖', '3+ Car Garage' => '🚗', 'Luxury Fire Pit' => '🔥', 'Concierge Service' => '🛎️',
-                            'Walk-in Closet' => '👗', 'High Ceilings' => '⤴️', 'Staff Quarters' => '👨‍💼', 'Backup Generator' => '⚡'
-                        ];
-                        foreach ( $amenity_options as $amenity => $icon ) : 
-                            $checked = in_array($amenity, $existing_amenities) ? 'checked' : '';
-                        ?>
-                            <label class="afc-checkbox-item">
-                                <input type="checkbox" name="listing_amenities[]" value="<?php echo esc_attr($amenity); ?>" <?php echo $checked; ?>>
-                                <span style="margin-right: 10px;"><?php echo $icon; ?></span>
-                                <span><?php echo esc_html($amenity); ?></span>
-                            </label>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-            </section>
-
-            <section class="afc-form-section">
-                <div class="afc-description-banner">
-                    <div class="afc-section-number">4</div>
-                    <div class="afc-banner-content">
-                        <h3>MEDIA ASSETS</h3>
-                        <p>High-resolution visual assets for global marketing distribution.</p>
-                    </div>
-                </div>
-
-                <div class="afc-metabox-content">
                     <div class="afc-field">
-                        <label class="afc-label">Primary Hero Photo</label>
-                        <div class="hero-preview-box" onclick="<?php echo $is_locked ? '' : "document.getElementById('hero_file').click();"; ?>">
-                            <?php if (has_post_thumbnail($post_id)) : ?>
-                                <?php echo get_the_post_thumbnail($post_id, 'large', ['id' => 'hero-preview', 'style' => 'width:100%; height:100%; object-fit:cover;']); ?>
-                            <?php else : ?>
-                                <div id="hero-placeholder" style="text-align: center; color: #94a3b8;">
-                                    <div style="font-size: 40px; margin-bottom: 10px;">🖼️</div>
-                                    <div style="font-weight: 800; letter-spacing: 1px;">UPLOAD MASTER HERO IMAGE</div>
-                                </div>
-                                <img id="hero-preview" style="display:none; width:100%; height:100%; object-fit:cover;">
-                            <?php endif; ?>
-                        </div>
-                        <input type="file" id="hero_file" name="hero_file" style="display:none" accept="image/*">
-                    </div>
-                    
-                    <div class="afc-field" style="margin-top: 40px;">
-                        <label class="afc-label">Gallery Collection (Max <?php echo C::MAX_GALLERY; ?>)</label>
-                        <div class="afc-upload-zone" onclick="<?php echo $is_locked ? '' : "document.getElementById('gallery_files').click();"; ?>" style="text-align: center; cursor: pointer;">
-                            <span style="font-size: 30px;">📸</span>
-                            <p style="margin: 10px 0; font-weight: 800; color: #475569; letter-spacing: 1px;">SELECT GALLERY ASSETS</p>
-                        </div>
-                        <input type="file" id="gallery_files" name="gallery_files[]" style="display:none" accept="image/*" multiple>
-                        
-                        <div id="new-gallery-preview" style="display:none; margin-top: 25px; padding: 25px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
-                            <label class="afc-label" style="color: #64748b; margin-bottom: 15px;">BATCH PREVIEW:</label>
-                            <div id="new-gallery-grid" class="afc-preview-grid"></div>
-                        </div>
+                        <label>Longitude (GPS)</label>
+                        <input type="text" name="gps_lng" placeholder="-85.8419" pattern="^-?([0-9]{1,2}|1[0-7][0-9]|180)(\.[0-9]{1,10})?$">
                     </div>
                 </div>
             </section>
 
+            <!-- SECTION 5: Property Specs -->
             <section class="afc-form-section">
-                <div class="afc-description-banner">
-                    <div class="afc-section-number">5</div>
-                    <div class="afc-banner-content">
-                        <h3>LOCATION DATA</h3>
-                        <p>Geospatial coordinates and physical address for global mapping.</p>
+                <h3 class="afc-section-title">
+                    <span class="afc-step-num">5</span>
+                    <i class="fas fa-bed"></i> Property Specs
+                </h3>
+                <div class="afc-flex-row">
+                    <div class="afc-field">
+                        <label>Bedrooms</label>
+                        <input type="number" name="listing_beds" placeholder="3" min="0">
                     </div>
-                </div>
-
-                <div class="afc-metabox-content">
-                    <div class="afc-field" style="margin-bottom: 30px;">
-                        <label class="afc-label">📍 Physical Address</label>
-                        <input type="text" name="listing_address" class="afc-input" value="<?php echo esc_attr($defaults['address']); ?>" placeholder="Enter property address or sector...">
+                    <div class="afc-field">
+                        <label>Bathrooms</label>
+                        <input type="number" name="listing_baths" placeholder="2.5" min="0" step="0.5">
                     </div>
-
-                    <div class="afc-agent-selector-wrapper" style="padding: 30px; border: 2px solid #e2e8f0;">
-                        <label class="afc-label" style="color: #475569; font-size: 12px;">📡 GPS COORDINATES (SATELLITE SYNC)</label>
-                        <div class="afc-gps-row" style="margin-top: 20px;">
-                            <div class="afc-field">
-                                <label style="font-size: 10px; color: #94a3b8;">LATITUDE</label>
-                                <input type="text" name="gps_lat" class="afc-input" value="<?php echo esc_attr($defaults['gps_lat']); ?>" placeholder="0.000000" style="font-family: 'Courier New', monospace; font-weight: 700;">
-                            </div>
-                            <div class="afc-field">
-                                <label style="font-size: 10px; color: #94a3b8;">LONGITUDE</label>
-                                <input type="text" name="gps_lng" class="afc-input" value="<?php echo esc_attr($defaults['gps_lng']); ?>" placeholder="0.000000" style="font-family: 'Courier New', monospace; font-weight: 700;">
-                            </div>
-                        </div>
+                    <div class="afc-field">
+                        <label>Area (SqFt/M²)</label>
+                        <input type="number" name="listing_sqft" placeholder="2500" min="0">
                     </div>
                 </div>
             </section>
 
-        </fieldset>
+            <!-- SECTION 6: Amenities & Lifestyle Features -->
+            <section class="afc-form-section">
+                <h3 class="afc-section-title">
+                    <span class="afc-step-num">6</span>
+                    <i class="fas fa-check-square"></i> Amenities & Lifestyle Features
+                </h3>
+                <div class="afc-amenities-grid">
+                    <?php 
+                    $amenities_list = [
+                        'Pool', 'Security', 'Gated', 'Ocean View', 'Mountain View',
+                        'Air Conditioning', 'High-Speed Wi-Fi', 'Parking', 'Garden', 'Terrace',
+                        'Furnished', 'Laundry Room', 'Guest House', 'Pet Friendly', 'Solar Power',
+                        'Water Tank', 'Gym', 'Walking Trails', 'BBQ Area', 'Workshop'
+                    ];
 
-        <div class="afc-publish-section" style="margin-top: 50px;">
-            <button type="submit" id="afc-submit-btn" class="afc-main-btn" <?php echo $is_locked ? 'disabled' : ''; ?>>
-                <?php echo $is_locked ? '🔒 SYSTEM ENCRYPTION ACTIVE' : ($post_id ? 'SYNC ASSET UPDATES' : 'DEPLOY WORLD-WIDE LISTING'); ?>
-            </button>
-        </div>
-        
-        <div id="afc-feedback" style="margin-top: 30px; text-align: center; font-weight: 800; font-size: 16px;"></div>
-    </form>
+                    foreach ( $amenities_list as $amenity ) : ?>
+                        <label class="afc-checkbox-item">
+                            <input type="checkbox" name="listing_amenities[]" value="<?php echo esc_attr($amenity); ?>">
+                            <span><?php echo esc_html($amenity); ?></span>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+            </section>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Hero Photo Preview Protocol
-        const heroInput = document.getElementById('hero_file');
-        const heroPreview = document.getElementById('hero-preview');
-        const heroPlaceholder = document.getElementById('hero-placeholder');
-        if (heroInput) {
-            heroInput.addEventListener('change', function() {
-                const file = this.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        heroPreview.src = e.target.result;
-                        heroPreview.style.display = 'block';
-                        if (heroPlaceholder) heroPlaceholder.style.display = 'none';
-                    }
-                    reader.readAsDataURL(file);
-                }
-            });
-        }
+            <!-- SECTION 7: Bilingual Content (Spanish) -->
+            <section class="afc-form-section">
+                <h3 class="afc-section-title">
+                    <span class="afc-step-num">7</span>
+                    <i class="fas fa-globe"></i> Spanish Translation
+                </h3>
+                <div class="afc-field full-width">
+                    <label>Intro Paragraph (Spanish)</label>
+                    <textarea name="listing_intro_es" rows="3" placeholder="Descripción breve en español..."></textarea>
+                </div>
+                <div class="afc-field full-width">
+                    <label>Full Description (Spanish)</label>
+                    <textarea name="listing_narrative_es" rows="6" placeholder="Descripción completa en español..."></textarea>
+                </div>
+            </section>
 
-        // Gallery Multi-Asset Preview Protocol
-        const galleryInput = document.getElementById('gallery_files');
-        const galleryGrid = document.getElementById('new-gallery-grid');
-        const galleryContainer = document.getElementById('new-gallery-preview');
-        if (galleryInput) {
-            galleryInput.addEventListener('change', function() {
-                galleryGrid.innerHTML = ''; 
-                galleryContainer.style.display = 'block';
-                Array.from(this.files).forEach(file => {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const div = document.createElement('div');
-                        div.className = 'afc-preview-item';
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        div.appendChild(img);
-                        galleryGrid.appendChild(div);
-                    }
-                    reader.readAsDataURL(file);
-                });
-            });
-        }
-    });
-    </script>
+            <!-- SECTION 8: Listing Status -->
+            <section class="afc-form-section">
+                <h3 class="afc-section-title">
+                    <span class="afc-step-num">8</span>
+                    <i class="fas fa-handshake"></i> Listing Status
+                </h3>
+                <div class="afc-status-toggle">
+                    <label class="status-opt">
+                        <input type="radio" name="listing_status" value="publish" checked>
+                        <span class="status-label active">ACTIVE</span>
+                    </label>
+                    <label class="status-opt">
+                        <input type="radio" name="listing_status" value="pending">
+                        <span class="status-label pending">PENDING</span>
+                    </label>
+                    <label class="status-opt">
+                        <input type="radio" name="listing_status" value="sold">
+                        <span class="status-label sold">SOLD</span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- SECTION 9: Agent Information -->
+            <section class="afc-form-section">
+                <h3 class="afc-section-title">
+                    <span class="afc-step-num">9</span>
+                    <i class="fas fa-user-tie"></i> Agent Information
+                </h3>
+                <div class="afc-flex-row">
+                    <div class="afc-field flex-2">
+                        <label>Agent Name</label>
+                        <input type="text" name="agent_name" value="<?php echo esc_attr(wp_get_current_user()->display_name); ?>">
+                    </div>
+                    <div class="afc-field">
+                        <label>Agent Phone</label>
+                        <input type="tel" name="agent_phone" placeholder="+506 1234-5678">
+                    </div>
+                </div>
+                <div class="afc-field full-width">
+                    <label>Agent Photo (Optional)</label>
+                    <input type="file" name="agent_photo_file" id="agent-photo-file" accept="image/*">
+                    <div id="agent-photo-preview" class="afc-preview-zone"></div>
+                </div>
+                <div class="afc-field full-width">
+                    <label>Brokerage Logo (Optional)</label>
+                    <input type="file" name="broker_logo_file" id="broker-logo-file" accept="image/*">
+                    <div id="broker-logo-preview" class="afc-preview-zone"></div>
+                </div>
+            </section>
+
+            <!-- SECTION 10: Additional Files -->
+            <section class="afc-form-section">
+                <h3 class="afc-section-title">
+                    <span class="afc-step-num">10</span>
+                    <i class="fas fa-file-pdf"></i> Additional Documents
+                </h3>
+                <div class="afc-field full-width">
+                    <label>PDF Brochure (Optional)</label>
+                    <input type="file" name="pdf_file" accept=".pdf">
+                </div>
+            </section>
+
+            <!-- SECTION 11: Quality Certification -->
+            <section class="afc-form-section">
+                <h3 class="afc-section-title">
+                    <span class="afc-step-num">11</span>
+                    <i class="fas fa-shield-alt"></i> Quality Review
+                </h3>
+                <label class="afc-checkbox-item">
+                    <input type="checkbox" required>
+                    <span>I certify that all images meet the 1200px minimum quality standard</span>
+                </label>
+            </section>
+
+            <!-- SECTION 12: Final Transmission -->
+            <section class="afc-form-section afc-submit-section">
+                <h3 class="afc-section-title">
+                    <span class="afc-step-num">12</span>
+                    Final Transmission
+                </h3>
+                <button type="submit" class="afc-main-submit" id="afc-submit-btn">
+                    🚀 Launch Listing to Market
+                </button>
+                <div id="afc-form-status" class="afc-form-status"></div>
+            </section>
+
+            <?php wp_nonce_field(C::NONCE_AJAX, 'afc_listing_nonce'); ?>
+            <input type="hidden" name="action" value="<?php echo C::AJAX_SUBMIT; ?>">
+        </form>
+    </div>
 </div>
+
+<script>
+jQuery(document).ready(function($) {
+    
+    // Image Preview Handlers
+    $('#hero-file').on('change', function(e) {
+        previewImage(e.target.files[0], '#hero-preview');
+    });
+    
+    $('#gallery-files').on('change', function(e) {
+        previewGallery(e.target.files, '#gallery-preview');
+    });
+
+    $('#agent-photo-file').on('change', function(e) {
+        previewImage(e.target.files[0], '#agent-photo-preview');
+    });
+
+    $('#broker-logo-file').on('change', function(e) {
+        previewImage(e.target.files[0], '#broker-logo-preview');
+    });
+    
+    function previewImage(file, container) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            $(container).html('<div class="gallery-thumb"><img src="' + e.target.result + '"></div>');
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    function previewGallery(files, container) {
+        $(container).empty();
+        Array.from(files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $(container).append('<div class="gallery-thumb"><img src="' + e.target.result + '"></div>');
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+    
+    // Form Submission with AJAX
+    $('#afc-submit-listing-form').on('submit', function(e) {
+        e.preventDefault();
+        
+        const $btn = $('#afc-submit-btn');
+        const $status = $('#afc-form-status');
+        const originalText = $btn.text();
+        
+        // Disable button
+        $btn.prop('disabled', true).text('🔄 TRANSMITTING...');
+        $status.removeClass('success error').text('');
+        
+        // Prepare FormData
+        const formData = new FormData(this);
+        
+        $.ajax({
+            url: '<?php echo admin_url("admin-ajax.php"); ?>',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    $status.addClass('success').html('✅ ' + response.data.message + '<br><a href="' + response.data.url + '">View Listing →</a>');
+                    $btn.text('✓ SUCCESS').css('background', '#10b981');
+                    
+                    // Reset form after 3 seconds
+                    setTimeout(function() {
+                        window.location.href = response.data.url;
+                    }, 2000);
+                } else {
+                    $status.addClass('error').text('❌ ' + (response.data?.message || 'Submission failed'));
+                    $btn.text(originalText).prop('disabled', false);
+                }
+            },
+            error: function() {
+                $status.addClass('error').text('❌ Network error. Please try again.');
+                $btn.text(originalText).prop('disabled', false);
+            }
+        });
+    });
+    
+    // Progress Bar Update
+    const totalSections = 12;
+    let completedSections = 0;
+    
+    $('.afc-form-section').each(function() {
+        const $section = $(this);
+        $section.find('input, textarea, select').on('change', function() {
+            updateProgress();
+        });
+    });
+    
+    function updateProgress() {
+        let filled = 0;
+        $('.afc-form-section').each(function() {
+            const hasContent = $(this).find('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea').filter(function() {
+                return $(this).val() !== '';
+            }).length > 0;
+            
+            if (hasContent) filled++;
+        });
+        
+        const percent = Math.min(100, (filled / totalSections) * 100);
+        $('#afc-progress-fill').css('width', percent + '%');
+    }
+});
+</script>
+
+<?php get_footer(); ?>

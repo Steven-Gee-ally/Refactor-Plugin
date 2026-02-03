@@ -10,14 +10,13 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 $post_id = get_the_ID();
 
 // 1. DATA HARVESTING (World-Class Precision)
-$price   = get_post_meta( $post_id, \AFCGlide\Core\Constants::META_PRICE, true );
-$beds    = get_post_meta( $post_id, \AFCGlide\Core\Constants::META_BEDS, true );
-$baths   = get_post_meta( $post_id, \AFCGlide\Core\Constants::META_BATHS, true );
-$sqft    = get_post_meta( $post_id, \AFCGlide\Core\Constants::META_SQFT, true );
-$address = get_post_meta( $post_id, \AFCGlide\Core\Constants::META_ADDRESS, true );
-
-// Live Synergy Analytics from our tracker
-$views   = get_post_meta( $post_id, '_listing_views_count', true ) ?: 0;
+$price   = \AFCGlide\Core\Constants::get_meta( $post_id, \AFCGlide\Core\Constants::META_PRICE );
+$beds    = \AFCGlide\Core\Constants::get_meta( $post_id, \AFCGlide\Core\Constants::META_BEDS );
+$baths   = \AFCGlide\Core\Constants::get_meta( $post_id, \AFCGlide\Core\Constants::META_BATHS );
+$sqft    = \AFCGlide\Core\Constants::get_meta( $post_id, \AFCGlide\Core\Constants::META_SQFT );
+$address = \AFCGlide\Core\Constants::get_meta( $post_id, \AFCGlide\Core\Constants::META_ADDRESS );
+$status  = \AFCGlide\Core\Constants::get_meta( $post_id, \AFCGlide\Core\Constants::META_STATUS ) ?: 'active';
+$views   = \AFCGlide\Core\Constants::get_meta( $post_id, \AFCGlide\Core\Constants::META_VIEWS ) ?: 0;
 
 // 2. FORMATTING
 $display_price = ( ! empty($price) ) ? '$' . number_format( (float)$price ) : 'Price Upon Request';

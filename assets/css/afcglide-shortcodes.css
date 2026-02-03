@@ -133,6 +133,57 @@
 }
 
 /* 3. THE SEARCH TERMINAL */
+.afc-grid-wrapper {
+    background: #f0f9ff;
+    padding: 60px 40px;
+    border-radius: 32px;
+    border: 1px solid #e0f2fe;
+}
+
+.afc-portfolio-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.afc-portfolio-headline {
+    font-size: 32px;
+    font-weight: 950;
+    color: #16a34a;
+    margin: 0;
+    letter-spacing: -1.5px;
+    text-transform: uppercase;
+}
+
+/* 🧼 CLEANUP: Hiding Astra Theme Elements on Portfolio */
+.page-id-portfolio .entry-title,
+.page-template-default.page .entry-title,
+.ast-archive-title,
+.ast-title-bar,
+.ast-title-bar-wrap,
+.ast-breadcrumbs-wrapper,
+#primary .entry-header,
+#main .entry-title,
+article h1.entry-title,
+.entry-header,
+[class*="portfolio"] .entry-title,
+[class*="portfolio"] .ast-archive-title,
+.ast-button-wrap .browse-listings-button,
+.ast-header-button-1,
+.ast-header-button-inner,
+#ast-masthead .ast-button-wrap,
+.menu-item .browse-listings-button {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+}
+
 .afc-search-terminal {
     background: #ffffff;
     padding: 35px;
@@ -142,27 +193,33 @@
     margin-bottom: 50px;
 }
 
-.afc-vogue-btn {
-    background: #3b82f6 !important;
-    color: white !important;
-    padding: 12px 30px !important;
-    border-radius: 12px !important;
-    font-weight: 800 !important;
+.afc-portfolio-btn {
+    background: #f0fdf4 !important;
+    /* Premium Mint Background */
+    color: #065f46 !important;
+    /* Deep Emerald Text for Contrast */
+    padding: 14px 34px !important;
+    border-radius: 14px !important;
+    font-weight: 900 !important;
     text-transform: uppercase;
-    letter-spacing: 1.2px;
-    border: none !important;
+    letter-spacing: 1.5px;
+    border: 2px solid #10b981 !important;
+    /* Vibrant Emerald Border */
     cursor: pointer;
-    transition: all 0.3s ease !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     text-decoration: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
 }
 
-.afc-vogue-btn:hover {
-    background: #2563eb !important;
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
+.afc-portfolio-btn:hover {
+    background: #10b981 !important;
+    color: #ffffff !important;
+    border-color: #10b981 !important;
+    transform: translateY(-3px);
+    box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.2), 0 10px 10px -5px rgba(16, 185, 129, 0.1);
 }
 
 /* 🚀 AGENT HUB EXPANSION STYLES */
@@ -317,12 +374,28 @@
 
 .afc-card-header h3 a {
     text-decoration: none;
-    color: inherit;
-    transition: color 0.2s;
+    color: #16a34a;
+    transition: all 0.2s ease;
 }
 
 .afc-card-header h3 a:hover {
-    color: #3b82f6;
+    color: #059669;
+    text-decoration: underline;
+}
+
+.afc-card-location {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #16a34a;
+    opacity: 0.8;
+    margin-bottom: 5px;
+}
+
+.afc-card-location svg {
+    color: #16a34a;
 }
 
 .afcglide-meta-specs {
@@ -344,6 +417,45 @@
 
 .afcglide-spec-item strong {
     font-size: 16px;
-    color: #0f172a;
-    font-weight: 800;
+    color: #16a34a;
+    font-weight: 950;
+}
+
+.afc-card-footer {
+    margin-top: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.afc-view-btn {
+    background: #f0fdf4;
+    color: #16a34a;
+    border: 2px solid #bbf7d0;
+    padding: 12px;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 900;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.afc-view-btn:hover {
+    background: #16a34a;
+    color: white;
+    border-color: #16a34a;
+}
+
+@media (max-width: 768px) {
+    .afc-portfolio-header {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+    }
+
+    .afc-portfolio-headline {
+        font-size: 24px;
+    }
 }

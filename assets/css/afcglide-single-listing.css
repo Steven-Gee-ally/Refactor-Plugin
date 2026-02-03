@@ -1,7 +1,7 @@
 /**
- * AFCGlide Listings - Unified Luxury Backbone v8.0
- * Cinematic Hero + 16-Photo Filmstrip Edition
- * MacBook Pro Optimized | 4px Precise Seams
+ * AFCGlide Listings - Unified Luxury Backbone v8.4
+ * Full 15-Section Master Architecture
+ * MacBook Pro Optimized | 4px Precise Seams | Cinematic Focus
  */
 
 :root {
@@ -18,12 +18,13 @@
     --afc-shadow-lux: 0 20px 40px rgba(0, 0, 0, 0.05);
 }
 
-/* 1. CINEMATIC HERO STAGE */
+/* ============================================================================
+   1. CINEMATIC HERO STAGE
+   ============================================================================ */
 .afc-cinematic-stage {
     display: flex;
     flex-direction: column;
     gap: var(--afc-seam);
-    /* 4px vertical gap */
     margin-bottom: 50px;
 }
 
@@ -47,7 +48,9 @@
     transform: scale(1.03);
 }
 
-/* 2. THE FILMSTRIP (4-UP SLIDER) */
+/* ============================================================================
+   2. THE FILMSTRIP (4-UP SLIDER)
+   ============================================================================ */
 .afc-filmstrip-wrapper {
     position: relative;
     width: 100%;
@@ -56,11 +59,9 @@
 .afc-filmstrip-container {
     display: flex;
     gap: var(--afc-seam);
-    /* 4px horizontal gap */
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     scrollbar-width: none;
-    /* Hide scrollbar Firefox */
     border-radius: 4px 4px var(--afc-radius) var(--afc-radius);
 }
 
@@ -70,11 +71,12 @@
 
 .afc-filmstrip-item {
     flex: 0 0 calc(25% - 3px);
-    /* Perfectly fits 4 photos with 4px seams */
-    height: 160px;
+    aspect-ratio: 16 / 9;
+    /* Locks the frame for professional alignment */
     scroll-snap-align: start;
     overflow: hidden;
     cursor: pointer;
+    background: #e2e8f0;
 }
 
 .afc-filmstrip-item img {
@@ -88,7 +90,9 @@
     opacity: 0.8;
 }
 
-/* 3. GLASSMORPHISM PRICE TAG */
+/* ============================================================================
+   3. GLASSMORPHISM PRICE TAG
+   ============================================================================ */
 .afcglide-price-badge {
     position: absolute;
     bottom: 30px;
@@ -106,7 +110,131 @@
     z-index: 10;
 }
 
-/* 4. LAYOUT GRID */
+/* ============================================================================
+   4. BROKERAGE BAR - FULL WIDTH PROFESSIONAL HEADER
+   ============================================================================ */
+.afc-brokerage-bar {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-top: 3px solid #3b82f6;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 30px 0;
+    margin-bottom: 50px;
+    width: 100%;
+}
+
+.afc-brokerage-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 60px;
+}
+
+.afc-broker-info {
+    flex: 0 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.afc-broker-name {
+    font-size: 28px;
+    font-weight: 900;
+    color: #1e3a8a;
+    margin: 0 0 10px 0;
+    letter-spacing: -0.5px;
+    line-height: 1;
+}
+
+.afc-contact-numbers {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.afc-phone-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #3b82f6;
+    text-decoration: none;
+    font-size: 16px;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.afc-phone-link:hover {
+    color: #1e40af;
+    transform: translateX(3px);
+}
+
+.afc-phone-link i.fas {
+    font-size: 14px;
+    width: 20px;
+    color: #64748b;
+    flex-shrink: 0;
+}
+
+.afc-phone-link .phone-label {
+    color: #64748b;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.afc-phone-link strong {
+    font-weight: 800;
+    color: #1e3a8a;
+    font-size: 17px;
+}
+
+.afc-wa-mini {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    color: white;
+    text-decoration: none;
+    margin-left: 8px;
+    transition: all 0.2s ease;
+}
+
+.afc-wa-mini:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+}
+
+.afc-wa-mini i {
+    font-size: 16px;
+}
+
+.afc-license-small {
+    font-size: 11px;
+    color: #94a3b8;
+    margin: 10px 0 0 0;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.afc-broker-logo {
+    flex-shrink: 0;
+}
+
+.afc-broker-logo img {
+    height: 60px;
+    width: auto;
+    max-width: 250px;
+    object-fit: contain;
+    display: block;
+}
+
+/* ============================================================================
+   5. LAYOUT GRID & WRAPPER
+   ============================================================================ */
 .afcglide-wrapper {
     max-width: 1300px;
     margin: 40px auto;
@@ -119,7 +247,28 @@
     gap: 60px;
 }
 
-/* 5. SPECS HUD */
+/* ============================================================================
+   6. LISTING TITLE & ADDRESS
+   ============================================================================ */
+.afc-listing-title {
+    font-size: 42px;
+    font-weight: 900;
+    margin-bottom: 10px;
+    color: #1e293b;
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+}
+
+.afc-listing-address {
+    color: var(--afc-gray, #64748b);
+    font-size: 18px;
+    margin-bottom: 30px;
+    font-weight: 500;
+}
+
+/* ============================================================================
+   7. SPECS HUD (Heads-Up Display)
+   ============================================================================ */
 .afcglide-specs-bar {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -156,7 +305,57 @@
     font-weight: 900;
 }
 
-/* 6. AGENT CARD (STICKY) */
+/* ============================================================================
+   8. PROPERTY NARRATIVE SECTION
+   ============================================================================ */
+.afc-description {
+    margin-top: 40px;
+}
+
+.afc-section-title {
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 20px;
+    color: #1e293b;
+    letter-spacing: -0.3px;
+}
+
+.afc-intro-text {
+    font-size: 18px;
+    color: #475569;
+    margin-bottom: 30px;
+    line-height: 1.8;
+    font-weight: 400;
+}
+
+.afc-narrative-body {
+    color: #475569;
+    line-height: 1.7;
+}
+
+.afc-narrative-body p {
+    margin-bottom: 20px;
+}
+
+/* ============================================================================
+   9. MAP SECTION
+   ============================================================================ */
+.afc-map-block {
+    margin-top: 60px;
+}
+
+.afc-map-embed {
+    width: 100%;
+    height: 450px;
+    border-radius: var(--afc-radius);
+    filter: grayscale(0.1);
+    border: 1px solid var(--afc-border);
+    display: block;
+}
+
+/* ============================================================================
+   10. AGENT CARD (STICKY)
+   ============================================================================ */
 .afcglide-agent-card {
     background: #fff;
     border: 1px solid var(--afc-border);
@@ -185,53 +384,29 @@
     border-radius: 50%;
 }
 
-/* 7. MOBILE OPTIMIZATION */
-@media (max-width: 1024px) {
-    .afc-listing-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .afcglide-agent-card {
-        position: relative;
-        top: 0;
-        margin-top: 40px;
-    }
+.afc-agent-name {
+    margin: 0 0 5px 0;
+    font-size: 22px;
+    font-weight: 800;
+    color: #1e293b;
 }
 
-@media (max-width: 768px) {
-    .afcglide-hero-main {
-        height: 400px;
-    }
-
-    .afc-filmstrip-item {
-        flex: 0 0 80%;
-        height: 200px;
-    }
-
-    .afcglide-price-badge {
-        font-size: 24px;
-        padding: 12px 20px;
-        bottom: 15px;
-        left: 15px;
-    }
-
-    .afcglide-specs-bar {
-        grid-template-columns: 1fr;
-        gap: 20px;
-    }
-
-    .afcglide-spec-item {
-        border-right: none;
-        border-bottom: 1px solid var(--afc-border);
-        padding-bottom: 15px;
-    }
-
-    .afcglide-spec-item:last-child {
-        border-bottom: none;
-    }
+.afc-agent-title {
+    margin: 0 0 25px 0;
+    color: var(--afc-gray, #64748b);
+    font-size: 12px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 700;
 }
 
-/* 8. CONCIERGE SUCCESS OVERLAY */
+.afc-inquiry-form-wrapper {
+    margin-top: 30px;
+}
+
+/* ============================================================================
+   11. CONCIERGE SUCCESS OVERLAY
+   ============================================================================ */
 .afc-overlay-hidden {
     position: fixed;
     inset: 0;
@@ -294,7 +469,9 @@
     line-height: 1;
 }
 
-/* 9. WHATSAPP & BUTTONS (DYNAMIC) */
+/* ============================================================================
+   12. WHATSAPP & BUTTONS (DYNAMIC)
+   ============================================================================ */
 @keyframes afc-pulse {
     0% {
         box-shadow: 0 0 0 0 var(--afc-wa-pulse, rgba(37, 211, 102, 0.7));
@@ -311,7 +488,7 @@
 
 .afc-whatsapp-float {
     position: fixed;
-    bottom: 30px;
+    bottom: calc(30px + env(safe-area-inset-bottom));
     right: 30px;
     width: 65px;
     height: 65px;
@@ -348,4 +525,169 @@
 .afc-btn-primary:hover {
     transform: translateY(-3px);
     box-shadow: 0 10px 20px var(--afc-brand-soft);
+}
+
+/* ============================================================================
+   13. RESPONSIVE - TABLET
+   ============================================================================ */
+@media (max-width: 1024px) {
+    .afc-listing-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .afcglide-agent-card {
+        position: relative;
+        top: 0;
+        margin-top: 40px;
+    }
+
+    .afc-brokerage-container {
+        padding: 0 40px;
+        gap: 40px;
+    }
+
+    .afc-broker-logo img {
+        height: 50px;
+        max-width: 200px;
+    }
+}
+
+/* ============================================================================
+   14. RESPONSIVE - MOBILE & SMALL DEVICES
+   ============================================================================ */
+@media (max-width: 768px) {
+    .afcglide-hero-main {
+        height: 400px;
+    }
+
+    .afc-filmstrip-item {
+        flex: 0 0 80%;
+        height: 200px;
+    }
+
+    .afcglide-price-badge {
+        font-size: 24px;
+        padding: 12px 20px;
+        bottom: 15px;
+        left: 15px;
+    }
+
+    .afcglide-specs-bar {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .afcglide-spec-item {
+        border-right: none;
+        border-bottom: 1px solid var(--afc-border);
+        padding-bottom: 15px;
+    }
+
+    .afcglide-spec-item:last-child {
+        border-bottom: none;
+    }
+
+    .afc-listing-title {
+        font-size: 32px;
+    }
+
+    .afc-listing-address {
+        font-size: 16px;
+    }
+
+    .afc-map-embed {
+        height: 300px;
+    }
+
+    .afc-brokerage-bar {
+        padding: 25px 0;
+    }
+
+    .afc-brokerage-container {
+        flex-direction: column;
+        text-align: center;
+        padding: 0 30px;
+        gap: 25px;
+    }
+
+    .afc-broker-info {
+        align-items: center;
+    }
+
+    .afc-contact-numbers {
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    .afc-broker-logo {
+        order: -1;
+    }
+
+    .afc-broker-logo img {
+        height: 45px;
+    }
+
+    .afc-broker-name {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .afc-broker-name {
+        font-size: 22px;
+    }
+
+    .afc-phone-link {
+        font-size: 14px;
+        flex-wrap: wrap;
+    }
+
+    .afc-phone-link strong {
+        font-size: 15px;
+    }
+
+    .afc-listing-title {
+        font-size: 28px;
+    }
+}
+
+/* ============================================================================
+   15. WORLD-CLASS AMENITIES GRID
+   ============================================================================ */
+.afc-amenities-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(4, auto);
+    gap: 15px 10px;
+    padding: 20px;
+    background: #fdfdfd;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.afc-checkbox-item {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.afc-checkbox-item:hover {
+    color: #000;
+}
+
+.afc-checkbox-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+    cursor: pointer;
+    accent-color: #10b981;
+}
+
+@media (max-width: 992px) {
+    .afc-amenities-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
