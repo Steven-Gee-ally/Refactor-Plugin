@@ -562,3 +562,28 @@ input[type="radio"]:checked + .status-label.sold { color: #ef4444; background: #
 .post-type-afcglide_listing .button { border-radius: 8px !important; padding: 8px 16px !important; font-weight: 600 !important; }
 .post-type-afcglide_listing .button-primary { background: #6366f1 !important; border-color: #6366f1 !important; }
 .post-type-afcglide_listing .button-secondary { background: white !important; border-color: #e2e8f0 !important; color: #1e293b !important; }
+
+/* Styling for Agent Photo & Broker Logo buttons */
+.afc-upload-agent-photo-btn,
+.afc-upload-broker-logo-btn {
+    background-color: #dbeafe !important; /* Soft Pastel Blue */
+    color: #1e40af !important; /* Deep Blue Text */
+    border: 1.5px solid #93c5fd !important; /* Light Blue Border */
+    padding: 10px 20px !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease !important;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.afc-upload-agent-photo-btn:hover,
+.afc-upload-broker-logo-btn:hover {
+    background-color: #bfdbfe !important; /* Richer blue on hover */
+    border-color: #60a5fa !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(30, 64, 175, 0.15);
+}

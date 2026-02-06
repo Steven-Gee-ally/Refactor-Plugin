@@ -423,15 +423,17 @@ class AFCGlide_Metaboxes {
         $agent_phone = C::get_meta( $post->ID, C::META_AGENT_PHONE );
         $agent_photo = C::get_meta( $post->ID, C::META_AGENT_PHOTO );
         $show_wa     = C::get_meta( $post->ID, C::META_SHOW_WA );
+        $broker_logo = C::get_meta( $post->ID, C::META_BROKER_LOGO );
 
         $photo_url = $agent_photo ? wp_get_attachment_image_url( $agent_photo, 'thumbnail' ) : AFCG_URL . 'assets/images/placeholder-agent.png';
+        $logo_url = $broker_logo ? wp_get_attachment_image_url( $broker_logo, 'thumbnail' ) : AFCG_URL . 'assets/images/placeholder.png';
         
         // Fetch agents for the selector
         $users = get_users([ 'role__in' => ['administrator', 'editor', 'author', 'contributor'] ] );
         ?>
         <div class="afc-metabox-content">
             <div class="afc-agent-selector-wrapper">
-                <label class="afc-label">Auto-Fill from Registry</label>
+                <label class="afc-label">AUTO-FILL FROM REGISTRY</label>
                 <select id="afc_agent_selector" class="afc-select">
                     <option value="">-- Choose an Existing Agent --</option>
                     <?php foreach ( $users as $user ) :
@@ -451,51 +453,108 @@ class AFCGlide_Metaboxes {
                 </select>
             </div>
 
-            <div class="afc-agent-container">
-                <div class="afc-agent-photo-wrapper">
-                    <div class="afc-agent-preview">
-                        <img src="<?php echo esc_url( $photo_url ); ?>" id="agent-photo-img" alt="">
+            <!-- CENTER-ALIGNED LAYOUT: Photo (Left) | Info (Center) | Logo (Right) -->
+            <div style="display: flex; align-items: center; justify-content: center; gap: 40px; padding: 30px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; margin-top: 20px;">
+                
+                <!-- AGENT PHOTO (Center-Left) -->
+                <div style="flex: 0 0 auto; text-align: center;">
+                    <label style="display: block; margin-bottom: 10px; font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">AGENT PHOTO</label>
+                    <div style="width: 120px; height: 120px; border-radius: 50%; overflow: hidden; border: 3px solid #e2e8f0; background: #fff; margin: 0 auto 10px;">
+                        <img src="<?php echo esc_url( $photo_url ); ?>" id="agent-photo-img" alt="" style="width: 100%; height: 100%; object-fit: cover;">
                     </div>
                     <input type="hidden" name="_agent_photo_id" id="agent_photo_id" value="<?php echo esc_attr( $agent_photo ); ?>">
-                    <button type="button" class="button afcglide-upload-image-btn">Change Photo</button>
-                    <p style="text-align:center; font-size:10px; color:#94a3b8; margin-top:5px;">AGENT</p>
+                    <button type="button" class="button afc-upload-agent-photo-btn" style="font-size: 11px; padding: 6px 12px;">Change Photo</button>
                 </div>
 
-                <!-- NEW: BROKERAGE LOGO -->
-                <div class="afc-agent-photo-wrapper" style="margin-left: 10px;">
-                    <?php 
-                    $broker_logo = \AFCGlide\Core\Constants::get_meta( $post->ID, \AFCGlide\Core\Constants::META_BROKER_LOGO ); 
-                    $broker_logo_url = $broker_logo ? wp_get_attachment_image_url( $broker_logo, 'thumbnail' ) : AFCG_URL . 'assets/images/placeholder.png';
-                    ?>
-                    <div class="afc-agent-preview" style="border-radius: 6px !important;">
-                        <img src="<?php echo esc_url( $broker_logo_url ); ?>" id="broker-logo-img" alt="" style="object-fit: contain !important;">
+                <!-- AGENT INFO (Center) -->
+                <div style="flex: 1; max-width: 400px;">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">AGENT BRANDING NAME</label>
+                        <input type="text" name="_agent_name_display" id="afc_agent_name" value="<?php echo esc_attr( $agent_name ); ?>" placeholder="e.g. John Smith" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; text-align: center; font-weight: 600;">
                     </div>
-                    <input type="hidden" name="_listing_broker_logo" id="_listing_broker_logo" value="<?php echo esc_attr( $broker_logo ); ?>">
-                    <button type="button" class="button afcglide-upload-logo-btn">Brand Logo</button>
-                    <p style="text-align:center; font-size:10px; color:#94a3b8; margin-top:5px;">BROKERAGE</p>
-                </div>
-
-                <div class="afc-agent-fields">
-                    <div class="afc-field">
-                        <label class="afc-label">Agent Branding Name</label>
-                        <input type="text" name="_agent_name_display" id="afc_agent_name" value="<?php echo esc_attr( $agent_name ); ?>" class="afc-input" placeholder="e.g. John Smith">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">DIRECT CONTACT NUMBER</label>
+                        <input type="text" name="_agent_phone_display" id="afc_agent_phone" value="<?php echo esc_attr( $agent_phone ); ?>" placeholder="+1 234 567 8900" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; text-align: center; font-family: monospace;">
                     </div>
-                    <div class="afc-field">
-                        <label class="afc-label">Direct Contact Number</label>
-                        <input type="text" name="_agent_phone_display" id="afc_agent_phone" value="<?php echo esc_attr( $agent_phone ); ?>" class="afc-input" placeholder="+1 234 567 8900">
-                    </div>
-                    <div class="afc-field">
-                        <label class="afc-checkbox-label">
+                    <div style="text-align: center;">
+                        <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: #475569; cursor: pointer;">
                             <input type="checkbox" name="_show_floating_whatsapp" value="1" <?php checked( $show_wa, '1' ); ?>>
-                            Enable Floating WhatsApp for this Listing
+                            <span>Enable Floating WhatsApp for this Listing</span>
                         </label>
                     </div>
                 </div>
+
+                <!-- BROKERAGE LOGO (Center-Right) -->
+                <div style="flex: 0 0 auto; text-align: center;">
+                    <label style="display: block; margin-bottom: 10px; font-size: 10px; color: #64748b; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">BROKER LOGO</label>
+                    <div style="width: 120px; height: 120px; border-radius: 8px; overflow: hidden; border: 2px dashed #cbd5e1; background: #fff; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center;">
+                        <img src="<?php echo esc_url( $logo_url ); ?>" id="broker-logo-img" alt="" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                    </div>
+                    <input type="hidden" name="_listing_broker_logo" id="_listing_broker_logo" value="<?php echo esc_attr( $broker_logo ); ?>">
+                    <button type="button" class="button afc-upload-broker-logo-btn" style="font-size: 11px; padding: 6px 12px;">Brand Logo</button>
+                </div>
+
             </div>
         </div>
+
+        <script>
+        jQuery(document).ready(function($) {
+            
+            // AGENT PHOTO UPLOAD
+            $('.afc-upload-agent-photo-btn').on('click', function(e) {
+                e.preventDefault();
+                var button = $(this);
+                var frame = wp.media({
+                    title: 'Select Agent Photo',
+                    button: { text: 'Use this photo' },
+                    multiple: false
+                });
+                
+                frame.on('select', function() {
+                    var attachment = frame.state().get('selection').first().toJSON();
+                    $('#agent_photo_id').val(attachment.id);
+                    $('#agent-photo-img').attr('src', attachment.url);
+                });
+                
+                frame.open();
+            });
+
+            // BROKER LOGO UPLOAD
+            $('.afc-upload-broker-logo-btn').on('click', function(e) {
+                e.preventDefault();
+                var button = $(this);
+                var frame = wp.media({
+                    title: 'Select Brokerage Logo',
+                    button: { text: 'Use this logo' },
+                    multiple: false
+                });
+                
+                frame.on('select', function() {
+                    var attachment = frame.state().get('selection').first().toJSON();
+                    $('#_listing_broker_logo').val(attachment.id);
+                    $('#broker-logo-img').attr('src', attachment.url);
+                });
+                
+                frame.open();
+            });
+
+            // AUTO-FILL FROM REGISTRY
+            $('#afc_agent_selector').on('change', function() {
+                var selected = $(this).find(':selected');
+                if (selected.val()) {
+                    $('#afc_agent_name').val(selected.data('name'));
+                    $('#afc_agent_phone').val(selected.data('phone'));
+                    
+                    if (selected.data('photo-url')) {
+                        $('#agent-photo-img').attr('src', selected.data('photo-url'));
+                        $('#agent_photo_id').val(selected.data('photo-id'));
+                    }
+                }
+            });
+        });
+        </script>
         <?php
     }
-
     /**
      * Section 10: Intelligence & Files
      */

@@ -10,6 +10,14 @@
  */
 
 /* ==========================================
+   GLOBAL OVERRIDES (SEAMLESS WHITE)
+   ========================================== */
+#wpcontent,
+#wpbody-content {
+    background: #ffffff !important;
+}
+
+/* ==========================================
    1. HIDE WORDPRESS DEFAULT CLUTTER
    ========================================== */
 .post-type-afcglide_listing #postdivrich,
@@ -644,7 +652,7 @@
 .profile-php #wpbody-content,
 .user-edit-php #wpbody-content,
 .user-new-php #wpbody-content {
-    background: #f8fafc !important;
+    background: #ffffff !important;
 }
 
 .profile-php h1,
@@ -1089,6 +1097,22 @@ ul#adminmenu li.current a.menu-top:after {
 
 .afc-notification {
     animation: afc-pulse 2s ease-in-out infinite;
+}
+
+/* Specific Section 5 & 6 Buttons (Pastel Blue) */
+.post-type-afcglide_listing .afc-upload-btn {
+    background: #0ea5e9 !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 4px 10px rgba(14, 165, 233, 0.2) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.post-type-afcglide_listing .afc-upload-btn:hover {
+    background: #0284c7 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(14, 165, 233, 0.3) !important;
 }
 
 /* Fade in animation for metaboxes */

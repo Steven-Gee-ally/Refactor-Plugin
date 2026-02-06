@@ -102,7 +102,7 @@ class AFCGlide_Inventory {
                 <div class="count-label">TOTAL ASSETS: <span><?php echo $query->found_posts; ?></span></div>
             </div>
 
-            <div style="background: white; padding: 40px 45px; border-bottom: 1px solid #e2e8f0; margin-bottom: 0;">
+            <div style="background: white; padding: 60px 80px; border-bottom: 1px solid #e2e8f0; margin: 0 -30px 30px -30px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 30px;">
                     <div>
                         <h1 style="margin:0; font-size:32px; font-weight: 900; letter-spacing:-1.5px; color:#064e3b;">Global Asset Management Hub</h1>
@@ -162,17 +162,17 @@ class AFCGlide_Inventory {
                 </form>
             </div>
 
-            <div class="afc-section" style="background: white !important; border-radius: 0 0 24px 24px; padding: 0; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; border-top: none;">
+            <div class="afc-section" style="background: white !important; border-radius: 0 0 24px 24px; padding: 0; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; border-top: none; margin: -30px -30px -30px -30px;">
                 <table class="afc-inventory-table" style="width: 100%; border-collapse: collapse; text-align: left;">
                     <thead>
-                        <tr style="background: #f8fafc; border-bottom: 2px solid #f1f5f9;">
-                            <th style="padding: 20px 25px; font-size: 10px; font-weight: 900; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase; width: 60px;">THUMB</th>
-                            <th style="padding: 20px 25px; font-size: 10px; font-weight: 900; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase;">ASSET IDENTITY</th>
-                            <th style="padding: 20px 25px; font-size: 10px; font-weight: 900; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase;">SPECIFICATIONS</th>
-                            <th style="padding: 20px 25px; font-size: 10px; font-weight: 900; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase;">MARKET VALUE</th>
-                            <th style="padding: 20px 25px; font-size: 10px; font-weight: 900; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase;">STATUS</th>
-                            <th style="padding: 20px 25px; font-size: 10px; font-weight: 900; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase;">ENGAGEMENT</th>
-                            <th style="padding: 20px 25px; font-size: 10px; font-weight: 900; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase; text-align: right;">OPERATIONS</th>
+                        <tr style="background: #60a5fa;">
+                            <th style="padding: 22px 25px; font-size: 11px; font-weight: 900; color: #ffffff; letter-spacing: 1.5px; text-transform: uppercase; width: 80px; border-top-left-radius: 20px;">THUMB</th>
+                            <th style="padding: 22px 25px; font-size: 11px; font-weight: 900; color: #ffffff; letter-spacing: 1.5px; text-transform: uppercase;">ASSET IDENTITY</th>
+                            <th style="padding: 22px 25px; font-size: 11px; font-weight: 900; color: #ffffff; letter-spacing: 1.5px; text-transform: uppercase;">SPECIFICATIONS</th>
+                            <th style="padding: 22px 25px; font-size: 11px; font-weight: 900; color: #ffffff; letter-spacing: 1.5px; text-transform: uppercase;">MARKET VALUE</th>
+                            <th style="padding: 22px 25px; font-size: 11px; font-weight: 900; color: #ffffff; letter-spacing: 1.5px; text-transform: uppercase;">STATUS</th>
+                            <th style="padding: 22px 25px; font-size: 11px; font-weight: 900; color: #ffffff; letter-spacing: 1.5px; text-transform: uppercase;">ENGAGEMENT</th>
+                            <th style="padding: 22px 25px; font-size: 11px; font-weight: 900; color: #ffffff; letter-spacing: 1.5px; text-transform: uppercase; text-align: right; border-top-right-radius: 20px;">OPERATIONS</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -285,6 +285,20 @@ class AFCGlide_Inventory {
                         </div>
                     </div>
                 <?php endif; ?>
+
+                <!-- 🛡️ INFRASTRUCTURE TERMINAL FOOTER -->
+                <div style="padding: 25px 45px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; border-radius: 0 0 24px 24px;">
+                    <div style="font-size: 10px; font-weight: 800; color: #94a3b8; letter-spacing: 1.5px; text-transform: uppercase;">
+                        AFC Glide Global Infrastructure at 2026
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span style="height: 1px; width: 40px; background: #e2e8f0;"></span>
+                        <div style="font-size: 10px; font-weight: 900; color: #10b981; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;">
+                            <span style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);"></span>
+                            SYSTEM ACTIVE VERSION 6.91
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <?php

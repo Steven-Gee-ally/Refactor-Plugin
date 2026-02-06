@@ -84,7 +84,43 @@ jQuery(document).ready(function ($) {
     });
 
     /**
-     * 3. AJAX BROADCAST (The Emerald Protocol)
+     * 3. PDF BROCHURE PREVIEW
+     */
+    $(document).on('change', '#pdf_file', function (e) {
+        const file = e.target.files[0];
+        if (file) {
+            $('#pdf-filename').text(file.name);
+            $('#pdf-status').text('✅');
+        }
+    });
+
+    /**
+     * 4. BRANDING PREVIEWS (Agent Photo & Broker Logo)
+     */
+    $(document).on('change', '#agent_photo_file', function (e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                $('.agent-photo-preview').html(`<img src="${event.target.result}" style="width:100%; height:100%; object-fit:cover;">`);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    $(document).on('change', '#broker_logo_file', function (e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                $('.broker-logo-preview').html(`<img src="${event.target.result}" style="max-width:100%; max-height:100%; object-fit:contain;">`);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    /**
+     * 5. AJAX BROADCAST (The Emerald Protocol)
      */
     $form.on('submit', function (e) {
         e.preventDefault();

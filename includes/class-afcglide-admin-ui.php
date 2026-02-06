@@ -157,7 +157,7 @@ class AFCGlide_Admin_UI {
     }
 
     public static function custom_admin_footer() {
-        return '<span id="footer-thankyou">AFCGlide Global infrastructure &copy; ' . date('Y') . ' | <span style="color:#10b981; font-weight:900;">SYSTEM ACTIVE</span></span>';
+        return '';
     }
 
     /**
