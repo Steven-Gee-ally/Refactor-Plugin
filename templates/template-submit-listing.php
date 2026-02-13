@@ -251,11 +251,11 @@ $existing_amenities = $post_id ? (array) C::get_meta($post_id, C::META_AMENITIES
             <h3><span class="step-num">5</span> Geospatial Identity</h3>
             <div class="afc-field full" style="margin-bottom: 25px;">
                 <label>📍 Primary Physical Address</label>
-                <input type="text" name="listing_address" value="<?php echo esc_attr($defaults['address']); ?>" placeholder="Enter the full street address..." style="background: #fff; border: 2px solid #e2e8f0;">
+                <input type="text" name="listing_address" value="<?php echo esc_attr($defaults['address']); ?>" placeholder="Enter street address or descriptive location (e.g. 500m Norte de la Iglesia)..." style="background: #fff; border: 2px solid #e2e8f0;">
             </div>
 
             <div class="geospatial-coords-wrapper" style="background: #f8fafc; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 25px;">
-                <label style="display: block; margin-bottom: 15px; font-weight: 800; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">📡 Precision Network Coordinates</label>
+                <label style="display: block; margin-bottom: 15px; font-weight: 800; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">📡 Precision Network Coordinates <a href="https://www.latlong.net/" target="_blank" style="text-decoration:none; margin-left:10px; color:#3b82f6; text-transform:none;">(Find Yours Here 🔗)</a></label>
                 <div class="afc-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     <div class="afc-field">
                         <label style="display: block; font-size: 10px; color: #64748b;">LATITUDE</label>

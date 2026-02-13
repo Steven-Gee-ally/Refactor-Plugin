@@ -104,8 +104,8 @@ function afcglide_init_admin() {
         \AFCGlide\Listings\AFCGlide_Metaboxes::init();
     }
     
-    if ( class_exists( '\AFCGlide\Listings\AFCGlide_Ajax_Handler' ) ) {
-        \AFCGlide\Listings\AFCGlide_Ajax_Handler::init();
+    if ( class_exists( '\AFCGlide\Admin\AFCGlide_Ajax_Handler' ) ) {
+        \AFCGlide\Admin\AFCGlide_Ajax_Handler::init();
     }
     
     if ( class_exists( '\AFCGlide\Admin\AFCGlide_Shortcodes' ) ) {

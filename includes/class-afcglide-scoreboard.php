@@ -1,5 +1,5 @@
 <?php
-namespace AFCGlide\Reporting;
+namespace AFCGlide\Admin;
 
 use AFCGlide\Core\Constants as C;
 

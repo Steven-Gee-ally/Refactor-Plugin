@@ -7,7 +7,7 @@
  * @version 4.0.0
  */
 
-namespace AFCGlide\admin;
+namespace AFCGlide\Admin;
 
 use AFCGlide\Core\Constants as C;
 

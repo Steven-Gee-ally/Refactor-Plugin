@@ -458,7 +458,7 @@ Password: <?php echo esc_html($guide['pass']); ?></textarea>
             <?php endif; ?>
 
             <!-- 📊 UNIFIED SCOREBOARD -->
-            <?php echo \AFCGlide\Reporting\AFCGlide_Scoreboard::render_scoreboard( $is_broker ? null : $current_user->ID ); ?>
+            <?php echo \AFCGlide\Admin\AFCGlide_Scoreboard::render_scoreboard( $is_broker ? null : $current_user->ID ); ?>
 
             <?php if ( $is_broker ) : ?>
 

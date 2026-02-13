@@ -101,6 +101,7 @@ const OPT_BRAND_COLOR     = 'afc_primary_color';
 const OPT_WA_COLOR        = 'afc_whatsapp_color';
 const OPT_WA_NUMBER       = 'afc_global_whatsapp';
 const OPT_GLOBAL_LOCKDOWN = 'afc_admin_lockdown';
+const OPT_LOCKDOWN        = 'afc_admin_lockdown';
 const OPT_QUALITY_GATE    = 'afc_quality_gatekeeper';
 const OPT_IDENTITY_SHIELD = 'afc_identity_shield';
 const OPT_MAINTENANCE     = 'afc_maintenance_mode';
@@ -118,9 +119,11 @@ const OPT_AGENT_PHONE     = 'afc_agent_phone';
     const AJAX_SUBMIT       = 'afc_handle_submission';
     const AJAX_DELETE_MEDIA = 'afc_delete_listing_media';
     const AJAX_LOCKDOWN     = 'afc_toggle_lockdown_ajax';
+    const AJAX_FILTER       = 'afc_filter_listings';
     const NONCE_RECRUITMENT = 'afcglide_recruit_agent';
-    const NONCE_AJAX = 'afc_submit_listing_action';
-    const NONCE_META = 'afcglide_meta_nonce';
+    const NONCE_AJAX        = 'afc_submit_listing_action';
+    const NONCE_META        = 'afcglide_meta_nonce';
+    const NONCE_INQUIRY     = 'afc_submit_inquiry_action';
 
     /* =========================================================
      * Limits
